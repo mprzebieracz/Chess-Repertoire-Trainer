@@ -1,249 +1,265 @@
 package com.example.chessrepertoiretrainer.ui.viewmodels
 
-import android.os.Bundle
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.savedstate.SavedStateRegistryOwner
-import com.example.chessrepertoiretrainer.data.LineMove
-import com.example.chessrepertoiretrainer.data.RepertoireDao
-import com.example.chessrepertoiretrainer.ui.components.chess.ChessBoardState
-import com.github.bhlangonijr.chesslib.Board
-import com.github.bhlangonijr.chesslib.Piece
-import com.github.bhlangonijr.chesslib.Square
-import com.github.bhlangonijr.chesslib.move.Move
+import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
+import com.example.chessrepertoiretrainer.database.entities.Line
+import com.example.chessrepertoiretrainer.database.entities.LineMove
+import com.example.chessrepertoiretrainer.ui.components.chess.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.ui.components.chess.toSan
+import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+data class TrainingUiState(
+    val isLoading: Boolean = true,
+    val isSessionEmpty: Boolean = false,
+    val isSessionComplete: Boolean = false,
+    val currentLineName: String? = null,
+    val currentLineNumber: Int = 0,
+    val totalLines: Int = 0,
+    val myColor: String? = null,
+    val lastMoveWasCorrect: Boolean? = null,
+    val lastUserSan: String? = null,
+    val lastExpectedSan: String? = null,
+    val isWaitingForUserMove: Boolean = false,
+    val statusMessage: String? = null
+)
 
 class TrainingViewModel(
     private val repertoireDao: RepertoireDao,
-    private val savedStateHandle: SavedStateHandle
-) : ViewModel(), ChessBoardState {
-    private val chapterId: Int = savedStateHandle.get<String>("chapterId")?.toInt() ?: 0
-    private val board = Board()
-
-    override var boardState by mutableStateOf(board.fen)
-        private set
-
-    override var selectedSquare by mutableStateOf<Square?>(null)
-        private set
-
-    override var lastMove by mutableStateOf<Move?>(null)
-        private set
-
-    override var hoveredSquare by mutableStateOf<Square?>(null)
-
-    private var _isFlipped by mutableStateOf(false)
-    override val isFlipped: Boolean get() = _isFlipped
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TrainingUiState())
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<TrainingEvent>()
-    val events = _events.asSharedFlow()
+    val chessController = DefaultChessBoardController()
 
-    private var linesToTrain: MutableList<List<LineMove>> = mutableListOf()
-    private var currentLine: List<LineMove>? = null
-    private var currentMoveIndex = 0
-    private var userColor: String = "White"
+    private val chapterId: Int? = savedStateHandle["chapterId"]
+    private var lines: List<Line> = emptyList()
+    private var currentLineIndex: Int = -1
+    private var currentLineMoves: List<LineMove> = emptyList()
+    private var expectedMoveIndex: Int = 0
+    private var mySide: Side = Side.WHITE
+    private var isAutoPlaying: Boolean = false
+
+    private fun normalizeSan(value: String): String {
+        return value.trim().trimEnd('+', '#')
+    }
 
     init {
-        loadChapterAndStartTraining()
-    }
+        chessController.onMoveListener = { _, san, _ ->
+            handleMoveFromBoard(san)
+        }
 
-    private fun loadChapterAndStartTraining() {
         viewModelScope.launch {
-            val chapter = repertoireDao.getChapterById(chapterId)
-            val repertoire = chapter?.let { repertoireDao.getRepertoireById(it.repertoireId) }
-            
-            if (repertoire != null) {
-                userColor = repertoire.color
-                _isFlipped = userColor.equals("Black", ignoreCase = true)
+            val flow = if (chapterId != null) {
+                repertoireDao.getLinesForChapter(chapterId)
+            } else {
+                val allLinesTime = Long.MAX_VALUE
+                repertoireDao.getLinesToReview(allLinesTime)
             }
+            flow.collect { loadedLines ->
+                lines = loadedLines
 
-            repertoireDao.getLinesForChapter(chapterId).first().let { lines ->
-                val allLinesMoves = mutableListOf<List<LineMove>>()
-                for (line in lines) {
-                    val moves = repertoireDao.getMovesForLine(line.id).first()
-                    if (moves.isNotEmpty()) {
-                        allLinesMoves.add(moves)
+                if (loadedLines.isEmpty()) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isSessionEmpty = true,
+                            isSessionComplete = false,
+                            totalLines = 0,
+                            currentLineName = null
+                        )
+                    }
+                    return@collect
+                }
+
+                if (currentLineIndex == -1) {
+                    startLine(0)
+                } else {
+                    _uiState.update { state ->
+                        state.copy(totalLines = loadedLines.size)
                     }
                 }
+            }
+        }
+    }
 
-                if (allLinesMoves.isNotEmpty()) {
-                    linesToTrain = allLinesMoves.shuffled().toMutableList()
-                    _uiState.value = _uiState.value.copy(
-                        totalLines = linesToTrain.size,
-                        completedLinesCount = 0,
-                        status = "Starting training..."
-                    )
-                    loadNextLine()
+    private fun handleMoveFromBoard(san: String) {
+        if (isAutoPlaying) return
+
+        val moves = currentLineMoves
+        if (moves.isEmpty()) return
+
+        if (expectedMoveIndex !in moves.indices) return
+
+        val expectedSan = moves[expectedMoveIndex].moveSan
+        val isCorrect = normalizeSan(san) == normalizeSan(expectedSan)
+
+        if (isCorrect) {
+            expectedMoveIndex++
+
+            _uiState.update {
+                it.copy(
+                    lastMoveWasCorrect = true,
+                    lastUserSan = san,
+                    lastExpectedSan = expectedSan,
+                    statusMessage = null
+                )
+            }
+
+            viewModelScope.launch {
+                advanceThroughOpponentReplies()
+                if (expectedMoveIndex >= currentLineMoves.size) {
+                    finishCurrentLine(success = true)
                 } else {
-                    _uiState.value = _uiState.value.copy(status = "No moves found in this chapter.")
+                    _uiState.update {
+                        it.copy(isWaitingForUserMove = true)
+                    }
                 }
             }
+        } else {
+            _uiState.update {
+                it.copy(
+                    lastMoveWasCorrect = false,
+                    lastUserSan = san,
+                    lastExpectedSan = expectedSan,
+                    isWaitingForUserMove = true,
+                    statusMessage = "Incorrect move"
+                )
+            }
+            chessController.navigateBack()
         }
     }
 
-    private fun loadNextLine() {
-        if (linesToTrain.isNotEmpty()) {
-            currentLine = linesToTrain.removeAt(0)
-            currentMoveIndex = 0
-            _uiState.value = _uiState.value.copy(
-                status = "New line!",
-                completedLinesCount = _uiState.value.totalLines - linesToTrain.size - 1
+    private suspend fun advanceThroughOpponentReplies() {
+        val moves = currentLineMoves
+        if (moves.isEmpty()) return
+
+        val board = chessController.getBoard()
+
+        while (expectedMoveIndex < moves.size && board.sideToMove != mySide) {
+            val targetSan = moves[expectedMoveIndex].moveSan
+            val legalMove = board.legalMoves().firstOrNull { move ->
+                board.toSan(move) == targetSan
+            } ?: break
+
+            delay(500)
+            isAutoPlaying = true
+            chessController.onMove(legalMove)
+            isAutoPlaying = false
+
+            expectedMoveIndex++
+        }
+    }
+
+    private suspend fun startLine(index: Int) {
+        if (index !in lines.indices) {
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    isSessionComplete = true,
+                    isWaitingForUserMove = false
+                )
+            }
+            return
+        }
+
+        currentLineIndex = index
+        val line = lines[index]
+
+        val chapter = repertoireDao.getChapterById(line.chapterId)
+        val repertoire = chapter?.let { repertoireDao.getRepertoireById(it.repertoireId) }
+        val colorString = repertoire?.color ?: "White"
+
+        mySide = if (colorString.equals("White", ignoreCase = true)) {
+            Side.WHITE
+        } else {
+            Side.BLACK
+        }
+
+        currentLineMoves = repertoireDao.getMovesForLine(line.id).first()
+        expectedMoveIndex = 0
+
+        chessController.resetBoard()
+        chessController.allowedMoveSide = mySide
+
+        if (mySide == Side.BLACK && !chessController.isFlipped) {
+            chessController.flipBoard()
+        } else if (mySide == Side.WHITE && chessController.isFlipped) {
+            chessController.flipBoard()
+        }
+
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                isSessionEmpty = false,
+                isSessionComplete = false,
+                currentLineName = line.name,
+                currentLineNumber = index + 1,
+                totalLines = lines.size,
+                myColor = colorString,
+                lastMoveWasCorrect = null,
+                lastUserSan = null,
+                lastExpectedSan = null,
+                isWaitingForUserMove = false,
+                statusMessage = null
             )
-            resetBoardToStartOfLine()
-        } else {
-            _uiState.value = _uiState.value.copy(status = "Chapter complete!", isComplete = true)
         }
-    }
 
-    private fun resetBoardToStartOfLine() {
-        board.loadFromFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-        currentMoveIndex = 0
-        updateBoardState()
-        checkAndPlayOpponentMove()
-    }
+        if (currentLineMoves.isEmpty()) {
+            finishCurrentLine(success = true)
+            return
+        }
 
-    private fun updateBoardState() {
-        boardState = board.fen
-        selectedSquare = null
-        lastMove = null
-    }
+        advanceThroughOpponentReplies()
 
-    private fun checkAndPlayOpponentMove() {
-        val line = currentLine ?: return
-        if (currentMoveIndex < line.size) {
-            val isUserMove = isUserSide()
-            if (!isUserMove) {
-                viewModelScope.launch {
-                    delay(500)
-                    playRepertoireMove(line[currentMoveIndex])
-                    currentMoveIndex++
-                    checkAndPlayOpponentMove()
-                }
+        if (expectedMoveIndex >= currentLineMoves.size) {
+            finishCurrentLine(success = true)
+        } else {
+            _uiState.update {
+                it.copy(isWaitingForUserMove = true)
             }
         }
     }
 
-    private fun isUserSide(): Boolean {
-        val sideToMove = board.sideToMove
-        return if (userColor.equals("White", ignoreCase = true)) {
-            sideToMove == com.github.bhlangonijr.chesslib.Side.WHITE
-        } else {
-            sideToMove == com.github.bhlangonijr.chesslib.Side.BLACK
-        }
-    }
+    private fun finishCurrentLine(success: Boolean) {
+        viewModelScope.launch {
+            val nextIndex = currentLineIndex + 1
 
-    override fun getBoard(): Board = board
-
-    override fun onSquareClick(square: Square) {
-        if (!isUserSide() || _uiState.value.isComplete) return
-        
-        val currentSelected = selectedSquare
-        if (currentSelected == null) {
-            val piece = board.getPiece(square)
-            if (piece != Piece.NONE && piece.pieceSide == board.sideToMove) {
-                selectedSquare = square
-            }
-        } else {
-            if (currentSelected == square) {
-                selectedSquare = null
-                return
-            }
-            onMove(Move(currentSelected, square))
-        }
-    }
-
-    override fun onMove(move: Move) {
-        if (board.legalMoves().contains(move)) {
-            attemptUserMove(move)
-        } else {
-            selectedSquare = null
-        }
-    }
-
-    private fun attemptUserMove(move: Move) {
-        val line = currentLine ?: return
-        if (currentMoveIndex >= line.size) return
-
-        val expectedMove = line[currentMoveIndex]
-        val moveSan = generateSan(move)
-
-        if (moveSan == expectedMove.moveSan) {
-            playRepertoireMove(expectedMove)
-            currentMoveIndex++
-            _uiState.value = _uiState.value.copy(status = "Correct!")
-            
-            if (currentMoveIndex >= line.size) {
-                viewModelScope.launch {
-                    delay(1000)
-                    loadNextLine()
+            if (nextIndex >= lines.size) {
+                _uiState.update {
+                    it.copy(
+                        isSessionComplete = true,
+                        isWaitingForUserMove = false,
+                        statusMessage = if (success) "Training complete" else "Training finished with mistakes"
+                    )
                 }
             } else {
-                checkAndPlayOpponentMove()
-            }
-        } else {
-            viewModelScope.launch {
-                _uiState.value = _uiState.value.copy(status = "Mistake! Try again.")
-                _events.emit(TrainingEvent.Mistake)
-                delay(1500)
-                resetBoardToStartOfLine()
+                startLine(nextIndex)
             }
         }
     }
 
-    private fun playRepertoireMove(move: LineMove) {
-        board.loadFromFen(move.fen)
-        boardState = board.fen
-        selectedSquare = null
-    }
-
-    private fun generateSan(move: Move): String {
-        val piece = board.getPiece(move.from)
-        val isCapture = board.getPiece(move.to) != Piece.NONE
-        val piecePrefix = when (piece) {
-            Piece.WHITE_KNIGHT, Piece.BLACK_KNIGHT -> "N"
-            Piece.WHITE_BISHOP, Piece.BLACK_BISHOP -> "B"
-            Piece.WHITE_ROOK, Piece.BLACK_ROOK -> "R"
-            Piece.WHITE_QUEEN, Piece.BLACK_QUEEN -> "Q"
-            Piece.WHITE_KING, Piece.BLACK_KING -> "K"
-            else -> ""
-        }
-        val destination = move.to.toString().lowercase()
-        val captureSign = if (isCapture) "x" else ""
-        return if (piecePrefix == "") {
-            if (isCapture) "${move.from.toString().lowercase()[0]}x$destination" else destination
-        } else "$piecePrefix$captureSign$destination"
-    }
-
-    class Factory(
-        private val repertoireDao: RepertoireDao,
-        owner: SavedStateRegistryOwner,
-        defaultArgs: Bundle? = null
-    ) : AbstractSavedStateViewModelFactory(owner, defaultArgs) {
+    class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(
-            key: String,
-            modelClass: Class<T>,
-            handle: SavedStateHandle
-        ): T = TrainingViewModel(repertoireDao, handle) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            val handle = extras.createSavedStateHandle()
+            return TrainingViewModel(repertoireDao, handle) as T
+        }
     }
 }
 
-data class TrainingUiState(
-    val status: String = "Initializing...",
-    val completedLinesCount: Int = 0,
-    val totalLines: Int = 0,
-    val isComplete: Boolean = false
-)
 
-sealed class TrainingEvent {
-    object Mistake : TrainingEvent()
-}
+

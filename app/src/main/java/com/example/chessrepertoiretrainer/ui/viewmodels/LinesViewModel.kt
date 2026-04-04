@@ -1,21 +1,27 @@
 package com.example.chessrepertoiretrainer.ui.viewmodels
 
-import android.os.Bundle
-import androidx.lifecycle.AbstractSavedStateViewModelFactory
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
-import androidx.savedstate.SavedStateRegistryOwner
-import com.example.chessrepertoiretrainer.data.Line
-import com.example.chessrepertoiretrainer.data.RepertoireDao
-import kotlinx.coroutines.flow.*
+import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.data.PgnImporter
+import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
+import com.example.chessrepertoiretrainer.database.entities.Line
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class LinesViewModel(
     private val repertoireDao: RepertoireDao,
-    private val savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    val chapterId: Int = savedStateHandle.get<String>("chapterId")?.toInt() ?: 0
+
+    val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
 
     val lines: StateFlow<List<Line>> = repertoireDao.getLinesForChapter(chapterId)
         .stateIn(
@@ -26,13 +32,16 @@ class LinesViewModel(
 
     fun addLine(name: String) {
         viewModelScope.launch {
-            val chapter = repertoireDao.getChapterById(chapterId)
-            val currentLines = lines.value
-            val finalName = if (name.isBlank()) {
-                "${chapter?.name ?: "Line"} #${currentLines.size + 1}"
-            } else name
-            
-            repertoireDao.insertLine(Line(chapterId = chapterId, name = finalName))
+            repertoireDao.insertLine(
+                Line(
+                    chapterId = chapterId,
+                    name = name,
+                    nextReviewDate = System.currentTimeMillis(),
+                    interval = 0,
+                    easeFactor = 2.5f,
+                    consecutiveCorrect = 0
+                )
+            )
         }
     }
 
@@ -42,16 +51,26 @@ class LinesViewModel(
         }
     }
 
-    class Factory(
-        private val repertoireDao: RepertoireDao,
-        owner: SavedStateRegistryOwner,
-        defaultArgs: Bundle? = null
-    ) : AbstractSavedStateViewModelFactory(owner, defaultArgs) {
+    fun importPgn(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val pgnString =
+                    inputStream?.bufferedReader().use { it?.readText() } ?: return@launch
+
+                val importer = PgnImporter(repertoireDao)
+                importer.importPgnToChapter(context, pgnString, chapterId)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(
-            key: String,
-            modelClass: Class<T>,
-            handle: SavedStateHandle
-        ): T = LinesViewModel(repertoireDao, handle) as T
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            val savedStateHandle = extras.createSavedStateHandle()
+            return LinesViewModel(repertoireDao, savedStateHandle) as T
+        }
     }
 }

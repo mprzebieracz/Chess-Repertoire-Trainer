@@ -3,14 +3,14 @@ package com.example.chessrepertoiretrainer.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.chessrepertoiretrainer.data.Repertoire
-import com.example.chessrepertoiretrainer.data.RepertoireDao
+import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
+import com.example.chessrepertoiretrainer.database.entities.Repertoire
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class RepertoireViewModel(private val repertoireDao: RepertoireDao) : ViewModel() {
+class RepertoiresViewModel(private val repertoireDao: RepertoireDao) : ViewModel() {
 
     val repertoires: StateFlow<List<Repertoire>> = repertoireDao.getAllRepertoires()
         .stateIn(
@@ -34,10 +34,7 @@ class RepertoireViewModel(private val repertoireDao: RepertoireDao) : ViewModel(
     class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(RepertoireViewModel::class.java)) {
-                return RepertoireViewModel(repertoireDao) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
+            return RepertoiresViewModel(repertoireDao) as T
         }
     }
 }

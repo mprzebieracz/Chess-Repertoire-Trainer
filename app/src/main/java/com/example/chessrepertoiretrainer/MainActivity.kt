@@ -13,7 +13,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ChessRepertoireTrainerTheme {
-                // Wywołujemy naszą główną funkcję nawigacji
                 AppNavigation()
             }
         }

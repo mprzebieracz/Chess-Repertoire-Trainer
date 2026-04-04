@@ -1,155 +1,138 @@
 package com.example.chessrepertoiretrainer.navigation
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
-import androidx.navigation.NavGraph.Companion.findStartDestination
-import com.example.chessrepertoiretrainer.ChessApplication
-import com.example.chessrepertoiretrainer.ui.screens.*
-import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoireViewModel
-import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoireDetailViewModel
-import com.example.chessrepertoiretrainer.ui.viewmodels.LinesViewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.chessrepertoiretrainer.database.ChessDatabase
+import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
+import com.example.chessrepertoiretrainer.ui.screens.AnalysisScreen
+import com.example.chessrepertoiretrainer.ui.screens.ChaptersScreen
+import com.example.chessrepertoiretrainer.ui.screens.HomeScreen
+import com.example.chessrepertoiretrainer.ui.screens.LineEditorScreen
+import com.example.chessrepertoiretrainer.ui.screens.LinesScreen
+import com.example.chessrepertoiretrainer.ui.screens.RepertoiresScreen
+import com.example.chessrepertoiretrainer.ui.screens.SettingsScreen
+import com.example.chessrepertoiretrainer.ui.screens.TrainScreen
+import com.example.chessrepertoiretrainer.ui.screens.TrainSelectionScreen
+import com.example.chessrepertoiretrainer.ui.screens.YourGamesScreen
+import com.example.chessrepertoiretrainer.ui.viewmodels.AnalysisViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.ChaptersViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LineEditorViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.LinesViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoiresViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingSelectionViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
+
+
+fun NavGraphBuilder.repertoireGraph(
+    navController: NavHostController,
+    repertoireDao: RepertoireDao
+) {
+    // 1. Główny Ekran Repertuarów
+    composable(Screen.RepertoireMain.route) {
+        val vm: RepertoiresViewModel =
+            viewModel(factory = RepertoiresViewModel.Factory(repertoireDao))
+        RepertoiresScreen(viewModel = vm, onNavigateToChapters = { id ->
+            navController.navigate(Screen.Chapters.createRoute(id))
+        })
+    }
+
+    // 2. Rozdziały
+    composable(
+        route = Screen.Chapters.route,
+        arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
+    ) {
+        val vm: ChaptersViewModel = viewModel(factory = ChaptersViewModel.Factory(repertoireDao))
+        ChaptersScreen(
+            viewModel = vm,
+            onNavigateToLines = { id -> navController.navigate(Screen.Lines.createRoute(id)) },
+            onBackClick = { navController.popBackStack() }
+        )
+    }
+
+    // 3. Linie
+    composable(
+        route = Screen.Lines.route,
+        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
+    ) {
+        val vm: LinesViewModel = viewModel(factory = LinesViewModel.Factory(repertoireDao))
+        LinesScreen(
+            viewModel = vm,
+            onNavigateToLineEditor = { id -> navController.navigate(Screen.LineEditor.createRoute(id)) },
+            onBackClick = { navController.popBackStack() },
+            onNavigateToTraining = { chapterId ->
+                navController.navigate(Screen.ChapterTraining.createRoute(chapterId))
+            }
+        )
+    }
+
+    // 4. Edytor Linii
+    composable(
+        route = Screen.LineEditor.route,
+        arguments = listOf(navArgument("lineId") { type = NavType.IntType })
+    ) {
+        val vm: LineEditorViewModel =
+            viewModel(factory = LineEditorViewModel.Factory(repertoireDao))
+        LineEditorScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() }
+        )
+    }
+
+    composable(
+        route = Screen.ChapterTraining.route,
+        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
+    ) {
+        val trainingViewModel: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireDao))
+        TrainScreen(viewModel = trainingViewModel, onBackClick = { navController.popBackStack() })
+    }
+}
+
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val context = LocalContext.current
-    val application = context.applicationContext as ChessApplication
-    val repertoireDao = application.database.repertoireDao()
-    
-    val repertoireViewModel: RepertoireViewModel = viewModel(
-        factory = RepertoireViewModel.Factory(repertoireDao)
-    )
+    val repertoireDao = ChessDatabase.getDatabase(LocalContext.current).repertoireDao()
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
+        bottomBar = { AppBottomBar(navController) }
     ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Ekrany główne
             composable(Screen.Home.route) { HomeScreen() }
-            composable(Screen.Train.route) { 
-                TrainScreen(
-                    viewModel = repertoireViewModel,
-                    onRepertoireClick = { id ->
-                        navController.navigate(Screen.RepertoireDetail.createRoute(id))
+            composable(Screen.Train.route) {
+                val selectionViewModel: TrainingSelectionViewModel =
+                    viewModel(factory = TrainingSelectionViewModel.Factory(repertoireDao))
+                TrainSelectionScreen(
+                    viewModel = selectionViewModel,
+                    onStartTraining = { chapterId ->
+                        navController.navigate(Screen.ChapterTraining.createRoute(chapterId))
                     }
-                ) 
-            }
-            composable(Screen.Repertoire.route) { 
-                RepertoireScreen(
-                    viewModel = repertoireViewModel,
-                    onRepertoireClick = { id -> 
-                        navController.navigate(Screen.RepertoireDetail.createRoute(id))
-                    }
-                ) 
+                )
             }
             composable(Screen.YourGames.route) { YourGamesScreen() }
-            composable(Screen.Analysis.route) { AnalysisScreen() }
-            composable(Screen.Bluetooth.route) { BluetoothScreen() }
             composable(Screen.Settings.route) { SettingsScreen() }
-            
-            composable(Screen.RepertoireDetail.route) { backStackEntry ->
-                val detailViewModel: RepertoireDetailViewModel = viewModel(
-                    factory = RepertoireDetailViewModel.Factory(
-                        repertoireDao = repertoireDao,
-                        owner = backStackEntry,
-                        defaultArgs = backStackEntry.arguments
-                    )
-                )
-                RepertoireDetailScreen(
-                    viewModel = detailViewModel,
-                    onChapterClick = { id ->
-                        navController.navigate(Screen.Lines.createRoute(id))
-                    },
-                    onBackClick = { navController.popBackStack() }
-                )
+
+            composable(Screen.Analysis.route) {
+                val analysisViewModel: AnalysisViewModel = viewModel()
+                AnalysisScreen(viewModel = analysisViewModel)
             }
 
-            composable(Screen.Lines.route) { backStackEntry ->
-                val linesViewModel: LinesViewModel = viewModel(
-                    factory = LinesViewModel.Factory(
-                        repertoireDao = repertoireDao,
-                        owner = backStackEntry,
-                        defaultArgs = backStackEntry.arguments
-                    )
-                )
-                LinesScreen(
-                    viewModel = linesViewModel,
-                    onLineClick = { id ->
-                        navController.navigate(Screen.LineEditor.createRoute(id))
-                    },
-                    onTrainChapterClick = { id ->
-                        navController.navigate(Screen.TrainingSession.createRoute(id))
-                    },
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
-
-            composable(Screen.LineEditor.route) { backStackEntry ->
-                val editorViewModel: LineEditorViewModel = viewModel(
-                    factory = LineEditorViewModel.Factory(
-                        repertoireDao = repertoireDao,
-                        owner = backStackEntry,
-                        defaultArgs = backStackEntry.arguments
-                    )
-                )
-                LineEditorScreen(
-                    viewModel = editorViewModel,
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
-
-            composable(Screen.TrainingSession.route) { backStackEntry ->
-                val trainingViewModel: TrainingViewModel = viewModel(
-                    factory = TrainingViewModel.Factory(
-                        repertoireDao = repertoireDao,
-                        owner = backStackEntry,
-                        defaultArgs = backStackEntry.arguments
-                    )
-                )
-                TrainingSessionScreen(
-                    viewModel = trainingViewModel,
-                    onBackClick = { navController.popBackStack() }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun BottomNavigationBar(navController: NavHostController) {
-    val items = listOf(
-        Screen.Home, Screen.Train, Screen.Repertoire,
-        Screen.YourGames, Screen.Analysis, Screen.Bluetooth, Screen.Settings
-    )
-
-    NavigationBar {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
-
-        items.forEach { screen ->
-            NavigationBarItem(
-                icon = { Icon(screen.icon, contentDescription = screen.title) },
-                label = { Text(screen.title) },
-                selected = currentRoute == screen.route,
-                onClick = {
-                    navController.navigate(screen.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            )
+            repertoireGraph(navController, repertoireDao)
         }
     }
 }

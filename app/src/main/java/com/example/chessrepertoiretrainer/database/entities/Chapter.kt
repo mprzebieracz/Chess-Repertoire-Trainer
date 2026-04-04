@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.data
+package com.example.chessrepertoiretrainer.database.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -20,5 +20,6 @@ import androidx.room.PrimaryKey
 data class Chapter(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val repertoireId: Int,
-    val name: String
+    val name: String,
+    val sortOrder: Int
 )

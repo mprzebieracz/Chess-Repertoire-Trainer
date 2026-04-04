@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.data
+package com.example.chessrepertoiretrainer.database.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -15,12 +15,17 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("lineId")]
+    indices = [
+        Index("lineId"),
+        Index("fen")
+    ]
 )
 data class LineMove(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val lineId: Int,
     val moveIndex: Int,
     val moveSan: String,
-    val fen: String
+    val fen: String,
+    val comment: String?,
+    val arrows: String?
 )

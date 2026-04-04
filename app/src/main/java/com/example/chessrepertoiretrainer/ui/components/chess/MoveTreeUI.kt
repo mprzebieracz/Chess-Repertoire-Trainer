@@ -9,38 +9,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.chessrepertoiretrainer.data.LineMove
+import com.example.chessrepertoiretrainer.database.entities.LineMove
 
 @Composable
 fun MoveTreeView(
-    nodes: List<MoveNode>,
+    nodes: List<LineMove>,
     selectedMoveId: Long?,
     onMoveClicked: (LineMove) -> Unit,
     indent: Int = 0
 ) {
     Column(modifier = Modifier.padding(start = (indent * 12).dp)) {
-        nodes.forEach { node ->
-            val isSelected = node.move.id == selectedMoveId
+        nodes.forEach { move ->
+            val isSelected = move.id == selectedMoveId
             
             Text(
-                text = node.move.moveSan,
+                text = move.moveSan,
                 fontSize = 16.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onMoveClicked(node.move) }
+                    .clickable { onMoveClicked(move) }
                     .padding(vertical = 4.dp, horizontal = 8.dp)
             )
-            
-            if (node.children.isNotEmpty()) {
-                MoveTreeView(
-                    nodes = node.children,
-                    selectedMoveId = selectedMoveId,
-                    onMoveClicked = onMoveClicked,
-                    indent = indent + 1
-                )
-            }
         }
     }
 }
