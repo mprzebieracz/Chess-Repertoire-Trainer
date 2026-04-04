@@ -18,10 +18,10 @@ fun AppBottomBar(navController: NavHostController) {
 
     val items = listOf(
         Screen.Home,
-        Screen.Train,
         Screen.RepertoireMain,
+        Screen.Train,
+        Screen.Puzzles,
         Screen.YourGames,
-        Screen.Analysis,
         Screen.Settings
     )
 

@@ -88,24 +88,8 @@ class DefaultChessBoardController(
             }
         }
 
-        if (board.legalMoves().contains(move)) {
-            // If there is an existing move in the history from this position that
-            // matches the move just played, simply advance along the existing
-            // line instead of starting a new branch (which would truncate the
-            // future moves and notify listeners).
-            if (currentPositionIndex < fullMoveHistory.size - 1) {
-                val nextRecordedMove = fullMoveHistory[currentPositionIndex + 1]
-                val isSameAsNextRecorded =
-                    nextRecordedMove.from == move.from &&
-                            nextRecordedMove.to == move.to &&
-                            nextRecordedMove.promotion == move.promotion
-
-                if (isSameAsNextRecorded) {
-                    navigateForward()
-                    return
-                }
-            }
-
+        val legalMoves = board.legalMoves()
+        if (legalMoves.contains(move)) {
             applyMove(move)
         } else {
             val piece = board.getPiece(move.to)
@@ -234,8 +218,15 @@ class DefaultChessBoardController(
         hoveredSquare = null
     }
 
-    fun loadFen(fen: String) {
+    override fun loadPositionFromFen(fen: String) {
         board.loadFromFen(fen)
+        fullMoveHistory.clear()
+        fullSanHistory.clear()
+        currentPositionIndex = -1
+        pgnState = ""
         boardState = board.fen
+        selectedSquare = null
+        lastMove = null
+        hoveredSquare = null
     }
 }

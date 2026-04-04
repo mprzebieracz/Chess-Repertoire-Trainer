@@ -17,6 +17,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -24,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.chessrepertoiretrainer.ui.components.chess.BoardBottomBar
 import com.example.chessrepertoiretrainer.ui.components.chess.ChessScreenLayout
 import com.example.chessrepertoiretrainer.ui.viewmodels.LineEditorViewModel
 
@@ -34,74 +36,83 @@ fun LineEditorScreen(
 ) {
     val moves by viewModel.dbMoves.collectAsState()
 
-    ChessScreenLayout(
-        title = "Edit Line",
-        chessCtrl = viewModel.chessController,
-        topContent = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Back to lines",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        },
-        bottomContent = {
-            val currentFen = viewModel.chessController.boardState
-            val currentComment = moves.firstOrNull { it.fen == currentFen }?.comment
-
-            if (!currentComment.isNullOrBlank()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
+    Scaffold(
+        bottomBar = {
+            BoardBottomBar(chessCtrl = viewModel.chessController) {
+                Button(
+                    onClick = { viewModel.undoDbMove() },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text(
-                        text = "Comment",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Undo",
+                        modifier = Modifier.size(18.dp)
                     )
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Text(
-                            text = currentComment,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    }
+                    Spacer(Modifier.width(4.dp))
+                    Text("Undo")
                 }
-            }
-        },
-        extraButtons = {
-            Button(
-                onClick = { viewModel.undoDbMove() },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Undo",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(4.dp))
-                Text("Undo")
             }
         }
-    )
+    ) { padding ->
+        Column(modifier = Modifier.padding(padding)) {
+            ChessScreenLayout(
+                title = "Edit Line",
+                chessCtrl = viewModel.chessController,
+                showNavigationControls = false,
+                showBoardActionButtons = false,
+                topContent = {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Back to lines",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                },
+                bottomContent = {
+                    val currentFen = viewModel.chessController.boardState
+                    val currentComment = moves.firstOrNull { it.fen == currentFen }?.comment
+
+                    if (!currentComment.isNullOrBlank()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Comment",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Text(
+                                    text = currentComment,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(12.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            )
+        }
+    }
 }

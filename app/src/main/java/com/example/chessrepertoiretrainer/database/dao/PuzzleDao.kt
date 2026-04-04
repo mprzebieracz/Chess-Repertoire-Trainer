@@ -1,6 +1,11 @@
 package com.example.chessrepertoiretrainer.database.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import com.example.chessrepertoiretrainer.database.entities.Puzzle
 import kotlinx.coroutines.flow.Flow
 
@@ -26,4 +31,7 @@ interface PuzzleDao {
 
     @Query("UPDATE puzzles SET isSolved = :isSolved, attempts = :attempts WHERE id = :id")
     suspend fun updatePuzzleStats(id: String, isSolved: Boolean, attempts: Int)
+
+    @Query("SELECT COUNT(*) FROM puzzles WHERE isSolved = 0")
+    suspend fun countUnsolvedPuzzles(): Int
 }

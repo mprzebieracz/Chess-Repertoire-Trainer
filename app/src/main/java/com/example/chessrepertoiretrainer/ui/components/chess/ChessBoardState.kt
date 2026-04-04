@@ -30,6 +30,7 @@ interface ChessBoardController {
     fun promotePendingMove(promotionPiece: Piece)
     fun navigateBack()
     fun navigateForward()
+    fun loadPositionFromFen(fen: String)
     fun resetBoard()
     fun flipBoard()
 }

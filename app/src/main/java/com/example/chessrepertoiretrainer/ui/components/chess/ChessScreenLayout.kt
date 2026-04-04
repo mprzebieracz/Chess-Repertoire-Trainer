@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.ui.components.chess
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -105,11 +107,15 @@ fun ScreenHeader(title: String) {
 
 @Composable
 fun PgnViewer(pgnText: String) {
+    val scrollState = rememberScrollState()
+    LaunchedEffect(pgnText) {
+        scrollState.animateScrollTo(scrollState.maxValue)
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .heightIn(min = 60.dp, max = 120.dp),
+            .height(40.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -117,15 +123,16 @@ fun PgnViewer(pgnText: String) {
     ) {
         Box(
             modifier = Modifier
-                .padding(12.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .horizontalScroll(scrollState)
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Text(
                 text = pgnText.ifEmpty { "Waiting for moves..." },
                 fontFamily = FontFamily.Monospace,
                 fontSize = 14.sp,
-                lineHeight = 20.sp,
+                maxLines = 1,
+                softWrap = false,
                 color = if (pgnText.isEmpty()) Color.Gray else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -187,3 +194,21 @@ fun BoardActionButtons(
         extraButtons()
     }
 }
+
+        @Composable
+        fun BoardBottomBar(
+          chessCtrl: ChessBoardController,
+          extraButtons: @Composable RowScope.() -> Unit = {}
+        ) {
+          Column {
+            BoardNavigationControls(
+              onBack = { chessCtrl.navigateBack() },
+              onForward = { chessCtrl.navigateForward() }
+            )
+            BoardActionButtons(
+              onReset = { chessCtrl.resetBoard() },
+              onFlip = { chessCtrl.flipBoard() },
+              extraButtons = extraButtons
+            )
+          }
+        }
