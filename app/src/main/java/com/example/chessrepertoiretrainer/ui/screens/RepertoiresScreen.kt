@@ -4,15 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.database.entities.Repertoire
+import com.example.chessrepertoiretrainer.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoiresViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,7 +31,7 @@ fun RepertoiresScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Repertoire")
+                Icon(AppIcons.AddRepertoire, contentDescription = "Add Repertoire")
             }
         }
     ) { paddingValues ->
@@ -89,7 +87,7 @@ fun RepertoireItem(repertoire: Repertoire, onClick: () -> Unit, onDelete: () -> 
                 Text(text = "Side: ${repertoire.color}", style = MaterialTheme.typography.bodyMedium)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                Icon(AppIcons.DeleteRepertoire, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
             }
         }
     }

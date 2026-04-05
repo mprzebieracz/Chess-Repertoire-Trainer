@@ -27,6 +27,13 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                     return@withContext
                 }
 
+                // Ustal bazową nazwę rozdziału i aktualną liczbę linii w tym rozdziale,
+                // aby nowe linie (również z PGN) były nazywane spójnie jak przy ręcznym dodawaniu:
+                // "{chapter name} #{nr line}".
+                val chapter = repertoireDao.getChapterById(chapterId)
+                val chapterName = chapter?.name ?: "Line"
+                var nextLineNumber = repertoireDao.getLineCountForChapter(chapterId) + 1
+
                 var gamesWithMovetext = 0
                 var gamesWithoutMovetext = 0
                 var totalLinesInserted = 0
@@ -46,8 +53,14 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                     }
 
                     gamesWithMovetext++
-                    val insertedForGame = parseSingleGameAndInsert(gameText, chapterId)
+                    val insertedForGame = parseSingleGameAndInsert(
+                        cleanedPgn = gameText,
+                        chapterId = chapterId,
+                        chapterName = chapterName,
+                        startingLineNumber = nextLineNumber
+                    )
                     totalLinesInserted += insertedForGame
+                    nextLineNumber += insertedForGame
                 }
 
                 Log.i(
@@ -113,7 +126,12 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
      * Główny parser PGN dla pojedynczej partii.
      * Buduje wszystkie linie (główna + warianty) i zapisuje je w bazie.
      */
-    private suspend fun parseSingleGameAndInsert(cleanedPgn: String, chapterId: Int): Int {
+    private suspend fun parseSingleGameAndInsert(
+        cleanedPgn: String,
+        chapterId: Int,
+        chapterName: String,
+        startingLineNumber: Int
+    ): Int {
         val headerMap = mutableMapOf<String, String>()
         val bodyBuilder = StringBuilder()
         var inHeaderSection = true
@@ -172,16 +190,15 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
         val baseTitle = "$white - $black ($event)"
 
         var insertedLinesCount = 0
+        var currentLineNumber = startingLineNumber
 
         // 2. Dla każdej linii odtwarzamy ruchy na szachownicy i zapisujemy jako osobną linię w rozdziale
         allLines.forEachIndexed { index, parsedMoves ->
             if (parsedMoves.isEmpty()) return@forEachIndexed
 
-            val lineTitle = if (allLines.size > 1) {
-                "$baseTitle (Line ${index + 1})"
-            } else {
-                baseTitle
-            }
+            // Nazwa linii w bazie ma być spójna z ręcznym dodawaniem linii:
+            // "{chapter name} #{nr line}", niezależnie od tego, z której partii PGN pochodzi.
+            val lineName = "$chapterName #$currentLineNumber"
 
             val board = Board()
             headerMap["FEN"]?.takeIf { it.isNotBlank() }?.let { fenTag ->
@@ -229,16 +246,16 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                 return@forEachIndexed
             }
 
-            Log.d(
-                "PgnImporter",
-                "Rozwiązana linia (${resolvedMoves.size} ruchów) dla '$lineTitle': " +
-                    resolvedMoves.joinToString(separator = " ") { it.san }
-            )
+                Log.d(
+                    "PgnImporter",
+                    "Rozwiązana linia (${resolvedMoves.size} ruchów) dla '$baseTitle' jako '$lineName': " +
+                        resolvedMoves.joinToString(separator = " ") { it.san }
+                )
 
             val lineId = repertoireDao.insertLine(
                 Line(
                     chapterId = chapterId,
-                    name = lineTitle,
+                    name = lineName,
                     nextReviewDate = System.currentTimeMillis(),
                     interval = 0,
                     easeFactor = 2.5f,
@@ -260,6 +277,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
             }
 
             insertedLinesCount++
+            currentLineNumber++
         }
 
         return insertedLinesCount
@@ -297,7 +315,13 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
         startIndex: Int,
         parentPrefix: List<ParsedMove>
     ): ParseResult {
-        val lines = mutableListOf<List<ParsedMove>>()
+        // "current" holds the main line for this subtree. Any variations
+        // encountered along the way are collected separately in
+        // variationLines so that when we return from this call we can place
+        // the main line FIRST, followed by its variations. This preserves
+        // the intuitive ordering where the main branch of a subtree comes
+        // before its side branches.
+        val variationLines = mutableListOf<List<ParsedMove>>()
         val current = parentPrefix.map { it.copy() }.toMutableList()
         var i = startIndex
         var pendingCommentForNext: String? = null
@@ -364,7 +388,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                     }
 
                     val result = parseMovetextRecursive(text, i + 1, parentForVariation)
-                    lines.addAll(result.lines)
+                    variationLines.addAll(result.lines)
                     i = result.nextIndex
                 }
 
@@ -434,11 +458,15 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
             }
         }
 
+        // Build the final list for this subtree: main line first (if any),
+        // then all collected variation lines.
+        val allLines = mutableListOf<List<ParsedMove>>()
         if (current.isNotEmpty()) {
-            lines.add(current.toList())
+            allLines.add(current.toList())
         }
+        allLines.addAll(variationLines)
 
-        return ParseResult(lines, i)
+        return ParseResult(allLines, i)
     }
 
     companion object {

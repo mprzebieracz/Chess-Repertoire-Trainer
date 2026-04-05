@@ -46,6 +46,7 @@ class TrainingViewModel(
     val chessController = DefaultChessBoardController()
 
     private val chapterId: Int? = savedStateHandle["chapterId"]
+    private val lineId: Int? = savedStateHandle["lineId"]
     private var lines: List<Line> = emptyList()
     private var currentLineIndex: Int = -1
     private var currentLineMoves: List<LineMove> = emptyList()
@@ -63,6 +64,28 @@ class TrainingViewModel(
         }
 
         viewModelScope.launch {
+            // Single-line training mode (used from learn flow)
+            if (lineId != null) {
+                val line = repertoireDao.getLineById(lineId)
+
+                if (line == null) {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isSessionEmpty = true,
+                            isSessionComplete = false,
+                            statusMessage = "Line not found"
+                        )
+                    }
+                    return@launch
+                }
+
+                lines = listOf(line)
+                startLine(0)
+                return@launch
+            }
+
+            // Chapter-wide or review-based training
             val flow = if (chapterId != null) {
                 repertoireDao.getLinesForChapter(chapterId)
             } else {
@@ -70,8 +93,6 @@ class TrainingViewModel(
                 repertoireDao.getLinesToReview(allLinesTime)
             }
             flow.collect { loadedLines ->
-                lines = loadedLines
-
                 if (loadedLines.isEmpty()) {
                     _uiState.update {
                         it.copy(
@@ -86,10 +107,20 @@ class TrainingViewModel(
                 }
 
                 if (currentLineIndex == -1) {
+                    // First time we load lines for this session.
+                    // For chapter-based training, we want to train lines in a random
+                    // permutation so that the user doesn't always see them in the
+                    // same order. For review-based training we keep the original
+                    // ordering from the DAO.
+                    lines = if (chapterId != null) {
+                        loadedLines.shuffled()
+                    } else {
+                        loadedLines
+                    }
                     startLine(0)
                 } else {
                     _uiState.update { state ->
-                        state.copy(totalLines = loadedLines.size)
+                        state.copy(totalLines = lines.size)
                     }
                 }
             }

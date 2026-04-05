@@ -32,10 +32,19 @@ class LinesViewModel(
 
     fun addLine(name: String) {
         viewModelScope.launch {
+            val chapter = repertoireDao.getChapterById(chapterId)
+            val lineCount = repertoireDao.getLineCountForChapter(chapterId)
+
+            val finalName = if (name.isBlank()) {
+                "${chapter?.name ?: "Line"} #${lineCount + 1}"
+            } else {
+                name
+            }
+
             repertoireDao.insertLine(
                 Line(
                     chapterId = chapterId,
-                    name = name,
+                    name = finalName,
                     nextReviewDate = System.currentTimeMillis(),
                     interval = 0,
                     easeFactor = 2.5f,

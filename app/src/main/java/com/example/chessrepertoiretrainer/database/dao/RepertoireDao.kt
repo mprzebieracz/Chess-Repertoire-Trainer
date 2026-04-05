@@ -1,7 +1,15 @@
 package com.example.chessrepertoiretrainer.database.dao
 
-import androidx.room.*
-import com.example.chessrepertoiretrainer.database.entities.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.example.chessrepertoiretrainer.database.entities.Chapter
+import com.example.chessrepertoiretrainer.database.entities.Line
+import com.example.chessrepertoiretrainer.database.entities.LineMove
+import com.example.chessrepertoiretrainer.database.entities.Repertoire
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -41,6 +49,9 @@ interface RepertoireDao {
     // Line
     @Query("SELECT * FROM lines WHERE chapterId = :chapterId")
     fun getLinesForChapter(chapterId: Int): Flow<List<Line>>
+
+    @Query("SELECT COUNT(*) FROM lines WHERE chapterId = :chapterId")
+    suspend fun getLineCountForChapter(chapterId: Int): Int
 
     @Query("SELECT * FROM lines WHERE id = :id")
     suspend fun getLineById(id: Int): Line?

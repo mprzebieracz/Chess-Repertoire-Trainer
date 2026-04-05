@@ -35,6 +35,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.R
+import com.example.chessrepertoiretrainer.data.BoardTheme
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
@@ -42,8 +43,28 @@ import com.github.bhlangonijr.chesslib.move.Move
 import kotlin.math.roundToInt
 
 // --- Colors ---
-private val LightSquareColor = Color(0xFFEBECD0)
-private val DarkSquareColor = Color(0xFF779556)
+
+data class BoardThemeColors(
+    val lightSquare: Color,
+    val darkSquare: Color
+)
+
+val ClassicBoardThemeColors = BoardThemeColors(
+    lightSquare = Color(0xFFEBECD0),
+    darkSquare = Color(0xFF779556)
+)
+
+val BlueBoardThemeColors = BoardThemeColors(
+    lightSquare = Color(0xFFE0E8FF),
+    darkSquare = Color(0xFF4A6FEA)
+)
+
+val BrownBoardThemeColors = BoardThemeColors(
+    lightSquare = Color(0xFFF0E0D0),
+    darkSquare = Color(0xFFB58863)
+)
+
+val LocalBoardThemeColors = androidx.compose.runtime.staticCompositionLocalOf { ClassicBoardThemeColors }
 private val SelectedSquareColor = Color(0xBBF5F682)
 private val LastMoveHighlightColor = Color(0x88F5F682)
 private val HoverHighlightColor = Color(0x66FFFFFF)
@@ -190,8 +211,10 @@ private fun ChessSquare(
     isHiddenForDrag: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val boardColors = LocalBoardThemeColors.current
+
     Box(
-        modifier = modifier.background(if (isDark) DarkSquareColor else LightSquareColor),
+        modifier = modifier.background(if (isDark) boardColors.darkSquare else boardColors.lightSquare),
         contentAlignment = Alignment.Center
     ) {
         if (isLastMove) Box(

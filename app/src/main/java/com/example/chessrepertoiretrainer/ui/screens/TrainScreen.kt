@@ -13,6 +13,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,9 +25,18 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
 @Composable
 fun TrainScreen(
     viewModel: TrainingViewModel,
-    onBackClick: (() -> Unit)? = null
+    onBackClick: (() -> Unit)? = null,
+    onSessionComplete: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Notify caller when the training session is finished (used for
+    // single-line training so the learn flow can continue automatically).
+    LaunchedEffect(uiState.isSessionComplete) {
+        if (uiState.isSessionComplete && onSessionComplete != null) {
+            onSessionComplete()
+        }
+    }
 
     ChessScreenLayout(
         title = "Train",

@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,16 +27,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
 
- @OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
  @Composable
  fun PlayerProfilesScreen(
    viewModel: PlayerProfilesViewModel,
+   defaultLichessUsername: String,
+   defaultChessComUsername: String,
+   defaultPlatform: String,
    onOpenProfileTree: (profileId: Long, color: String, timeControl: String, maxGames: Int?) -> Unit
  ) {
   val uiState by viewModel.uiState.collectAsState()
 
-  val (username, setUsername) = remember { mutableStateOf("") }
-  val (platform, setPlatform) = remember { mutableStateOf("lichess") }
+  val (platform, setPlatform) = remember {
+    mutableStateOf(if (defaultPlatform == "chess.com") "chess.com" else "lichess")
+  }
+  val (username, setUsername) = remember {
+    mutableStateOf(
+      if (platform == "chess.com") defaultChessComUsername else defaultLichessUsername
+    )
+  }
   val (colorFilter, setColorFilter) = remember { mutableStateOf("white") }
   val (bulletEnabled, setBulletEnabled) = remember { mutableStateOf(true) }
   val (blitzEnabled, setBlitzEnabled) = remember { mutableStateOf(true) }
@@ -72,21 +81,31 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
             Spacer(modifier = Modifier.height(8.dp))
 
                   Text(text = "Platform", style = MaterialTheme.typography.labelMedium)
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = platform == "lichess",
-                    onClick = { setPlatform("lichess") }
-                )
-                Text(text = "Lichess")
-                Spacer(modifier = Modifier.width(16.dp))
-                RadioButton(
-                    selected = platform == "chess.com",
-                    onClick = { setPlatform("chess.com") }
-                )
-                Text(text = "Chess.com")
-            }
+             Row(
+                 verticalAlignment = Alignment.CenterVertically
+             ) {
+                 RadioButton(
+                     selected = platform == "lichess",
+                     onClick = {
+                         setPlatform("lichess")
+                         if (defaultLichessUsername.isNotBlank()) {
+                             setUsername(defaultLichessUsername)
+                         }
+                     }
+                 )
+                 Text(text = "Lichess")
+                 Spacer(modifier = Modifier.width(16.dp))
+                 RadioButton(
+                     selected = platform == "chess.com",
+                     onClick = {
+                         setPlatform("chess.com")
+                         if (defaultChessComUsername.isNotBlank()) {
+                             setUsername(defaultChessComUsername)
+                         }
+                     }
+                 )
+                 Text(text = "Chess.com")
+             }
 
                   Spacer(modifier = Modifier.height(8.dp))
 

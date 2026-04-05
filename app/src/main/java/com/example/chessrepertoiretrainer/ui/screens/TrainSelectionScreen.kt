@@ -15,19 +15,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.chessrepertoiretrainer.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingSelectionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainSelectionScreen(
     viewModel: TrainingSelectionViewModel,
-    onStartTraining: (Int) -> Unit
+    onStartTraining: (Int) -> Unit,
+    onBackClick: (() -> Unit)? = null
 ) {
     val repertoires by viewModel.repertoires.collectAsState()
     val chapters by viewModel.chapters.collectAsState()
@@ -36,7 +40,19 @@ fun TrainSelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Training") }
+                title = { Text("Training") },
+                navigationIcon = if (onBackClick != null) {
+                    {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = AppIcons.Back,
+                                contentDescription = "Back"
+                            )
+                        }
+                    }
+                } else {
+                    {}
+                }
             )
         }
     ) { padding ->

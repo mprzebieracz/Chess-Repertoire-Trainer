@@ -3,10 +3,12 @@ package com.example.chessrepertoiretrainer.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -33,7 +35,9 @@ import com.example.chessrepertoiretrainer.ui.screens.LinesScreen
 import com.example.chessrepertoiretrainer.ui.screens.PuzzlesScreen
 import com.example.chessrepertoiretrainer.ui.screens.RepertoiresScreen
 import com.example.chessrepertoiretrainer.ui.screens.SettingsScreen
+import com.example.chessrepertoiretrainer.ui.screens.CourseOverviewScreen
 import com.example.chessrepertoiretrainer.ui.screens.TrainScreen
+import com.example.chessrepertoiretrainer.ui.screens.LearnChapterScreen
 import com.example.chessrepertoiretrainer.ui.screens.TrainSelectionScreen
 import com.example.chessrepertoiretrainer.ui.screens.PlayerProfilesScreen
 import com.example.chessrepertoiretrainer.ui.screens.OpeningTreeScreen
@@ -45,22 +49,88 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.PuzzleTrainingViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.PuzzlesViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoiresViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.CourseOverviewViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingSelectionViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.LearnChapterViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.SettingsViewModel
 
 
 fun NavGraphBuilder.repertoireGraph(
     navController: NavHostController,
     repertoireDao: RepertoireDao
 ) {
-    // 1. Główny Ekran Repertuarów
+    // 1. Główny Ekran Repertuarów (lista kursów)
     composable(Screen.RepertoireMain.route) {
         val vm: RepertoiresViewModel =
             viewModel(factory = RepertoiresViewModel.Factory(repertoireDao))
         RepertoiresScreen(viewModel = vm, onNavigateToChapters = { id ->
-            navController.navigate(Screen.Chapters.createRoute(id))
+            // When user taps a repertoire, open the course overview (learn
+            // mode) by default. Editing is available from that screen.
+            navController.navigate(Screen.CourseOverview.createRoute(id))
         })
+    }
+
+    // 1b. Course overview (learn/train/edit entry point for a repertoire)
+    composable(
+        route = Screen.CourseOverview.route,
+        arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
+    ) {
+        val vm: CourseOverviewViewModel =
+            viewModel(factory = CourseOverviewViewModel.Factory(repertoireDao))
+            CourseOverviewScreen(
+                viewModel = vm,
+                onBackClick = { navController.popBackStack() },
+                onEditCourse = { repertoireId ->
+                    navController.navigate(Screen.Chapters.createRoute(repertoireId))
+                },
+                onTrainCourse = { _ ->
+                    // For now, training the course is equivalent to training all
+                    // chapters selected via the existing training tab. In a later
+                    // step we can introduce a dedicated "train course" flow.
+                    navController.navigate(Screen.Train.route)
+                },
+                onOpenChapterLearn = { chapterId ->
+                    // Open the dedicated learn flow for this chapter.
+                    navController.navigate(Screen.ChapterLearn.createRoute(chapterId))
+                },
+                onOpenChapterTrain = { chapterId ->
+                    navController.navigate(Screen.ChapterTraining.createRoute(chapterId))
+                }
+            )
+    }
+
+    // 1c. Learn chapter flow (step through each line, then train it)
+    composable(
+        route = Screen.ChapterLearn.route,
+        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
+    ) { backStackEntry ->
+        val vm: LearnChapterViewModel = viewModel(factory = LearnChapterViewModel.Factory(repertoireDao))
+
+        // Listen for a signal that single-line training has finished and
+        // advance the learn flow when it happens.
+        val savedStateHandle = backStackEntry.savedStateHandle
+        val lineTrainingFinishedFlow = savedStateHandle.getStateFlow("lineTrainingFinished", false)
+        val lineTrainingFinished by lineTrainingFinishedFlow.collectAsStateWithLifecycle()
+
+        LaunchedEffect(lineTrainingFinished) {
+            if (lineTrainingFinished) {
+                vm.onLineTrainingFinished()
+                savedStateHandle["lineTrainingFinished"] = false
+            }
+        }
+
+        LearnChapterScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+            onStartChapterTraining = { chapterId ->
+                navController.navigate(Screen.ChapterTraining.createRoute(chapterId))
+            },
+            onStartLineTraining = { lineId ->
+                navController.navigate(Screen.LineTraining.createRoute(lineId))
+            }
+        )
     }
 
     // 2. Rozdziały
@@ -112,11 +182,32 @@ fun NavGraphBuilder.repertoireGraph(
         val trainingViewModel: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireDao))
         TrainScreen(viewModel = trainingViewModel, onBackClick = { navController.popBackStack() })
     }
+
+    // 5. Single-line training, used from the learn flow
+    composable(
+        route = Screen.LineTraining.route,
+        arguments = listOf(navArgument("lineId") { type = NavType.IntType })
+    ) { backStackEntry ->
+        val trainingViewModel: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireDao))
+        val lineId = backStackEntry.arguments?.getInt("lineId") ?: return@composable
+
+        TrainScreen(
+            viewModel = trainingViewModel,
+            onBackClick = { navController.popBackStack() },
+            onSessionComplete = {
+                // Notify the learn screen that this line's training has finished
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("lineTrainingFinished", true)
+                navController.popBackStack()
+            }
+        )
+    }
 }
 
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(settingsViewModel: SettingsViewModel) {
     val navController = rememberNavController()
     val db = ChessDatabase.getDatabase(LocalContext.current)
     val repertoireDao = db.repertoireDao()
@@ -166,7 +257,8 @@ fun AppNavigation() {
                     viewModel = selectionViewModel,
                     onStartTraining = { chapterId ->
                         navController.navigate(Screen.ChapterTraining.createRoute(chapterId))
-                    }
+                    },
+                    onBackClick = { navController.popBackStack() }
                 )
             }
              // "My games" root screen: configure filters and download games for analysis.
@@ -178,8 +270,14 @@ fun AppNavigation() {
                              playerGamesRepository
                          )
                      )
+
+                 val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+
                  PlayerProfilesScreen(
                      viewModel = vm,
+                     defaultLichessUsername = settings.lichessUsername,
+                     defaultChessComUsername = settings.chessComUsername,
+                     defaultPlatform = settings.defaultOnlinePlatform,
                      onOpenProfileTree = { profileId, color, timeControl, maxGames ->
                          navController.navigate(
                              Screen.OpeningTree.createRoute(
@@ -236,7 +334,7 @@ fun AppNavigation() {
                     onBackClick = { navController.popBackStack() }
                 )
             }
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) { SettingsScreen(viewModel = settingsViewModel) }
 
             composable(Screen.Analysis.route) {
                 val analysisViewModel: AnalysisViewModel = viewModel()
@@ -264,12 +362,17 @@ private fun shouldShowBottomBar(destination: NavDestination?): Boolean {
     val route = destination?.route ?: return true
 
     return when {
-        // Ekrany z szachownicą – pełny ekran, bez dolnego paska nawigacji
+        // Ekrany z szachownicą, które mają własny przycisk "Back" i
+        // powinny zajmować cały ekran (bez dolnego paska nawigacji).
         route.startsWith(Screen.LineEditor.route.substringBefore("/")) -> false
-        route.startsWith(Screen.ChapterTraining.route.substringBefore("/")) -> false
+        route.startsWith(Screen.ChapterLearn.route.substringBefore("/")) -> false
+        route.startsWith(Screen.LineTraining.route.substringBefore("/")) -> false
         route == Screen.Analysis.route -> false
         route == Screen.PuzzleTraining.route -> false
         route.startsWith(Screen.OpeningTree.route.substringBefore("/")) -> false
+        // Dla ekranów treningu całego rozdziału (ChapterTraining) zostawiamy
+        // dolny pasek nawigacji widoczny, żeby zawsze można było szybko
+        // wrócić np. do zakładki "Repertoire".
         else -> true
     }
 }
