@@ -17,6 +17,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.chessrepertoiretrainer.database.ChessDatabase
+import com.example.chessrepertoiretrainer.data.ChessComGameFetcher
+import com.example.chessrepertoiretrainer.data.GameFetcherRegistry
+import com.example.chessrepertoiretrainer.data.PlayerGamesRepository
+import com.example.chessrepertoiretrainer.data.PlayerProfileRepository
 import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.data.DefaultPuzzleRepository
 import com.example.chessrepertoiretrainer.ui.screens.AnalysisScreen
@@ -30,16 +34,21 @@ import com.example.chessrepertoiretrainer.ui.screens.RepertoiresScreen
 import com.example.chessrepertoiretrainer.ui.screens.SettingsScreen
 import com.example.chessrepertoiretrainer.ui.screens.TrainScreen
 import com.example.chessrepertoiretrainer.ui.screens.TrainSelectionScreen
+import com.example.chessrepertoiretrainer.ui.screens.PlayerProfilesScreen
+import com.example.chessrepertoiretrainer.ui.screens.OpeningTreeScreen
 import com.example.chessrepertoiretrainer.ui.screens.YourGamesScreen
 import com.example.chessrepertoiretrainer.ui.viewmodels.AnalysisViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.ChaptersViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LineEditorViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LinesViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.PuzzleTrainingViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.PuzzlesViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoiresViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingSelectionViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.YourGamesViewModel
 
 
 fun NavGraphBuilder.repertoireGraph(
@@ -113,7 +122,21 @@ fun AppNavigation() {
     val db = ChessDatabase.getDatabase(LocalContext.current)
     val repertoireDao = db.repertoireDao()
     val puzzleDao = db.puzzleDao()
+    val playerProfileDao = db.playerProfileDao()
+    val gameDao = db.gameDao()
     val puzzleRepository = DefaultPuzzleRepository(puzzleDao)
+    val playerProfileRepository = PlayerProfileRepository(playerProfileDao)
+    val gameFetcherRegistry = GameFetcherRegistry(
+        listOf(
+            com.example.chessrepertoiretrainer.data.LichessGameFetcher,
+            ChessComGameFetcher
+        )
+    )
+    val playerGamesRepository = PlayerGamesRepository(
+        gameDao = gameDao,
+        playerProfileDao = playerProfileDao,
+        fetcherRegistry = gameFetcherRegistry
+    )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -147,6 +170,28 @@ fun AppNavigation() {
                     }
                 )
             }
+            // "My games" root screen: configure filters and download games for analysis.
+            composable(Screen.YourGames.route) {
+                val vm: PlayerProfilesViewModel =
+                    viewModel(
+                        factory = PlayerProfilesViewModel.Factory(
+                            playerProfileRepository,
+                            playerGamesRepository
+                        )
+                    )
+                PlayerProfilesScreen(
+                    viewModel = vm,
+                    onOpenProfileTree = { profileId, color, timeControl ->
+                        navController.navigate(
+                            Screen.OpeningTree.createRoute(
+                                profileId = profileId,
+                                color = color,
+                                timeControl = timeControl
+                            )
+                        )
+                    }
+                )
+            }
             composable(Screen.Puzzles.route) {
                 val puzzlesViewModel: PuzzlesViewModel =
                     viewModel(factory = PuzzlesViewModel.Factory(puzzleRepository))
@@ -155,7 +200,38 @@ fun AppNavigation() {
                     onStartTraining = { navController.navigate(Screen.PuzzleTraining.route) }
                 )
             }
-            composable(Screen.YourGames.route) { YourGamesScreen() }
+            composable(
+                route = Screen.OpeningTree.route,
+                arguments = listOf(
+                    navArgument("profileId") { type = NavType.LongType },
+                    navArgument("color") { type = NavType.StringType; defaultValue = "both" },
+                    navArgument("timeControl") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStackEntry ->
+                val profileId = backStackEntry.arguments?.getLong("profileId") ?: return@composable
+                val colorArg = backStackEntry.arguments?.getString("color") ?: "both"
+                val timeControlArg = backStackEntry.arguments?.getString("timeControl") ?: ""
+
+                val colorFilter = when (colorArg.lowercase()) {
+                    "white" -> OpeningTreeViewModel.ColorFilter.WHITE_ONLY
+                    "black" -> OpeningTreeViewModel.ColorFilter.BLACK_ONLY
+                    else -> OpeningTreeViewModel.ColorFilter.BOTH
+                }
+
+                val vm: OpeningTreeViewModel =
+                    viewModel(
+                        factory = OpeningTreeViewModel.Factory(
+                            profileId = profileId,
+                            gamesRepository = playerGamesRepository,
+                            colorFilter = colorFilter,
+                            timeControlFilter = timeControlArg.ifBlank { null }
+                        )
+                    )
+                OpeningTreeScreen(
+                    viewModel = vm,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
             composable(Screen.Settings.route) { SettingsScreen() }
 
             composable(Screen.Analysis.route) {
@@ -189,6 +265,7 @@ private fun shouldShowBottomBar(destination: NavDestination?): Boolean {
         route.startsWith(Screen.ChapterTraining.route.substringBefore("/")) -> false
         route == Screen.Analysis.route -> false
         route == Screen.PuzzleTraining.route -> false
+        route.startsWith(Screen.OpeningTree.route.substringBefore("/")) -> false
         else -> true
     }
 }

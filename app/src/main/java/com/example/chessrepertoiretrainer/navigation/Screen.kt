@@ -32,4 +32,19 @@ sealed class Screen(val route: String, val title: String = "", val icon: ImageVe
     }
     object PuzzleTraining : Screen("puzzle_training")
     object Analysis : Screen("analysis")
+
+    // Opening tree exploration for a specific tracked player profile.
+    // Optional query parameters allow filtering which games are included
+    // in the tree (e.g. only games as White, by time control, etc.).
+    object OpeningTree : Screen("opening_tree/{profileId}?color={color}&timeControl={timeControl}") {
+        fun createRoute(
+            profileId: Long,
+            color: String,
+            timeControl: String
+        ): String {
+            val safeColor = color.ifBlank { "both" }
+            val safeTc = java.net.URLEncoder.encode(timeControl, Charsets.UTF_8.name())
+            return "opening_tree/$profileId?color=$safeColor&timeControl=$safeTc"
+        }
+    }
 }
