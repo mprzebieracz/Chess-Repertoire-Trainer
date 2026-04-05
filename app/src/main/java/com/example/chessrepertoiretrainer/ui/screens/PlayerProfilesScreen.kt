@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,12 +8,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,27 +25,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.chessrepertoiretrainer.database.entities.PlayerProfile
 import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PlayerProfilesScreen(
-  viewModel: PlayerProfilesViewModel,
-  onOpenProfileTree: (profileId: Long, color: String, timeControl: String) -> Unit
-) {
+ @OptIn(ExperimentalMaterial3Api::class)
+ @Composable
+ fun PlayerProfilesScreen(
+   viewModel: PlayerProfilesViewModel,
+   onOpenProfileTree: (profileId: Long, color: String, timeControl: String, maxGames: Int?) -> Unit
+ ) {
   val uiState by viewModel.uiState.collectAsState()
 
   val (username, setUsername) = remember { mutableStateOf("") }
   val (platform, setPlatform) = remember { mutableStateOf("lichess") }
-  val (colorFilter, setColorFilter) = remember { mutableStateOf("both") }
-  val (timeControlFilter, setTimeControlFilter) = remember { mutableStateOf("") }
+  val (colorFilter, setColorFilter) = remember { mutableStateOf("white") }
+  val (bulletEnabled, setBulletEnabled) = remember { mutableStateOf(true) }
+  val (blitzEnabled, setBlitzEnabled) = remember { mutableStateOf(true) }
+  val (rapidEnabled, setRapidEnabled) = remember { mutableStateOf(true) }
+  val (classicalEnabled, setClassicalEnabled) = remember { mutableStateOf(true) }
   val (maxGamesText, setMaxGamesText) = remember { mutableStateOf("200") }
 
-    Scaffold(
-        topBar = {
-                  TopAppBar(title = { Text("Your games") })
-        }
+     Scaffold(
+         topBar = {
+                   TopAppBar(title = { Text("Opening tree") })
+         }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -55,10 +55,10 @@ fun PlayerProfilesScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-                  Text(
-                    text = "Download your games for opening analysis",
-                    style = MaterialTheme.typography.titleMedium
-                  )
+                   Text(
+                     text = "Prepare your opening tree from your online games",
+                     style = MaterialTheme.typography.titleMedium
+                   )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -93,12 +93,6 @@ fun PlayerProfilesScreen(
                   Text(text = "Color", style = MaterialTheme.typography.labelMedium)
                   Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(
-                      selected = colorFilter == "both",
-                      onClick = { setColorFilter("both") }
-                    )
-                    Text(text = "Both")
-                    Spacer(modifier = Modifier.width(16.dp))
-                    RadioButton(
                       selected = colorFilter == "white",
                       onClick = { setColorFilter("white") }
                     )
@@ -113,12 +107,35 @@ fun PlayerProfilesScreen(
 
                   Spacer(modifier = Modifier.height(8.dp))
 
-                  OutlinedTextField(
-                    value = timeControlFilter,
-                    onValueChange = setTimeControlFilter,
-                    label = { Text("Time control filter (optional)") },
-                    modifier = Modifier.fillMaxWidth()
-                  )
+                  Text(text = "Time controls", style = MaterialTheme.typography.labelMedium)
+
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                      checked = bulletEnabled,
+                      onCheckedChange = { setBulletEnabled(it) }
+                    )
+                    Text(text = "Bullet")
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Checkbox(
+                      checked = blitzEnabled,
+                      onCheckedChange = { setBlitzEnabled(it) }
+                    )
+                    Text(text = "Blitz")
+                  }
+
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                      checked = rapidEnabled,
+                      onCheckedChange = { setRapidEnabled(it) }
+                    )
+                    Text(text = "Rapid")
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Checkbox(
+                      checked = classicalEnabled,
+                      onCheckedChange = { setClassicalEnabled(it) }
+                    )
+                    Text(text = "Classical/Daily")
+                  }
 
                   Spacer(modifier = Modifier.height(8.dp))
 
@@ -136,21 +153,36 @@ fun PlayerProfilesScreen(
 
                   Spacer(modifier = Modifier.height(8.dp))
 
-                  Button(
-                    onClick = {
-                      val maxGames = maxGamesText.toIntOrNull()
-                      viewModel.syncGamesForUsername(
-                        username = username,
-                        platform = platform,
-                        maxGames = maxGames
-                      ) { profileId ->
-                        onOpenProfileTree(profileId, colorFilter, timeControlFilter)
-                      }
-                    },
-                    enabled = username.isNotBlank() && !uiState.isSyncing
-                  ) {
-                    Text(if (uiState.isSyncing) "Syncing..." else "Download games and open tree")
-                  }
+                    Button(
+                       onClick = {
+                       val maxGames = maxGamesText.toIntOrNull()
+                       // Build a comma-separated list of selected time-control categories.
+                       val selectedCategories = buildList {
+                         if (bulletEnabled) add("bullet")
+                         if (blitzEnabled) add("blitz")
+                         if (rapidEnabled) add("rapid")
+                         if (classicalEnabled) add("classical")
+                       }
+                       // If all categories are selected, treat as no explicit filter.
+                       val timeControlFilter = if (selectedCategories.size == 4) {
+                         ""
+                       } else {
+                         selectedCategories.joinToString(",")
+                       }
+                       viewModel.syncGamesForUsername(
+                         username = username,
+                         platform = platform,
+                         maxGamesForTree = maxGames,
+                         color = colorFilter,
+                         timeControlFilter = timeControlFilter
+                       ) { profileId ->
+                         onOpenProfileTree(profileId, colorFilter, timeControlFilter, maxGames)
+                       }
+                     },
+                     enabled = username.isNotBlank() && !uiState.isSyncing
+                   ) {
+                     Text("Download games and open tree")
+                   }
 
             if (uiState.errorMessage != null) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -169,10 +201,10 @@ fun PlayerProfilesScreen(
                     )
                   }
 
-                  if (uiState.isSyncing) {
+                  uiState.statusMessage?.let { status ->
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                      text = "Syncing games...",
+                      text = status,
                       style = MaterialTheme.typography.bodySmall,
                       color = MaterialTheme.colorScheme.primary
                     )

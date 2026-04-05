@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -43,13 +42,14 @@ import androidx.compose.ui.unit.sp
 // ==========================================
 @Composable
 fun ChessScreenLayout(
-  title: String,
-  chessCtrl: ChessBoardController,
-  topContent: @Composable () -> Unit = {},
-  bottomContent: @Composable () -> Unit = {},
-  extraButtons: @Composable RowScope.() -> Unit = {},
-  showNavigationControls: Boolean = true,
-  showBoardActionButtons: Boolean = true
+    title: String,
+    chessCtrl: ChessBoardController,
+    showPgnBar: Boolean = true,
+    topContent: @Composable () -> Unit = {},
+    bottomContent: @Composable () -> Unit = {},
+    extraButtons: @Composable RowScope.() -> Unit = {},
+    showNavigationControls: Boolean = true,
+    showBoardActionButtons: Boolean = true
 ) {
     Column(
         modifier = Modifier
@@ -62,31 +62,33 @@ fun ChessScreenLayout(
 
         topContent()
 
-        PgnViewer(pgnText = chessCtrl.pgnState)
+        if (showPgnBar) {
+            PgnViewer(pgnText = chessCtrl.pgnState)
+        }
 
-            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-              ChessboardUI(state = chessCtrl)
-            }
+        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            ChessboardUI(state = chessCtrl)
+        }
 
-            bottomContent()
+        bottomContent()
 
-            if (showNavigationControls) {
-              BoardNavigationControls(
+        if (showNavigationControls) {
+            BoardNavigationControls(
                 onBack = { chessCtrl.navigateBack() },
                 onForward = { chessCtrl.navigateForward() }
-              )
-            }
+            )
+        }
 
-            if (showBoardActionButtons) {
-              BoardActionButtons(
+        if (showBoardActionButtons) {
+            BoardActionButtons(
                 onReset = { chessCtrl.resetBoard() },
                 onFlip = { chessCtrl.flipBoard() },
                 extraButtons = extraButtons
-              )
-            }
+            )
+        }
 
-            Spacer(modifier = Modifier.height(80.dp))
-          }
+        Spacer(modifier = Modifier.height(80.dp))
+    }
 }
 
 // ==========================================
@@ -195,20 +197,20 @@ fun BoardActionButtons(
     }
 }
 
-        @Composable
-        fun BoardBottomBar(
-          chessCtrl: ChessBoardController,
-          extraButtons: @Composable RowScope.() -> Unit = {}
-        ) {
-          Column {
-            BoardNavigationControls(
-              onBack = { chessCtrl.navigateBack() },
-              onForward = { chessCtrl.navigateForward() }
-            )
-            BoardActionButtons(
-              onReset = { chessCtrl.resetBoard() },
-              onFlip = { chessCtrl.flipBoard() },
-              extraButtons = extraButtons
-            )
-          }
-        }
+@Composable
+fun BoardBottomBar(
+    chessCtrl: ChessBoardController,
+    extraButtons: @Composable RowScope.() -> Unit = {}
+) {
+    Column {
+        BoardNavigationControls(
+            onBack = { chessCtrl.navigateBack() },
+            onForward = { chessCtrl.navigateForward() }
+        )
+        BoardActionButtons(
+            onReset = { chessCtrl.resetBoard() },
+            onFlip = { chessCtrl.flipBoard() },
+            extraButtons = extraButtons
+        )
+    }
+}

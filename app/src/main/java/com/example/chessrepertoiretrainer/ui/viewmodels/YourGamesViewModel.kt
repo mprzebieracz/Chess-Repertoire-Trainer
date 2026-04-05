@@ -7,7 +7,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.data.GameForOpeningTree
 import com.example.chessrepertoiretrainer.data.OpeningTree
 import com.example.chessrepertoiretrainer.data.OpeningTreeBuilder
-import com.example.chessrepertoiretrainer.data.PlayerGamesRepository
+import com.example.chessrepertoiretrainer.domain.games.GamesRepository
 import com.example.chessrepertoiretrainer.data.PlayerProfileRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,10 +25,10 @@ import kotlinx.coroutines.launch
  * username + platform, downloads games via the PlayerGamesRepository, and
  * exposes how many games are stored locally for that user.
  */
-class YourGamesViewModel(
+ class YourGamesViewModel(
     private val profileRepository: PlayerProfileRepository,
-    private val gamesRepository: PlayerGamesRepository
-) : ViewModel() {
+    private val gamesRepository: GamesRepository
+ ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(YourGamesUiState())
     val uiState: StateFlow<YourGamesUiState> = _uiState.asStateFlow()
@@ -219,7 +219,7 @@ class YourGamesViewModel(
 
     class Factory(
         private val profileRepository: PlayerProfileRepository,
-        private val gamesRepository: PlayerGamesRepository
+        private val gamesRepository: GamesRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

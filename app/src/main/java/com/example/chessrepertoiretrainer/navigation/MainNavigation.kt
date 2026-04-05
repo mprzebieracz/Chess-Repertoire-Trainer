@@ -21,6 +21,7 @@ import com.example.chessrepertoiretrainer.data.ChessComGameFetcher
 import com.example.chessrepertoiretrainer.data.GameFetcherRegistry
 import com.example.chessrepertoiretrainer.data.PlayerGamesRepository
 import com.example.chessrepertoiretrainer.data.PlayerProfileRepository
+import com.example.chessrepertoiretrainer.domain.games.GamesRepository
 import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.data.DefaultPuzzleRepository
 import com.example.chessrepertoiretrainer.ui.screens.AnalysisScreen
@@ -36,7 +37,6 @@ import com.example.chessrepertoiretrainer.ui.screens.TrainScreen
 import com.example.chessrepertoiretrainer.ui.screens.TrainSelectionScreen
 import com.example.chessrepertoiretrainer.ui.screens.PlayerProfilesScreen
 import com.example.chessrepertoiretrainer.ui.screens.OpeningTreeScreen
-import com.example.chessrepertoiretrainer.ui.screens.YourGamesScreen
 import com.example.chessrepertoiretrainer.ui.viewmodels.AnalysisViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.ChaptersViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LineEditorViewModel
@@ -48,7 +48,6 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoiresViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingSelectionViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeViewModel
-import com.example.chessrepertoiretrainer.ui.viewmodels.YourGamesViewModel
 
 
 fun NavGraphBuilder.repertoireGraph(
@@ -132,7 +131,7 @@ fun AppNavigation() {
             ChessComGameFetcher
         )
     )
-    val playerGamesRepository = PlayerGamesRepository(
+    val playerGamesRepository: GamesRepository = PlayerGamesRepository(
         gameDao = gameDao,
         playerProfileDao = playerProfileDao,
         fetcherRegistry = gameFetcherRegistry
@@ -170,28 +169,29 @@ fun AppNavigation() {
                     }
                 )
             }
-            // "My games" root screen: configure filters and download games for analysis.
-            composable(Screen.YourGames.route) {
-                val vm: PlayerProfilesViewModel =
-                    viewModel(
-                        factory = PlayerProfilesViewModel.Factory(
-                            playerProfileRepository,
-                            playerGamesRepository
-                        )
-                    )
-                PlayerProfilesScreen(
-                    viewModel = vm,
-                    onOpenProfileTree = { profileId, color, timeControl ->
-                        navController.navigate(
-                            Screen.OpeningTree.createRoute(
-                                profileId = profileId,
-                                color = color,
-                                timeControl = timeControl
-                            )
-                        )
-                    }
-                )
-            }
+             // "My games" root screen: configure filters and download games for analysis.
+             composable(Screen.YourGames.route) {
+                 val vm: PlayerProfilesViewModel =
+                     viewModel(
+                         factory = PlayerProfilesViewModel.Factory(
+                             playerProfileRepository,
+                             playerGamesRepository
+                         )
+                     )
+                 PlayerProfilesScreen(
+                     viewModel = vm,
+                     onOpenProfileTree = { profileId, color, timeControl, maxGames ->
+                         navController.navigate(
+                             Screen.OpeningTree.createRoute(
+                                 profileId = profileId,
+                                 color = color,
+                                 timeControl = timeControl,
+                                 maxGames = maxGames
+                             )
+                         )
+                     }
+                 )
+             }
             composable(Screen.Puzzles.route) {
                 val puzzlesViewModel: PuzzlesViewModel =
                     viewModel(factory = PuzzlesViewModel.Factory(puzzleRepository))
@@ -205,12 +205,15 @@ fun AppNavigation() {
                 arguments = listOf(
                     navArgument("profileId") { type = NavType.LongType },
                     navArgument("color") { type = NavType.StringType; defaultValue = "both" },
-                    navArgument("timeControl") { type = NavType.StringType; defaultValue = "" }
+                    navArgument("timeControl") { type = NavType.StringType; defaultValue = "" },
+                    navArgument("maxGames") { type = NavType.IntType; defaultValue = -1 }
                 )
             ) { backStackEntry ->
                 val profileId = backStackEntry.arguments?.getLong("profileId") ?: return@composable
                 val colorArg = backStackEntry.arguments?.getString("color") ?: "both"
                 val timeControlArg = backStackEntry.arguments?.getString("timeControl") ?: ""
+                val maxGamesArg = backStackEntry.arguments?.getInt("maxGames") ?: -1
+                val maxGamesForTree = maxGamesArg.takeIf { it > 0 }
 
                 val colorFilter = when (colorArg.lowercase()) {
                     "white" -> OpeningTreeViewModel.ColorFilter.WHITE_ONLY
@@ -219,14 +222,15 @@ fun AppNavigation() {
                 }
 
                 val vm: OpeningTreeViewModel =
-                    viewModel(
+                     viewModel(
                         factory = OpeningTreeViewModel.Factory(
-                            profileId = profileId,
-                            gamesRepository = playerGamesRepository,
-                            colorFilter = colorFilter,
-                            timeControlFilter = timeControlArg.ifBlank { null }
-                        )
-                    )
+                             profileId = profileId,
+                             gamesRepository = playerGamesRepository,
+                             colorFilter = colorFilter,
+                             timeControlFilter = timeControlArg.ifBlank { null },
+                             maxGamesForTree = maxGamesForTree
+                         )
+                     )
                 OpeningTreeScreen(
                     viewModel = vm,
                     onBackClick = { navController.popBackStack() }

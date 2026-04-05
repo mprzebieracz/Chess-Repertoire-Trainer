@@ -1,6 +1,7 @@
 package com.example.chessrepertoiretrainer.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,72 +65,90 @@ fun OpeningTreeScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-            ChessScreenLayout(
-                title = "Opening Tree",
-                chessCtrl = viewModel.chessController,
-                showNavigationControls = false,
-                showBoardActionButtons = false,
-                topContent = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                        Spacer(modifier = Modifier.size(8.dp))
-                        Text(
-                            text = if (uiState.pathMoves.isEmpty()) {
-                                "From starting position"
-                            } else {
-                                "Path: " + uiState.pathMoves.joinToString(" ")
-                            },
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                },
-                bottomContent = {
-                    if (uiState.moves.isNotEmpty()) {
-                        Column(
+        if (uiState.isLoading) {
+            // While the opening tree is being prepared, show a simple
+            // full-screen progress view instead of a half-populated board.
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Preparing opening tree...",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = uiState.statusMessage ?: "",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        } else {
+            Column(modifier = Modifier.padding(padding)) {
+                ChessScreenLayout(
+                    title = "Opening Tree",
+                    chessCtrl = viewModel.chessController,
+                    showPgnBar = false,
+                    showNavigationControls = false,
+                    showBoardActionButtons = false,
+                    topContent = {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "Next moves",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            LazyColumn(
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back"
+                                )
+                            }
+                        }
+                    },
+                    bottomContent = {
+                        if (uiState.moves.isNotEmpty()) {
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .heightIn(max = 240.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
                             ) {
-                                items(uiState.moves) { move ->
-                                    OpeningTreeMoveCard(move = move) {
-                                        viewModel.onMoveSelected(move.toFen)
+                                Text(
+                                    text = "Next moves",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Spacer(modifier = Modifier.size(8.dp))
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 240.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(uiState.moves) { move ->
+                                        OpeningTreeMoveCard(move = move) {
+                                            viewModel.onMoveSelected(move.toFen)
+                                        }
                                     }
                                 }
                             }
+                        } else {
+                            Text(
+                                text = uiState.statusMessage
+                                    ?: "No further moves from this position",
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
                         }
-                    } else {
-                        Text(
-                            text = "No further moves from this position",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -138,65 +157,30 @@ fun OpeningTreeScreen(
 private fun OpeningTreeMoveCard(
     move: OpeningTreeViewModel.OpeningTreeMoveUi,
     onClick: () -> Unit
-) {
+    ) {
     Card(
-        modifier = Modifier,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = move.moveSan, style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.size(4.dp))
-            // Simple colored bar representation: W / D / L
-            val winWeight = move.winPercent.coerceIn(0, 100)
-            val drawWeight = move.drawPercent.coerceIn(0, 100)
-            val lossWeight = move.lossPercent.coerceIn(0, 100)
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                horizontalArrangement = Arrangement.spacedBy(0.dp)
-            ) {
-                if (winWeight > 0) {
-                    Box(
-                        modifier = Modifier
-                            .weight(winWeight.toFloat())
-                            .background(Color(0xFF4CAF50))
-                    )
-                }
-                if (drawWeight > 0) {
-                    Box(
-                        modifier = Modifier
-                            .weight(drawWeight.toFloat())
-                            .background(Color(0xFF9E9E9E))
-                    )
-                }
-                if (lossWeight > 0) {
-                    Box(
-                        modifier = Modifier
-                            .weight(lossWeight.toFloat())
-                            .background(Color(0xFFF44336))
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.size(4.dp))
+            Text(
+                text = move.moveSan,
+                style = MaterialTheme.typography.bodyMedium
+            )
             Text(
                 text = "W ${move.winPercent}%  D ${move.drawPercent}%  L ${move.lossPercent}%  (${move.games} games)",
                 style = MaterialTheme.typography.bodySmall
             )
-
-            Spacer(modifier = Modifier.size(4.dp))
-
-            Spacer(modifier = Modifier.size(4.dp))
-            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-                Text("Go to position")
-            }
         }
     }
 }

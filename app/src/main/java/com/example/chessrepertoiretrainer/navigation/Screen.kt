@@ -14,7 +14,7 @@ sealed class Screen(val route: String, val title: String = "", val icon: ImageVe
     object RepertoireMain : Screen("repertoire_main", "Repertoire", Icons.AutoMirrored.Filled.List)
     object Train : Screen("train", "Train", Icons.Default.PlayArrow)
     object Puzzles : Screen("puzzles", "Puzzles", Icons.Default.PlayArrow)
-    object YourGames : Screen("games", "Games", Icons.Default.Person)
+    object YourGames : Screen("games", "Opening tree", Icons.Default.Person)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 
     // Nested / detail screens (not in bottom bar)
@@ -35,16 +35,19 @@ sealed class Screen(val route: String, val title: String = "", val icon: ImageVe
 
     // Opening tree exploration for a specific tracked player profile.
     // Optional query parameters allow filtering which games are included
-    // in the tree (e.g. only games as White, by time control, etc.).
-    object OpeningTree : Screen("opening_tree/{profileId}?color={color}&timeControl={timeControl}") {
+    // in the tree (e.g. only games as White, by time control, etc.), and
+    // limiting how many filtered games are used to build the tree.
+    object OpeningTree : Screen("opening_tree/{profileId}?color={color}&timeControl={timeControl}&maxGames={maxGames}") {
         fun createRoute(
             profileId: Long,
             color: String,
-            timeControl: String
+            timeControl: String,
+            maxGames: Int?
         ): String {
             val safeColor = color.ifBlank { "both" }
             val safeTc = java.net.URLEncoder.encode(timeControl, Charsets.UTF_8.name())
-            return "opening_tree/$profileId?color=$safeColor&timeControl=$safeTc"
+            val safeMax = maxGames?.toString() ?: "-1"
+            return "opening_tree/$profileId?color=$safeColor&timeControl=$safeTc&maxGames=$safeMax"
         }
     }
 }

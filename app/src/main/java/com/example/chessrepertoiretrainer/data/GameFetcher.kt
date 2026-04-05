@@ -5,16 +5,25 @@ import android.util.Log
 /**
  * Simple domain model representing a single remote game fetched from an
  * external platform such as Lichess or Chess.com.
+ *
+ * @property timeControl Raw time-control string as provided by the platform
+ *   (e.g. "600+0", "1/259200"). This is preserved for potential UI display
+ *   but is no longer interpreted heuristically for filtering.
+ * @property timeCategory Normalized time-control category derived from
+ *   provider-specific fields such as Chess.com `time_class` or Lichess
+ *   `speed`. Expected values are lowercase strings like "bullet",
+ *   "blitz", "rapid", or "classical".
  */
 data class FetchedGame(
-    val platformGameId: String,
-    val opponentName: String,
-    val isUserWhite: Boolean,
-    val result: String,
-    val timeControl: String?,
-    val rated: Boolean,
-    val playedAt: Long,
-    val pgn: String
+  val platformGameId: String,
+  val opponentName: String,
+  val isUserWhite: Boolean,
+  val result: String,
+  val timeControl: String?,
+  val timeCategory: String?,
+  val rated: Boolean,
+  val playedAt: Long,
+  val pgn: String
 )
 
 /**

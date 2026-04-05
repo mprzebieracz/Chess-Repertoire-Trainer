@@ -110,6 +110,12 @@ object LichessGameFetcher : GameFetcher {
                     }
                     val timeControl = timeControlTag ?: tcFromClock
 
+                    // Use Lichess "speed" field to derive a normalized
+                    // time‑control category instead of inferring it from the
+                    // numeric time control string.
+                    val speedRaw = obj.optString("speed", "")
+                    val timeCategory = mapLichessSpeedToCategory(speedRaw)
+
                     val createdAt = obj.optLong("createdAt", 0L)
                     val lastMoveAt = obj.optLong("lastMoveAt", 0L)
                     val playedAt = if (lastMoveAt > 0L) lastMoveAt else createdAt
@@ -123,6 +129,7 @@ object LichessGameFetcher : GameFetcher {
                         isUserWhite = isUserWhite,
                         result = resultTag,
                         timeControl = timeControl,
+                        timeCategory = timeCategory,
                         rated = rated,
                         playedAt = playedAt,
                         pgn = pgn
@@ -139,6 +146,20 @@ object LichessGameFetcher : GameFetcher {
         )
 
         return@withContext result
+    }
+
+    private fun mapLichessSpeedToCategory(speed: String?): String? {
+        val normalized = speed?.trim()?.lowercase().orEmpty()
+        return when (normalized) {
+            "ultrabullet" -> "bullet"
+            "bullet" -> "bullet"
+            "blitz" -> "blitz"
+            "rapid" -> "rapid"
+            "classical" -> "classical"
+            // Lichess uses "correspondence" for daily/correspondence games.
+            "correspondence" -> "classical"
+            else -> null
+        }
     }
 }
 

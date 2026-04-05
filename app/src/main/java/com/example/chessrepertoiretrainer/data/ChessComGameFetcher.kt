@@ -89,6 +89,12 @@ object ChessComGameFetcher : GameFetcher {
                 val timeControlFromJson = timeControlFromJsonRaw.takeIf { it.isNotBlank() }
                 val timeControl = timeControlTag ?: timeControlFromJson
 
+                // Use Chess.com "time_class" field to derive a normalized
+                // time‑control category instead of inferring it heuristically
+                // from the numeric time.
+                val timeClassRaw = gameJson.optString("time_class", "")
+                val timeCategory = mapChessComTimeClassToCategory(timeClassRaw)
+
                 val uuidRaw = gameJson.optString("uuid", "")
                 val urlRaw = gameJson.optString("url", "")
                 val uuid = uuidRaw.takeIf { it.isNotBlank() }
@@ -105,6 +111,7 @@ object ChessComGameFetcher : GameFetcher {
                     isUserWhite = isUserWhite,
                     result = resultTag,
                     timeControl = timeControl,
+                    timeCategory = timeCategory,
                     rated = rated,
                     playedAt = playedAt,
                     pgn = pgn
@@ -118,6 +125,18 @@ object ChessComGameFetcher : GameFetcher {
         )
 
         return@withContext result
+    }
+
+    private fun mapChessComTimeClassToCategory(timeClass: String?): String? {
+        val normalized = timeClass?.trim()?.lowercase().orEmpty()
+        return when (normalized) {
+            "bullet" -> "bullet"
+            "blitz" -> "blitz"
+            "rapid" -> "rapid"
+            // Chess.com uses "daily" for correspondence/daily chess.
+            "daily" -> "classical"
+            else -> null
+        }
     }
 
     private fun httpGet(urlString: String): String? {

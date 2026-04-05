@@ -32,6 +32,8 @@ data class Game(
     val isUserWhite: Boolean,
     val result: String,      // "1-0", "0-1", "1/2-1/2", "*" etc.
     val timeControl: String?,
+    /** Normalized time-control category such as "bullet", "blitz", "rapid", "classical". */
+    val timeCategory: String?,
     val rated: Boolean,
     val playedAt: Long
 )

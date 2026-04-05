@@ -5,6 +5,7 @@ import com.example.chessrepertoiretrainer.database.dao.GameDao
 import com.example.chessrepertoiretrainer.database.dao.PlayerProfileDao
 import com.example.chessrepertoiretrainer.database.entities.Game
 import com.example.chessrepertoiretrainer.database.entities.GameMoves
+import com.example.chessrepertoiretrainer.domain.games.GamesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
@@ -16,16 +17,16 @@ class PlayerGamesRepository(
     private val gameDao: GameDao,
     private val playerProfileDao: PlayerProfileDao,
     private val fetcherRegistry: GameFetcherRegistry
-) {
+) : GamesRepository {
 
-    fun getGamesForProfile(profileId: Long): Flow<List<Game>> =
+    override fun getGamesForProfile(profileId: Long): Flow<List<Game>> =
         gameDao.getGamesForProfile(profileId)
 
     /**
      * Snapshot helper returning all games for a profile together with their
      * stored PGN, for use by opening-tree style analyses.
      */
-    suspend fun getGamesWithPgnForProfile(profileId: Long): List<GameWithPgn> {
+    override suspend fun getGamesWithPgnForProfile(profileId: Long): List<GameWithPgn> {
         val games = gameDao.getGamesForProfile(profileId).first()
         if (games.isEmpty()) return emptyList()
 
@@ -42,9 +43,9 @@ class PlayerGamesRepository(
      * database. The operation is incremental based on
      * [PlayerProfile.lastSyncTime] when available.
      */
-    suspend fun syncGamesForProfile(
+    override suspend fun syncGamesForProfile(
         profileId: Long,
-        maxGames: Int? = null
+        maxGames: Int?
     ): GameSyncResult {
         val profile = playerProfileDao.getProfileById(profileId)
             ?: return GameSyncResult(0, 0, errorMessage = "Profile not found")
@@ -92,15 +93,16 @@ class PlayerGamesRepository(
             }
 
             val entity = Game(
-                platformGameId = g.platformGameId,
-                profileId = profile.id,
-                opponentName = g.opponentName,
-                isUserWhite = g.isUserWhite,
-                result = g.result,
-                timeControl = g.timeControl,
-                rated = g.rated,
-                playedAt = g.playedAt
-            )
+        platformGameId = g.platformGameId,
+        profileId = profile.id,
+        opponentName = g.opponentName,
+        isUserWhite = g.isUserWhite,
+        result = g.result,
+        timeControl = g.timeControl,
+        timeCategory = g.timeCategory,
+        rated = g.rated,
+        playedAt = g.playedAt
+      )
             val moves = GameMoves(
                 gameId = 0,
                 pgn = g.pgn

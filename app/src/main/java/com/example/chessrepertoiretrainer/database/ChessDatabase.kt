@@ -4,11 +4,18 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.chessrepertoiretrainer.database.dao.PuzzleDao
-import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.database.dao.GameDao
 import com.example.chessrepertoiretrainer.database.dao.PlayerProfileDao
-import com.example.chessrepertoiretrainer.database.entities.*
+import com.example.chessrepertoiretrainer.database.dao.PuzzleDao
+import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
+import com.example.chessrepertoiretrainer.database.entities.Chapter
+import com.example.chessrepertoiretrainer.database.entities.Game
+import com.example.chessrepertoiretrainer.database.entities.GameMoves
+import com.example.chessrepertoiretrainer.database.entities.Line
+import com.example.chessrepertoiretrainer.database.entities.LineMove
+import com.example.chessrepertoiretrainer.database.entities.PlayerProfile
+import com.example.chessrepertoiretrainer.database.entities.Puzzle
+import com.example.chessrepertoiretrainer.database.entities.Repertoire
 
 @Database(
     entities = [
@@ -21,7 +28,7 @@ import com.example.chessrepertoiretrainer.database.entities.*
         Game::class,
         GameMoves::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class ChessDatabase : RoomDatabase() {

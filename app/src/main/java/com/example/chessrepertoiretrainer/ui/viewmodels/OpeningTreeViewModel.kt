@@ -7,7 +7,9 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.data.GameForOpeningTree
 import com.example.chessrepertoiretrainer.data.OpeningTree
 import com.example.chessrepertoiretrainer.data.OpeningTreeBuilder
-import com.example.chessrepertoiretrainer.data.PlayerGamesRepository
+import com.example.chessrepertoiretrainer.data.OpeningTreeCache
+import com.example.chessrepertoiretrainer.data.OpeningTreeCacheKey
+import com.example.chessrepertoiretrainer.domain.games.GamesRepository
 import com.example.chessrepertoiretrainer.ui.components.chess.DefaultChessBoardController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +17,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class OpeningTreeViewModel(
-  private val profileId: Long,
-  private val gamesRepository: PlayerGamesRepository,
-  private val colorFilter: ColorFilter = ColorFilter.BOTH,
-  private val timeControlFilter: String? = null
+    private val profileId: Long,
+    private val gamesRepository: GamesRepository,
+    private val colorFilter: ColorFilter = ColorFilter.BOTH,
+    private val timeControlFilter: String? = null,
+    private val maxGamesForTree: Int? = null
 ) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
@@ -30,19 +33,82 @@ class OpeningTreeViewModel(
 
     init {
         viewModelScope.launch {
-            rebuildOpeningTree()
+            // First try to reuse a tree that was eagerly built and cached by
+            // the PlayerProfilesViewModel. If no matching cached tree exists,
+            // fall back to building it on demand as before.
+            val cached = getCachedTreeForCurrentFilters()
+            if (cached != null) {
+                openingTree = cached
+                updateBoardOrientation()
+                applyFen(cached.rootFen, cached)
+            } else {
+                rebuildOpeningTree()
+            }
         }
     }
 
-      private suspend fun rebuildOpeningTree() {
-        val allGamesWithPgn = gamesRepository.getGamesWithPgnForProfile(profileId)
-        val gamesWithPgn = applyFilters(allGamesWithPgn)
-        if (gamesWithPgn.isEmpty()) {
-          openingTree = null
-          _uiState.value = OpeningTreeUiState()
-          chessController.resetBoard()
-          return
+    private fun getCachedTreeForCurrentFilters(): OpeningTree? {
+        val normalizedColor = when (colorFilter) {
+            ColorFilter.WHITE_ONLY -> "white"
+            ColorFilter.BLACK_ONLY -> "black"
+            ColorFilter.BOTH -> "both"
         }
+        val normalizedTimeControl = timeControlFilter?.trim().orEmpty()
+
+        val key = OpeningTreeCacheKey(
+            profileId = profileId,
+            color = normalizedColor,
+            timeControlFilter = normalizedTimeControl,
+            maxGamesForTree = maxGamesForTree
+        )
+
+        return OpeningTreeCache.get(key)
+    }
+
+    private suspend fun rebuildOpeningTree() {
+        // Step 1: gather games from local database.
+        _uiState.value = OpeningTreeUiState(
+            isLoading = true,
+            statusMessage = "Gathering games..."
+        )
+
+        val allGamesWithPgn = gamesRepository.getGamesWithPgnForProfile(profileId)
+
+        if (allGamesWithPgn.isEmpty()) {
+            openingTree = null
+            _uiState.value = OpeningTreeUiState(
+                isLoading = false,
+                statusMessage = "No games stored for this profile yet.",
+                currentFen = null,
+                pathMoves = emptyList(),
+                moves = emptyList()
+            )
+            chessController.resetBoard()
+            return
+        }
+
+        // Step 2: apply color / time-control filters.
+        _uiState.value = _uiState.value.copy(statusMessage = "Applying filters...")
+        val filteredGames = applyFilters(allGamesWithPgn)
+        val gamesWithPgn = maxGamesForTree?.let { limit ->
+            filteredGames.take(limit)
+        } ?: filteredGames
+
+        if (gamesWithPgn.isEmpty()) {
+            openingTree = null
+            _uiState.value = OpeningTreeUiState(
+                isLoading = false,
+                statusMessage = "No games match current filters.",
+                currentFen = null,
+                pathMoves = emptyList(),
+                moves = emptyList()
+            )
+            chessController.resetBoard()
+            return
+        }
+
+        // Step 3: build the opening tree from PGNs.
+        _uiState.value = _uiState.value.copy(statusMessage = "Building opening tree...")
 
         val gamesForTree = gamesWithPgn.map { gwp ->
             GameForOpeningTree(
@@ -55,9 +121,18 @@ class OpeningTreeViewModel(
         openingTree = OpeningTreeBuilder.buildTree(gamesForTree)
         val tree = openingTree
         if (tree == null) {
-            _uiState.value = OpeningTreeUiState()
+            _uiState.value = OpeningTreeUiState(
+                isLoading = false,
+                statusMessage = "Failed to build opening tree.",
+                currentFen = null,
+                pathMoves = emptyList(),
+                moves = emptyList()
+            )
             chessController.resetBoard()
         } else {
+            // Step 4: analyze statistics / prepare first position.
+            _uiState.value = _uiState.value.copy(statusMessage = "Analyzing statistics...")
+            updateBoardOrientation()
             applyFen(tree.rootFen, tree)
         }
     }
@@ -89,7 +164,10 @@ class OpeningTreeViewModel(
 
         val path = buildPathForNode(node, tree)
 
-        _uiState.value = OpeningTreeUiState(
+        val previous = _uiState.value
+        _uiState.value = previous.copy(
+            isLoading = false,
+            statusMessage = null,
             currentFen = fen,
             pathMoves = path,
             moves = movesUi
@@ -142,47 +220,91 @@ class OpeningTreeViewModel(
     )
 
     data class OpeningTreeUiState(
+        val isLoading: Boolean = true,
+        val statusMessage: String? = null,
         val currentFen: String? = null,
         val pathMoves: List<String> = emptyList(),
         val moves: List<OpeningTreeMoveUi> = emptyList()
     )
 
-      enum class ColorFilter { BOTH, WHITE_ONLY, BLACK_ONLY }
-
-      private fun applyFilters(games: List<com.example.chessrepertoiretrainer.data.GameWithPgn>): List<com.example.chessrepertoiretrainer.data.GameWithPgn> {
-        var sequence = games.asSequence()
-
-        sequence = when (colorFilter) {
-          ColorFilter.BOTH -> sequence
-          ColorFilter.WHITE_ONLY -> sequence.filter { it.game.isUserWhite }
-          ColorFilter.BLACK_ONLY -> sequence.filter { !it.game.isUserWhite }
+    private fun updateBoardOrientation() {
+        val shouldBeFlipped = when (colorFilter) {
+            ColorFilter.BLACK_ONLY -> true
+            else -> false
         }
 
-        val tc = timeControlFilter?.trim().orEmpty()
-        if (tc.isNotEmpty()) {
-          sequence = sequence.filter { gwp ->
-            gwp.game.timeControl?.contains(tc, ignoreCase = true) == true
-          }
+        if (chessController.isFlipped != shouldBeFlipped) {
+            chessController.flipBoard()
+        }
+    }
+
+    enum class ColorFilter { BOTH, WHITE_ONLY, BLACK_ONLY }
+
+    private fun applyFilters(
+        games: List<com.example.chessrepertoiretrainer.data.GameWithPgn>
+    ): List<com.example.chessrepertoiretrainer.data.GameWithPgn> {
+        var sequence = games.asSequence()
+
+        // First apply color filter, if any.
+        sequence = when (colorFilter) {
+            ColorFilter.BOTH -> sequence
+            ColorFilter.WHITE_ONLY -> sequence.filter { it.game.isUserWhite }
+            ColorFilter.BLACK_ONLY -> sequence.filter { !it.game.isUserWhite }
+        }
+
+        // Then apply time-control filter, if provided.
+        val tcRaw = timeControlFilter?.trim().orEmpty()
+        if (tcRaw.isNotEmpty()) {
+            val categories = tcRaw.split(',')
+                .map { it.trim().lowercase() }
+                .filter { it.isNotEmpty() }
+                .toSet()
+
+            if (categories.isNotEmpty()) {
+                sequence = sequence.filter { gwp ->
+                    // Use the pre-computed normalized time category stored on
+                    // the Game entity (derived from provider-specific fields
+                    // like Chess.com time_class or Lichess speed).
+                    matchesTimeControlFilter(gwp.game.timeCategory, categories)
+                }
+            }
         }
 
         return sequence.toList()
-      }
+    }
 
-      class Factory(
+    class Factory(
         private val profileId: Long,
-        private val gamesRepository: PlayerGamesRepository,
+        private val gamesRepository: GamesRepository,
         private val colorFilter: ColorFilter,
-        private val timeControlFilter: String?
-      ) : ViewModelProvider.Factory {
+        private val timeControlFilter: String?,
+        private val maxGamesForTree: Int?
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-          return OpeningTreeViewModel(
-            profileId = profileId,
-            gamesRepository = gamesRepository,
-            colorFilter = colorFilter,
-            timeControlFilter = timeControlFilter
-          ) as T
+            return OpeningTreeViewModel(
+                profileId = profileId,
+                gamesRepository = gamesRepository,
+                colorFilter = colorFilter,
+                timeControlFilter = timeControlFilter,
+                maxGamesForTree = maxGamesForTree
+            ) as T
         }
-      }
+    }
 }
 
+/**
+ * Returns true if a game with the given normalized [gameTimeCategory]
+ * (e.g. "bullet", "blitz", "rapid", "classical") belongs to at least one
+ * of the [selectedCategories]. When [selectedCategories] is empty, no
+ * filtering is applied and the function always returns true.
+ */
+internal fun matchesTimeControlFilter(
+    gameTimeCategory: String?,
+    selectedCategories: Set<String>
+): Boolean {
+    if (selectedCategories.isEmpty()) return true
+
+    val category = gameTimeCategory?.trim()?.lowercase() ?: return false
+    return category in selectedCategories
+}
