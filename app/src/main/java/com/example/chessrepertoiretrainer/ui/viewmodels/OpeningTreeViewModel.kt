@@ -34,8 +34,10 @@ class OpeningTreeViewModel(
     init {
         viewModelScope.launch {
             // First try to reuse a tree that was eagerly built and cached by
-            // the PlayerProfilesViewModel. If no matching cached tree exists,
-            // fall back to building it on demand as before.
+            // one of the preparation viewmodels (e.g. MyStatsViewModel,
+            // OpeningTreeSearchViewModel, PlayerProfilesViewModel). If no
+            // matching cached tree exists, fall back to building it on demand
+            // as before.
             val cached = getCachedTreeForCurrentFilters()
             if (cached != null) {
                 openingTree = cached
@@ -89,7 +91,11 @@ class OpeningTreeViewModel(
 
         // Step 2: apply color / time-control filters.
         _uiState.value = _uiState.value.copy(statusMessage = "Applying filters...")
-        val filteredGames = applyFilters(allGamesWithPgn)
+        val filteredGames = OpeningTreeFilterUtils.filterGames(
+            games = allGamesWithPgn,
+            colorFilter = colorFilter,
+            timeControlFilter = timeControlFilter
+        )
         val gamesWithPgn = maxGamesForTree?.let { limit ->
             filteredGames.take(limit)
         } ?: filteredGames
@@ -240,38 +246,6 @@ class OpeningTreeViewModel(
 
     enum class ColorFilter { BOTH, WHITE_ONLY, BLACK_ONLY }
 
-    private fun applyFilters(
-        games: List<com.example.chessrepertoiretrainer.data.GameWithPgn>
-    ): List<com.example.chessrepertoiretrainer.data.GameWithPgn> {
-        var sequence = games.asSequence()
-
-        // First apply color filter, if any.
-        sequence = when (colorFilter) {
-            ColorFilter.BOTH -> sequence
-            ColorFilter.WHITE_ONLY -> sequence.filter { it.game.isUserWhite }
-            ColorFilter.BLACK_ONLY -> sequence.filter { !it.game.isUserWhite }
-        }
-
-        // Then apply time-control filter, if provided.
-        val tcRaw = timeControlFilter?.trim().orEmpty()
-        if (tcRaw.isNotEmpty()) {
-            val categories = tcRaw.split(',')
-                .map { it.trim().lowercase() }
-                .filter { it.isNotEmpty() }
-                .toSet()
-
-            if (categories.isNotEmpty()) {
-                sequence = sequence.filter { gwp ->
-                    // Use the pre-computed normalized time category stored on
-                    // the Game entity (derived from provider-specific fields
-                    // like Chess.com time_class or Lichess speed).
-                    matchesTimeControlFilter(gwp.game.timeCategory, categories)
-                }
-            }
-        }
-
-        return sequence.toList()
-    }
 
     class Factory(
         private val profileId: Long,

@@ -40,6 +40,7 @@ class PgnImporterParserTest {
         override suspend fun deleteChapter(chapter: Chapter) = error("Not used")
 
         override fun getLinesForChapter(chapterId: Int): Flow<List<Line>> = flowOf(emptyList())
+        override suspend fun getLineCountForChapter(chapterId: Int): Int = 0
         override suspend fun getLineById(id: Int): Line? = null
         override suspend fun insertLine(line: Line): Long = error("Not used")
         override suspend fun updateLine(line: Line) = error("Not used")

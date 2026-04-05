@@ -25,17 +25,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeSearchViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
- @Composable
- fun PlayerProfilesScreen(
-   viewModel: PlayerProfilesViewModel,
+@Composable
+fun OpeningTreeSearchScreen(
+   viewModel: OpeningTreeSearchViewModel,
    defaultLichessUsername: String,
    defaultChessComUsername: String,
    defaultPlatform: String,
    onOpenProfileTree: (profileId: Long, color: String, timeControl: String, maxGames: Int?) -> Unit
- ) {
+  ) {
   val uiState by viewModel.uiState.collectAsState()
 
   val (platform, setPlatform) = remember {
@@ -55,7 +55,7 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
 
      Scaffold(
          topBar = {
-                   TopAppBar(title = { Text("Opening tree") })
+                   TopAppBar(title = { Text("Opening tree search") })
          }
     ) { padding ->
         Column(
@@ -65,7 +65,7 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
                 .padding(16.dp)
         ) {
                    Text(
-                     text = "Prepare your opening tree from your online games",
+                     text = "Build an opening tree from any player's online games",
                      style = MaterialTheme.typography.titleMedium
                    )
 
@@ -188,7 +188,7 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
                        } else {
                          selectedCategories.joinToString(",")
                        }
-                       viewModel.syncGamesForUsername(
+                       viewModel.searchAndPrepareOpeningTree(
                          username = username,
                          platform = platform,
                          maxGamesForTree = maxGames,
@@ -231,3 +231,5 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
         }
     }
 }
+
+

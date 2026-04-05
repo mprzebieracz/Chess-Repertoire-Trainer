@@ -164,38 +164,18 @@ import kotlinx.coroutines.withContext
          // Step 2: apply filters on the main thread (cheap operations).
          _uiState.value = _uiState.value.copy(statusMessage = "Applying filters...")
 
-         var sequence = allGamesWithPgn.asSequence()
-
-         // Apply color filter in the same way as OpeningTreeViewModel.
          val colorFilterEnum = when (normalizedColor) {
              "white" -> OpeningTreeViewModel.ColorFilter.WHITE_ONLY
              "black" -> OpeningTreeViewModel.ColorFilter.BLACK_ONLY
              else -> OpeningTreeViewModel.ColorFilter.BOTH
          }
 
-         sequence = when (colorFilterEnum) {
-             OpeningTreeViewModel.ColorFilter.BOTH -> sequence
-             OpeningTreeViewModel.ColorFilter.WHITE_ONLY -> sequence.filter { it.game.isUserWhite }
-             OpeningTreeViewModel.ColorFilter.BLACK_ONLY -> sequence.filter { !it.game.isUserWhite }
-         }
+         val filteredGames = OpeningTreeFilterUtils.filterGames(
+             games = allGamesWithPgn,
+             colorFilter = colorFilterEnum,
+             timeControlFilter = normalizedTimeControl
+         )
 
-         // Apply time-control filter using the same category logic as the
-         // dedicated opening-tree viewmodel.
-         val tcRaw = normalizedTimeControl
-         if (tcRaw.isNotEmpty()) {
-             val categories = tcRaw.split(',')
-                 .map { it.trim().lowercase() }
-                 .filter { it.isNotEmpty() }
-                 .toSet()
-
-             if (categories.isNotEmpty()) {
-                 sequence = sequence.filter { gwp ->
-                     matchesTimeControlFilter(gwp.game.timeCategory, categories)
-                 }
-             }
-         }
-
-         val filteredGames = sequence.toList()
          if (filteredGames.isEmpty()) {
              OpeningTreeCache.clearForProfile(profileId)
              _uiState.value = _uiState.value.copy(statusMessage = "No games match current filters.")

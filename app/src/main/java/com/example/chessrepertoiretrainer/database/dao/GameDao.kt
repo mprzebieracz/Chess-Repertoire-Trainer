@@ -15,6 +15,9 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE profileId = :profileId ORDER BY playedAt DESC")
     fun getGamesForProfile(profileId: Long): Flow<List<Game>>
 
+    @Query("SELECT * FROM games WHERE profileId = :profileId ORDER BY playedAt DESC LIMIT :limit")
+    suspend fun getLastNGamesForProfile(profileId: Long, limit: Int): List<Game>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGame(game: Game): Long
 

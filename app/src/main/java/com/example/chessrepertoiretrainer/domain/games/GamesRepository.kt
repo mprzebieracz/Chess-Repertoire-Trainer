@@ -18,7 +18,10 @@ interface GamesRepository {
     fun getGamesForProfile(profileId: Long): Flow<List<Game>>
 
     /** Snapshot helper returning games together with their stored PGN. */
-    suspend fun getGamesWithPgnForProfile(profileId: Long): List<GameWithPgn>
+    suspend fun getGamesWithPgnForProfile(
+        profileId: Long,
+        maxGames: Int? = null
+    ): List<GameWithPgn>
 
     /**
      * Download/synchronize games for the given profile and persist them

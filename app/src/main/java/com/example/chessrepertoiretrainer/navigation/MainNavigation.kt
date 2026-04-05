@@ -20,6 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.chessrepertoiretrainer.database.ChessDatabase
 import com.example.chessrepertoiretrainer.data.ChessComGameFetcher
+import com.example.chessrepertoiretrainer.data.DefaultGameStatsRepository
 import com.example.chessrepertoiretrainer.data.GameFetcherRegistry
 import com.example.chessrepertoiretrainer.data.PlayerGamesRepository
 import com.example.chessrepertoiretrainer.data.PlayerProfileRepository
@@ -39,13 +40,13 @@ import com.example.chessrepertoiretrainer.ui.screens.CourseOverviewScreen
 import com.example.chessrepertoiretrainer.ui.screens.TrainScreen
 import com.example.chessrepertoiretrainer.ui.screens.LearnChapterScreen
 import com.example.chessrepertoiretrainer.ui.screens.TrainSelectionScreen
-import com.example.chessrepertoiretrainer.ui.screens.PlayerProfilesScreen
+import com.example.chessrepertoiretrainer.ui.screens.OpeningTreeSearchScreen
 import com.example.chessrepertoiretrainer.ui.screens.OpeningTreeScreen
+import com.example.chessrepertoiretrainer.ui.screens.MyStatsScreen
 import com.example.chessrepertoiretrainer.ui.viewmodels.AnalysisViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.ChaptersViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LineEditorViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LinesViewModel
-import com.example.chessrepertoiretrainer.ui.viewmodels.PlayerProfilesViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.PuzzleTrainingViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.PuzzlesViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.RepertoiresViewModel
@@ -55,6 +56,8 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LearnChapterViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.SettingsViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeSearchViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.MyStatsViewModel
 
 
 fun NavGraphBuilder.repertoireGraph(
@@ -189,8 +192,6 @@ fun NavGraphBuilder.repertoireGraph(
         arguments = listOf(navArgument("lineId") { type = NavType.IntType })
     ) { backStackEntry ->
         val trainingViewModel: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireDao))
-        val lineId = backStackEntry.arguments?.getInt("lineId") ?: return@composable
-
         TrainScreen(
             viewModel = trainingViewModel,
             onBackClick = { navController.popBackStack() },
@@ -214,6 +215,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
     val puzzleDao = db.puzzleDao()
     val playerProfileDao = db.playerProfileDao()
     val gameDao = db.gameDao()
+    val gameStatsDao = db.gameStatsDao()
     val puzzleRepository = DefaultPuzzleRepository(puzzleDao)
     val playerProfileRepository = PlayerProfileRepository(playerProfileDao)
     val gameFetcherRegistry = GameFetcherRegistry(
@@ -226,6 +228,10 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
         gameDao = gameDao,
         playerProfileDao = playerProfileDao,
         fetcherRegistry = gameFetcherRegistry
+    )
+    val gameStatsRepository = DefaultGameStatsRepository(
+        gamesRepository = playerGamesRepository,
+        gameStatsDao = gameStatsDao
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -245,12 +251,13 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
             modifier = Modifier.padding(innerPadding)
         ) {
             // Ekrany główne
-            composable(Screen.Home.route) {
-                HomeScreen(
-                    onOpenAnalysis = { navController.navigate(Screen.Analysis.route) }
-                )
-            }
-            composable(Screen.Train.route) {
+             composable(Screen.Home.route) {
+                 HomeScreen(
+                     onOpenAnalysis = { navController.navigate(Screen.Analysis.route) },
+                     onOpenMyStats = { navController.navigate(Screen.MyStats.route) }
+                 )
+             }
+             composable(Screen.Train.route) {
                 val selectionViewModel: TrainingSelectionViewModel =
                     viewModel(factory = TrainingSelectionViewModel.Factory(repertoireDao))
                 TrainSelectionScreen(
@@ -261,19 +268,18 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                     onBackClick = { navController.popBackStack() }
                 )
             }
-             // "My games" root screen: configure filters and download games for analysis.
+             // Opening tree search for arbitrary players (ephemeral, in-memory).
              composable(Screen.YourGames.route) {
-                 val vm: PlayerProfilesViewModel =
+                 val vm: OpeningTreeSearchViewModel =
                      viewModel(
-                         factory = PlayerProfilesViewModel.Factory(
-                             playerProfileRepository,
-                             playerGamesRepository
+                         factory = OpeningTreeSearchViewModel.Factory(
+                             gameFetcherRegistry
                          )
                      )
 
                  val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
 
-                 PlayerProfilesScreen(
+                 OpeningTreeSearchScreen(
                      viewModel = vm,
                      defaultLichessUsername = settings.lichessUsername,
                      defaultChessComUsername = settings.chessComUsername,
@@ -334,7 +340,34 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                     onBackClick = { navController.popBackStack() }
                 )
             }
-            composable(Screen.Settings.route) { SettingsScreen(viewModel = settingsViewModel) }
+             composable(Screen.Settings.route) { SettingsScreen(viewModel = settingsViewModel) }
+
+             composable(Screen.MyStats.route) {
+                 val vm: MyStatsViewModel = viewModel(
+                     factory = MyStatsViewModel.Factory(
+                         profileRepository = playerProfileRepository,
+                          gamesRepository = playerGamesRepository,
+                          gameStatsRepository = gameStatsRepository
+                     )
+                 )
+
+                 val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+
+                 MyStatsScreen(
+                     viewModel = vm,
+                     settings = settings,
+                     onOpenProfileTree = { profileId, color, timeControl, maxGames ->
+                         navController.navigate(
+                             Screen.OpeningTree.createRoute(
+                                 profileId = profileId,
+                                 color = color,
+                                 timeControl = timeControl,
+                                 maxGames = maxGames
+                             )
+                         )
+                     }
+                 )
+             }
 
             composable(Screen.Analysis.route) {
                 val analysisViewModel: AnalysisViewModel = viewModel()

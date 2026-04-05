@@ -23,11 +23,18 @@ class PlayerGamesRepository(
         gameDao.getGamesForProfile(profileId)
 
     /**
-     * Snapshot helper returning all games for a profile together with their
+     * Snapshot helper returning games for a profile together with their
      * stored PGN, for use by opening-tree style analyses.
      */
-    override suspend fun getGamesWithPgnForProfile(profileId: Long): List<GameWithPgn> {
-        val games = gameDao.getGamesForProfile(profileId).first()
+    override suspend fun getGamesWithPgnForProfile(
+        profileId: Long,
+        maxGames: Int?
+    ): List<GameWithPgn> {
+        val games: List<Game> = if (maxGames != null && maxGames > 0) {
+            gameDao.getLastNGamesForProfile(profileId, maxGames)
+        } else {
+            gameDao.getGamesForProfile(profileId).first()
+        }
         if (games.isEmpty()) return emptyList()
 
         val result = mutableListOf<GameWithPgn>()
