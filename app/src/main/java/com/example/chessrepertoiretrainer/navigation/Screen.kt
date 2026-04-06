@@ -37,6 +37,12 @@ import com.example.chessrepertoiretrainer.ui.icons.AppIcons
         fun createRoute(chapterId: Int) = "chapter_learn/$chapterId"
     }
 
+    // Read-only review mode for a chapter – step through moves of lines and
+    // quickly switch between lines without affecting learned status.
+    object ChapterReview : Screen("chapter_review/{chapterId}") {
+        fun createRoute(chapterId: Int) = "chapter_review/$chapterId"
+    }
+
     object LineEditor : Screen("line_editor/{lineId}") {
         fun createRoute(lineId: Int) = "line_editor/$lineId"
     }

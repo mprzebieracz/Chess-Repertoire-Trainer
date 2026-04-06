@@ -35,7 +35,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.R
-import com.example.chessrepertoiretrainer.data.BoardTheme
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
@@ -67,7 +66,8 @@ val BrownBoardThemeColors = BoardThemeColors(
 val LocalBoardThemeColors = androidx.compose.runtime.staticCompositionLocalOf { ClassicBoardThemeColors }
 private val SelectedSquareColor = Color(0xBBF5F682)
 private val LastMoveHighlightColor = Color(0x88F5F682)
-private val HoverHighlightColor = Color(0x66FFFFFF)
+// Bright amber color used for the hint/hover circle so it is clearly visible.
+private val HoverHighlightColor = Color(0xFFFFC107)
 
 @Composable
 fun ChessboardUI(state: ChessBoardController) {
@@ -115,6 +115,7 @@ fun ChessboardUI(state: ChessBoardController) {
                             isLastMove = state.lastMove?.from == square || state.lastMove?.to == square,
                             isLegalMove = legalMoves.contains(square),
                             isHovered = state.hoveredSquare == square,
+                            isMarked = state.markedSquare == square,
                             isHiddenForDrag = draggingSquare == square,
                             modifier = Modifier
                                 .weight(1f)
@@ -208,6 +209,7 @@ private fun ChessSquare(
     isLastMove: Boolean,
     isLegalMove: Boolean,
     isHovered: Boolean,
+    isMarked: Boolean,
     isHiddenForDrag: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -227,11 +229,6 @@ private fun ChessSquare(
                 .fillMaxSize()
                 .background(SelectedSquareColor)
         )
-        if (isHovered) Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(HoverHighlightColor)
-        )
 
         if (isLegalMove) {
             if (piece != Piece.NONE) {
@@ -247,6 +244,26 @@ private fun ChessSquare(
                         .background(Color(0x40000000), CircleShape)
                 )
             }
+        }
+
+        // Subtle feedback for the current drag hover target square.
+        if (isHovered) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(2.dp, Color(0x33000000))
+            )
+        }
+
+        // Lichess-style marked square ring used for explicit hints (puzzle hint,
+        // etc.). This is separate from isHovered so the hint does not change when
+        // you start dragging a piece.
+        if (isMarked) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(0.8f)
+                    .border(3.dp, HoverHighlightColor, CircleShape)
+            )
         }
 
         if (piece != Piece.NONE && !isHiddenForDrag) {
@@ -304,7 +321,11 @@ private fun Modifier.setupDragGestures(
     onDragEnd: () -> Unit
 ): Modifier = this
     .clickable { state.onSquareClick(square) }
-    .pointerInput(isFlipped) {
+    // Include [piece] and [sideToMove] as keys so the drag/hover gesture logic
+    // is restarted whenever pieces move or the side to move changes. This avoids
+    // stale closures where a square that was originally empty would never allow
+    // dragging after a piece moves onto it.
+    .pointerInput(isFlipped, piece, sideToMove) {
         detectDragGestures(
             onDragStart = { offset ->
                 if (piece != Piece.NONE && piece.pieceSide == sideToMove) {
@@ -327,7 +348,12 @@ private fun Modifier.setupDragGestures(
                 val targetRank = (currentY / squareSizePx).toInt().coerceIn(0, 7)
                     .let { if (isFlipped) it else 7 - it }
 
-                state.hoveredSquare = Square.entries.toTypedArray()[targetRank * 8 + targetFile]
+                val newHovered = Square.entries.toTypedArray()[targetRank * 8 + targetFile]
+                // Only update when the hovered square actually changes to avoid
+                // triggering unnecessary recompositions on every tiny drag step.
+                if (state.hoveredSquare != newHovered) {
+                    state.hoveredSquare = newHovered
+                }
             },
             onDragEnd = {
                 state.hoveredSquare?.let { target ->

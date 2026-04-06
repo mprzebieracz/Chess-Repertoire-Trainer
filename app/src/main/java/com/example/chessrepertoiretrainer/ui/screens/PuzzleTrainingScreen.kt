@@ -163,6 +163,13 @@ fun PuzzleTrainingScreen(
                         ) {
                             Text("Solution")
                         }
+
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { viewModel.showHint() }
+                        ) {
+                            Text("Hint")
+                        }
+
                         androidx.compose.material3.OutlinedButton(
                             onClick = { viewModel.nextPuzzle() }
                         ) {

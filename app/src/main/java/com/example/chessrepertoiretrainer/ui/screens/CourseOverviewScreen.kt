@@ -34,7 +34,8 @@ fun CourseOverviewScreen(
     onEditCourse: (repertoireId: Int) -> Unit,
     onTrainCourse: (repertoireId: Int) -> Unit,
     onOpenChapterLearn: (chapterId: Int) -> Unit,
-    onOpenChapterTrain: (chapterId: Int) -> Unit
+    onOpenChapterTrain: (chapterId: Int) -> Unit,
+    onOpenChapterReview: (chapterId: Int) -> Unit
 ) {
     val repertoire by viewModel.repertoire.collectAsState()
     val chaptersWithStats by viewModel.chaptersWithStats.collectAsState()
@@ -98,6 +99,7 @@ fun CourseOverviewScreen(
                 items(chaptersWithStats) { item ->
                     val chapter = item.chapter
                     val totalLines = item.totalLines
+                    val learnedLines = item.learnedLines
 
                     Card(
                         modifier = Modifier
@@ -114,10 +116,24 @@ fun CourseOverviewScreen(
                                 text = chapter.name,
                                 style = MaterialTheme.typography.titleMedium
                             )
+                            val percent =
+                                if (totalLines == 0) 0 else (learnedLines * 100 / totalLines)
                             Text(
-                                text = "Lines: $totalLines  •  0% learned",
+                                text = if (totalLines > 0) {
+                                    "$learnedLines / $totalLines lines learned ($percent%)"
+                                } else {
+                                    "No lines yet"
+                                },
                                 style = MaterialTheme.typography.bodySmall
                             )
+                            if (totalLines > 0) {
+                                androidx.compose.material3.LinearProgressIndicator(
+                                    progress = { learnedLines.toFloat() / totalLines.toFloat() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 4.dp)
+                                )
+                            }
 
                             Row(
                                 modifier = Modifier
@@ -129,13 +145,19 @@ fun CourseOverviewScreen(
                                     onClick = { onOpenChapterLearn(chapter.id) },
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text("Learn chapter")
+                                    Text("Learn")
+                                }
+                                androidx.compose.material3.OutlinedButton(
+                                    onClick = { onOpenChapterReview(chapter.id) },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("Review")
                                 }
                                 androidx.compose.material3.OutlinedButton(
                                     onClick = { onOpenChapterTrain(chapter.id) },
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text("Train chapter")
+                                    Text("Train")
                                 }
                             }
                         }

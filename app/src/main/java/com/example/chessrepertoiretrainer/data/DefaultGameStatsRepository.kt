@@ -115,9 +115,17 @@ class DefaultGameStatsRepository(
         )
     }
 
-    private fun buildOpeningKey(sanMoves: List<String>, maxPlies: Int = 8): String {
+    /**
+     * Build a short "opening key" from the first couple of moves in SAN.
+     *
+     * We intentionally cap this at the first two plies (e.g. "e4 e5", "e4 c5")
+     * so that the UI can show compact, easy-to-scan labels without needing a
+     * full ECO classifier or an opening book. If there are fewer than two
+     * moves, we just join whatever is available.
+     */
+    private fun buildOpeningKey(sanMoves: List<String>): String {
         if (sanMoves.isEmpty()) return "(no moves)"
-        return sanMoves.take(maxPlies).joinToString(" ")
+        return sanMoves.take(2).joinToString(" ")
     }
 
     private fun countUserMoves(plyCount: Int, isUserWhite: Boolean): Int {

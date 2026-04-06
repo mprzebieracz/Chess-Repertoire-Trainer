@@ -10,9 +10,7 @@ import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.database.entities.Line
 import com.example.chessrepertoiretrainer.database.entities.LineMove
 import com.example.chessrepertoiretrainer.ui.components.chess.DefaultChessBoardController
-import com.example.chessrepertoiretrainer.ui.components.chess.toSan
 import com.github.bhlangonijr.chesslib.Side
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,23 +42,22 @@ class TrainingViewModel(
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
 
     val chessController = DefaultChessBoardController()
+    private val moveTrainer = MoveTrainingEngine(chessController) { normalizeSan(it) }
 
     private val chapterId: Int? = savedStateHandle["chapterId"]
     private val lineId: Int? = savedStateHandle["lineId"]
     private var lines: List<Line> = emptyList()
     private var currentLineIndex: Int = -1
     private var currentLineMoves: List<LineMove> = emptyList()
-    private var expectedMoveIndex: Int = 0
     private var mySide: Side = Side.WHITE
-    private var isAutoPlaying: Boolean = false
 
     private fun normalizeSan(value: String): String {
         return value.trim().trimEnd('+', '#')
     }
 
     init {
-        chessController.onMoveListener = { _, san, _ ->
-            handleMoveFromBoard(san)
+        moveTrainer.setMoveResultListener { result ->
+            handleMoveResult(result)
         }
 
         viewModelScope.launch {
@@ -127,71 +124,42 @@ class TrainingViewModel(
         }
     }
 
-    private fun handleMoveFromBoard(san: String) {
-        if (isAutoPlaying) return
+    private fun handleMoveResult(result: MoveTrainingEngine.MoveResult) {
+        when (result) {
+            is MoveTrainingEngine.MoveResult.Correct -> {
+                _uiState.update {
+                    it.copy(
+                        lastMoveWasCorrect = true,
+                        lastUserSan = result.userSan,
+                        lastExpectedSan = result.expectedSan,
+                        statusMessage = null
+                    )
+                }
 
-        val moves = currentLineMoves
-        if (moves.isEmpty()) return
-
-        if (expectedMoveIndex !in moves.indices) return
-
-        val expectedSan = moves[expectedMoveIndex].moveSan
-        val isCorrect = normalizeSan(san) == normalizeSan(expectedSan)
-
-        if (isCorrect) {
-            expectedMoveIndex++
-
-            _uiState.update {
-                it.copy(
-                    lastMoveWasCorrect = true,
-                    lastUserSan = san,
-                    lastExpectedSan = expectedSan,
-                    statusMessage = null
-                )
-            }
-
-            viewModelScope.launch {
-                advanceThroughOpponentReplies()
-                if (expectedMoveIndex >= currentLineMoves.size) {
-                    finishCurrentLine(success = true)
-                } else {
-                    _uiState.update {
-                        it.copy(isWaitingForUserMove = true)
+                viewModelScope.launch {
+                    moveTrainer.advanceOpponentReplies()
+                    if (moveTrainer.isSequenceComplete()) {
+                        finishCurrentLine(success = true)
+                    } else {
+                        _uiState.update {
+                            it.copy(isWaitingForUserMove = true)
+                        }
                     }
                 }
             }
-        } else {
-            _uiState.update {
-                it.copy(
-                    lastMoveWasCorrect = false,
-                    lastUserSan = san,
-                    lastExpectedSan = expectedSan,
-                    isWaitingForUserMove = true,
-                    statusMessage = "Incorrect move"
-                )
+
+            is MoveTrainingEngine.MoveResult.Incorrect -> {
+                _uiState.update {
+                    it.copy(
+                        lastMoveWasCorrect = false,
+                        lastUserSan = result.userSan,
+                        lastExpectedSan = result.expectedSan,
+                        isWaitingForUserMove = true,
+                        statusMessage = "Incorrect move"
+                    )
+                }
+                chessController.navigateBack()
             }
-            chessController.navigateBack()
-        }
-    }
-
-    private suspend fun advanceThroughOpponentReplies() {
-        val moves = currentLineMoves
-        if (moves.isEmpty()) return
-
-        val board = chessController.getBoard()
-
-        while (expectedMoveIndex < moves.size && board.sideToMove != mySide) {
-            val targetSan = moves[expectedMoveIndex].moveSan
-            val legalMove = board.legalMoves().firstOrNull { move ->
-                board.toSan(move) == targetSan
-            } ?: break
-
-            delay(500)
-            isAutoPlaying = true
-            chessController.onMove(legalMove)
-            isAutoPlaying = false
-
-            expectedMoveIndex++
         }
     }
 
@@ -221,7 +189,12 @@ class TrainingViewModel(
         }
 
         currentLineMoves = repertoireDao.getMovesForLine(line.id).first()
-        expectedMoveIndex = 0
+        moveTrainer.reset(
+            MoveTrainingEngine.Config(
+                mySide = mySide,
+                sanMoves = currentLineMoves.map { it.moveSan }
+            )
+        )
 
         chessController.resetBoard()
         chessController.allowedMoveSide = mySide
@@ -254,9 +227,10 @@ class TrainingViewModel(
             return
         }
 
-        advanceThroughOpponentReplies()
+        // Auto-play any initial opponent moves before the first user move.
+        moveTrainer.advanceOpponentReplies()
 
-        if (expectedMoveIndex >= currentLineMoves.size) {
+        if (moveTrainer.isSequenceComplete()) {
             finishCurrentLine(success = true)
         } else {
             _uiState.update {

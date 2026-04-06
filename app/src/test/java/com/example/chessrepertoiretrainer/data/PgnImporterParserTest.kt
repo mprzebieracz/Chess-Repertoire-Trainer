@@ -41,11 +41,15 @@ class PgnImporterParserTest {
 
         override fun getLinesForChapter(chapterId: Int): Flow<List<Line>> = flowOf(emptyList())
         override suspend fun getLineCountForChapter(chapterId: Int): Int = 0
+        override suspend fun getLearnedLineCountForChapter(chapterId: Int): Int = 0
         override suspend fun getLineById(id: Int): Line? = null
         override suspend fun insertLine(line: Line): Long = error("Not used")
         override suspend fun updateLine(line: Line) = error("Not used")
         override suspend fun deleteLine(line: Line) = error("Not used")
         override fun getLinesToReview(currentTime: Long): Flow<List<Line>> = flowOf(emptyList())
+
+        override suspend fun getLineCountForRepertoire(repertoireId: Int): Int = 0
+        override suspend fun getLearnedLineCountForRepertoire(repertoireId: Int): Int = 0
 
         override fun getMovesForLine(lineId: Int): Flow<List<LineMove>> = flowOf(emptyList())
         override suspend fun getLineMovesByFen(fen: String): List<LineMove> = emptyList()

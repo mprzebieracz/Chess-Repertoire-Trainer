@@ -38,15 +38,21 @@ class CourseOverviewViewModel(
 
     data class ChapterWithStats(
         val chapter: Chapter,
-        val totalLines: Int
+        val totalLines: Int,
+        val learnedLines: Int
     )
 
     val chaptersWithStats: StateFlow<List<ChapterWithStats>> =
         repertoireDao.getChaptersForRepertoire(repertoireId)
             .mapLatest { chapters ->
                 chapters.map { chapter ->
-                    val lineCount = repertoireDao.getLineCountForChapter(chapter.id)
-                    ChapterWithStats(chapter = chapter, totalLines = lineCount)
+                    val total = repertoireDao.getLineCountForChapter(chapter.id)
+                    val learned = repertoireDao.getLearnedLineCountForChapter(chapter.id)
+                    ChapterWithStats(
+                        chapter = chapter,
+                        totalLines = total,
+                        learnedLines = learned
+                    )
                 }
             }
             .stateIn(

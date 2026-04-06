@@ -21,8 +21,14 @@ data class Line(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val chapterId: Int,
     val name: String,
+    // Review scheduling fields (simple SRS).
     val nextReviewDate: Long,
     val interval: Int,
     val easeFactor: Float,
-    val consecutiveCorrect: Int
+    val consecutiveCorrect: Int,
+    // Learning/progress tracking.
+    val isLearned: Boolean = false,
+    val learnedAt: Long? = null,
+    val timesTrained: Int = 0,
+    val lastTrainedAt: Long? = null
 )

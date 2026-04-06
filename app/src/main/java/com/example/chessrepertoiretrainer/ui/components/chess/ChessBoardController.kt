@@ -26,6 +26,7 @@ class DefaultChessBoardController(
     override var lastMove by mutableStateOf<Move?>(null)
         private set
     override var hoveredSquare by mutableStateOf<Square?>(null)
+    override var markedSquare by mutableStateOf<Square?>(null)
     override var isFlipped by mutableStateOf(false)
         private set
 
@@ -84,6 +85,7 @@ class DefaultChessBoardController(
                 pendingPromotion = PendingPromotion(move.from, move.to)
                 selectedSquare = null
                 hoveredSquare = null
+                markedSquare = null
                 return
             }
         }
@@ -175,6 +177,8 @@ class DefaultChessBoardController(
         boardState = board.fen
         selectedSquare = null
         lastMove = move
+        hoveredSquare = null
+        markedSquare = null
 
         onMoveListener?.invoke(move, san, board.fen)
     }
@@ -216,6 +220,7 @@ class DefaultChessBoardController(
         selectedSquare = null
         lastMove = null
         hoveredSquare = null
+        markedSquare = null
     }
 
     override fun loadPositionFromFen(fen: String) {
@@ -228,5 +233,6 @@ class DefaultChessBoardController(
         selectedSquare = null
         lastMove = null
         hoveredSquare = null
+        markedSquare = null
     }
 }

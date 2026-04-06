@@ -43,6 +43,7 @@ import com.example.chessrepertoiretrainer.ui.screens.TrainSelectionScreen
 import com.example.chessrepertoiretrainer.ui.screens.OpeningTreeSearchScreen
 import com.example.chessrepertoiretrainer.ui.screens.OpeningTreeScreen
 import com.example.chessrepertoiretrainer.ui.screens.MyStatsScreen
+import com.example.chessrepertoiretrainer.ui.screens.ReviewChapterScreen
 import com.example.chessrepertoiretrainer.ui.viewmodels.AnalysisViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.ChaptersViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LineEditorViewModel
@@ -54,6 +55,7 @@ import com.example.chessrepertoiretrainer.ui.viewmodels.CourseOverviewViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingSelectionViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.LearnChapterViewModel
+import com.example.chessrepertoiretrainer.ui.viewmodels.ReviewChapterViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.SettingsViewModel
 import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeSearchViewModel
@@ -82,26 +84,29 @@ fun NavGraphBuilder.repertoireGraph(
     ) {
         val vm: CourseOverviewViewModel =
             viewModel(factory = CourseOverviewViewModel.Factory(repertoireDao))
-            CourseOverviewScreen(
-                viewModel = vm,
-                onBackClick = { navController.popBackStack() },
-                onEditCourse = { repertoireId ->
-                    navController.navigate(Screen.Chapters.createRoute(repertoireId))
-                },
-                onTrainCourse = { _ ->
-                    // For now, training the course is equivalent to training all
-                    // chapters selected via the existing training tab. In a later
-                    // step we can introduce a dedicated "train course" flow.
-                    navController.navigate(Screen.Train.route)
-                },
-                onOpenChapterLearn = { chapterId ->
-                    // Open the dedicated learn flow for this chapter.
-                    navController.navigate(Screen.ChapterLearn.createRoute(chapterId))
-                },
-                onOpenChapterTrain = { chapterId ->
-                    navController.navigate(Screen.ChapterTraining.createRoute(chapterId))
-                }
-            )
+        CourseOverviewScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+            onEditCourse = { repertoireId ->
+                navController.navigate(Screen.Chapters.createRoute(repertoireId))
+            },
+            onTrainCourse = { _ ->
+                // For now, training the course is equivalent to training all
+                // chapters selected via the existing training tab. In a later
+                // step we can introduce a dedicated "train course" flow.
+                navController.navigate(Screen.Train.route)
+            },
+            onOpenChapterLearn = { chapterId ->
+                // Open the dedicated learn flow for this chapter.
+                navController.navigate(Screen.ChapterLearn.createRoute(chapterId))
+            },
+            onOpenChapterTrain = { chapterId ->
+                navController.navigate(Screen.ChapterTraining.createRoute(chapterId))
+            },
+            onOpenChapterReview = { chapterId ->
+                navController.navigate(Screen.ChapterReview.createRoute(chapterId))
+            }
+        )
     }
 
     // 1c. Learn chapter flow (step through each line, then train it)
@@ -133,6 +138,18 @@ fun NavGraphBuilder.repertoireGraph(
             onStartLineTraining = { lineId ->
                 navController.navigate(Screen.LineTraining.createRoute(lineId))
             }
+        )
+    }
+
+    // 1d. Review chapter flow (read-only browsing of lines)
+    composable(
+        route = Screen.ChapterReview.route,
+        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
+    ) {
+        val vm: ReviewChapterViewModel = viewModel(factory = ReviewChapterViewModel.Factory(repertoireDao))
+        ReviewChapterScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() }
         )
     }
 
@@ -399,6 +416,7 @@ private fun shouldShowBottomBar(destination: NavDestination?): Boolean {
         // powinny zajmować cały ekran (bez dolnego paska nawigacji).
         route.startsWith(Screen.LineEditor.route.substringBefore("/")) -> false
         route.startsWith(Screen.ChapterLearn.route.substringBefore("/")) -> false
+        route.startsWith(Screen.ChapterReview.route.substringBefore("/")) -> false
         route.startsWith(Screen.LineTraining.route.substringBefore("/")) -> false
         route == Screen.Analysis.route -> false
         route == Screen.PuzzleTraining.route -> false

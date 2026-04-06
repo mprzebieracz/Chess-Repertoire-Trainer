@@ -7,12 +7,33 @@ import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.database.entities.Repertoire
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+data class CourseProgress(
+    val repertoire: Repertoire,
+    val totalLines: Int,
+    val learnedLines: Int
+) {
+    val learnedFraction: Float
+        get() = if (totalLines == 0) 0f else learnedLines.toFloat() / totalLines
+}
+
 class RepertoiresViewModel(private val repertoireDao: RepertoireDao) : ViewModel() {
 
-    val repertoires: StateFlow<List<Repertoire>> = repertoireDao.getAllRepertoires()
+    val courses: StateFlow<List<CourseProgress>> = repertoireDao.getAllRepertoires()
+        .mapLatest { repertoires ->
+            repertoires.map { rep ->
+                val total = repertoireDao.getLineCountForRepertoire(rep.id)
+                val learned = repertoireDao.getLearnedLineCountForRepertoire(rep.id)
+                CourseProgress(
+                    repertoire = rep,
+                    totalLines = total,
+                    learnedLines = learned
+                )
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

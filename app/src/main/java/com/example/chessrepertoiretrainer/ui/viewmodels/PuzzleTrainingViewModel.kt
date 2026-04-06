@@ -41,12 +41,10 @@ class PuzzleTrainingViewModel(
     val uiState: StateFlow<PuzzleTrainingUiState> = _uiState.asStateFlow()
 
     val chessController = DefaultChessBoardController()
+    private val moveTrainer = MoveTrainingEngine(chessController) { normalizeSan(it) }
 
     private var currentPuzzle: Puzzle? = null
-    private var solutionMoves: List<String> = emptyList()
-    private var currentMoveIndex: Int = 0
     private var mySide: Side = Side.WHITE
-    private var isAutoPlaying: Boolean = false
     private var currentAttempts: Int = 0
 
     private fun normalizeSan(value: String): String =
@@ -54,8 +52,8 @@ class PuzzleTrainingViewModel(
 
     init {
         // Use SAN-based comparison like repertoire training.
-        chessController.onMoveListener = { _, san, _ ->
-            handleMoveFromBoard(san)
+        moveTrainer.setMoveResultListener { result ->
+            handleMoveResult(result)
         }
 
         viewModelScope.launch {
@@ -84,8 +82,6 @@ class PuzzleTrainingViewModel(
 
                 if (puzzle == null) {
                     currentPuzzle = null
-                    solutionMoves = emptyList()
-                    currentMoveIndex = 0
                     currentAttempts = 0
 
                     chessController.resetBoard()
@@ -108,7 +104,7 @@ class PuzzleTrainingViewModel(
                     }
                     return
                 }
-                // Start from this candidate puzzle – raw UCI tokens from the DB.
+                 // Start from this candidate puzzle – raw UCI tokens from the DB.
                 val rawTokens = puzzle.moves.split(" ").filter { it.isNotBlank() }
                 if (rawTokens.isEmpty()) {
                     // Puzzle without a solution sequence is not useful for training – mark as solved
@@ -122,7 +118,7 @@ class PuzzleTrainingViewModel(
 
                 // Convert the entire UCI solution to SAN using a separate working board.
                 val sanMoves = convertUciSequenceToSan(puzzle.fen, rawTokens)
-                if (sanMoves.isEmpty()) {
+                 if (sanMoves.isEmpty()) {
                     repository.updatePuzzleStats(
                         id = puzzle.id,
                         isSolved = true,
@@ -139,7 +135,7 @@ class PuzzleTrainingViewModel(
                         "sanSolution=${sanMoves.joinToString(" ")}"
                 )
 
-                // Now initialise the visible training board from the same FEN.
+                 // Now initialise the visible training board from the same FEN.
                 chessController.loadPositionFromFen(puzzle.fen)
                 val board = chessController.getBoard()
                 mySide = board.sideToMove
@@ -150,10 +146,15 @@ class PuzzleTrainingViewModel(
                     chessController.flipBoard()
                 }
 
-                currentPuzzle = puzzle
-                solutionMoves = sanMoves
-                currentMoveIndex = 0
-                currentAttempts = puzzle.attempts
+                 currentPuzzle = puzzle
+                 currentAttempts = puzzle.attempts
+
+                 moveTrainer.reset(
+                     MoveTrainingEngine.Config(
+                         mySide = mySide,
+                         sanMoves = sanMoves
+                     )
+                 )
 
                 _uiState.update {
                     it.copy(
@@ -175,8 +176,6 @@ class PuzzleTrainingViewModel(
 
             // Too many invalid puzzles in a row – treat as no valid puzzles available.
             currentPuzzle = null
-            solutionMoves = emptyList()
-            currentMoveIndex = 0
             currentAttempts = 0
 
             chessController.resetBoard()
@@ -199,8 +198,6 @@ class PuzzleTrainingViewModel(
             }
         } catch (e: Exception) {
             currentPuzzle = null
-            solutionMoves = emptyList()
-            currentMoveIndex = 0
             currentAttempts = 0
 
             chessController.resetBoard()
@@ -240,128 +237,87 @@ class PuzzleTrainingViewModel(
 
     fun showSolution() {
         if (currentPuzzle == null) return
-        if (solutionMoves.isEmpty()) return
-        if (currentMoveIndex >= solutionMoves.size) return
 
-    viewModelScope.launch {
-      val board = chessController.getBoard()
-
-      // Only allow showing the solution when it's the user's turn, to avoid
-      // racing with ongoing automatic opponent replies.
-      if (board.sideToMove != mySide) {
-        return@launch
-      }
-
-      // Play only the next solution move using SAN, like in repertoire training.
-      val targetSan = solutionMoves[currentMoveIndex]
-      val move = board.legalMoves().firstOrNull { legal ->
-        board.toSan(legal) == targetSan
-      }
-      if (move == null) {
-        _uiState.update {
-          it.copy(
-            statusMessage = "Unable to show solution move from this position.",
-            isWaitingForUserMove = true
-          )
-        }
-        return@launch
-      }
-
-      delay(300)
-      isAutoPlaying = true
-      chessController.onMove(move)
-      isAutoPlaying = false
-
-      currentMoveIndex++
-
-      if (currentMoveIndex >= solutionMoves.size) {
-        markPuzzleSolved()
-      } else {
-        _uiState.update {
-          it.copy(
-            statusMessage = "Solution move played.",
-            isWaitingForUserMove = board.sideToMove == mySide
-          )
-        }
-      }
-    }
-    }
-
-  private fun handleMoveFromBoard(san: String) {
-        if (isAutoPlaying) return
-
-        val puzzle = currentPuzzle ?: return
-        if (solutionMoves.isEmpty()) return
-        if (currentMoveIndex !in solutionMoves.indices) return
-
-    val expectedSan = solutionMoves[currentMoveIndex]
-    val isCorrect = normalizeSan(san) == normalizeSan(expectedSan)
-
-        if (isCorrect) {
-            currentMoveIndex++
-
-            _uiState.update {
-                it.copy(
-                    lastMoveWasCorrect = true,
-                    statusMessage = "Correct!"
-                )
+        viewModelScope.launch {
+            val finished = moveTrainer.playSolutionStep()
+            if (finished) {
+                markPuzzleSolved()
+            } else {
+                _uiState.update {
+                    it.copy(
+                        statusMessage = "Solution move played.",
+                        isWaitingForUserMove = true
+                    )
+                }
             }
+        }
+    }
 
-            viewModelScope.launch {
-                advanceThroughOpponentReplies()
-                if (currentMoveIndex >= solutionMoves.size) {
-                    markPuzzleSolved()
-                } else {
-                    _uiState.update {
-                        it.copy(
-                            isWaitingForUserMove = true,
-                            statusMessage = "Your turn"
-                        )
+    fun showHint() {
+        if (currentPuzzle == null) return
+
+        val square = moveTrainer.computeHintSquare()
+        if (square != null) {
+            chessController.markedSquare = square
+            _uiState.update {
+                it.copy(statusMessage = "Hint: highlighted the piece to move.")
+            }
+        } else {
+            _uiState.update {
+                it.copy(statusMessage = "No hint available right now.")
+            }
+        }
+    }
+
+    private fun handleMoveResult(result: MoveTrainingEngine.MoveResult) {
+        val puzzle = currentPuzzle ?: return
+
+        when (result) {
+            is MoveTrainingEngine.MoveResult.Correct -> {
+                _uiState.update {
+                    it.copy(
+                        lastMoveWasCorrect = true,
+                        statusMessage = "Correct!"
+                    )
+                }
+
+                viewModelScope.launch {
+                    moveTrainer.advanceOpponentReplies()
+                    if (moveTrainer.isSequenceComplete()) {
+                        markPuzzleSolved()
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isWaitingForUserMove = true,
+                                statusMessage = "Your turn"
+                            )
+                        }
                     }
                 }
             }
-        } else {
-            currentAttempts++
 
-            viewModelScope.launch {
-                repository.updatePuzzleStats(
-                    id = puzzle.id,
-                    isSolved = false,
-                    attempts = currentAttempts
-                )
+            is MoveTrainingEngine.MoveResult.Incorrect -> {
+                currentAttempts++
+
+                viewModelScope.launch {
+                    repository.updatePuzzleStats(
+                        id = puzzle.id,
+                        isSolved = false,
+                        attempts = currentAttempts
+                    )
+                }
+
+                _uiState.update {
+                    it.copy(
+                        lastMoveWasCorrect = false,
+                        attemptsForCurrent = currentAttempts,
+                        isWaitingForUserMove = true,
+                        statusMessage = "Incorrect, try again"
+                    )
+                }
+
+                chessController.navigateBack()
             }
-
-            _uiState.update {
-                it.copy(
-                    lastMoveWasCorrect = false,
-                    attemptsForCurrent = currentAttempts,
-                    isWaitingForUserMove = true,
-                    statusMessage = "Incorrect, try again"
-                )
-            }
-
-            chessController.navigateBack()
-        }
-    }
-
-    private suspend fun advanceThroughOpponentReplies() {
-        val puzzle = currentPuzzle ?: return
-        if (solutionMoves.isEmpty()) return
-
-        val board = chessController.getBoard()
-
-        while (currentMoveIndex < solutionMoves.size && board.sideToMove != mySide) {
-            val targetSan = solutionMoves[currentMoveIndex]
-            val legalMove = board.legalMoves().firstOrNull { move ->
-                board.toSan(move) == targetSan
-            } ?: break
-
-            delay(500)
-            isAutoPlaying = true
-            chessController.onMove(legalMove)
-            isAutoPlaying = false
-
-            currentMoveIndex++
         }
     }
 

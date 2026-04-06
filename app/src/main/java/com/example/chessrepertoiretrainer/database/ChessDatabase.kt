@@ -31,7 +31,7 @@ import com.example.chessrepertoiretrainer.database.entities.Repertoire
         GameMoves::class,
         GameStats::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class ChessDatabase : RoomDatabase() {

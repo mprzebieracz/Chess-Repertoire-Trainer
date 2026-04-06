@@ -53,6 +53,9 @@ interface RepertoireDao {
     @Query("SELECT COUNT(*) FROM lines WHERE chapterId = :chapterId")
     suspend fun getLineCountForChapter(chapterId: Int): Int
 
+    @Query("SELECT COUNT(*) FROM lines WHERE chapterId = :chapterId AND isLearned = 1")
+    suspend fun getLearnedLineCountForChapter(chapterId: Int): Int
+
     @Query("SELECT * FROM lines WHERE id = :id")
     suspend fun getLineById(id: Int): Line?
 
@@ -67,6 +70,17 @@ interface RepertoireDao {
 
     @Query("SELECT * FROM lines WHERE nextReviewDate <= :currentTime")
     fun getLinesToReview(currentTime: Long): Flow<List<Line>>
+
+    // Aggregated counts for course-level progress.
+    @Query(
+        "SELECT COUNT(*) FROM lines WHERE chapterId IN (SELECT id FROM chapters WHERE repertoireId = :repertoireId)"
+    )
+    suspend fun getLineCountForRepertoire(repertoireId: Int): Int
+
+    @Query(
+        "SELECT COUNT(*) FROM lines WHERE isLearned = 1 AND chapterId IN (SELECT id FROM chapters WHERE repertoireId = :repertoireId)"
+    )
+    suspend fun getLearnedLineCountForRepertoire(repertoireId: Int): Int
 
     // LineMove
     @Query("SELECT * FROM line_moves WHERE lineId = :lineId ORDER BY moveIndex ASC")
