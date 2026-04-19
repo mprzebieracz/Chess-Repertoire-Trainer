@@ -4,10 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chessrepertoiretrainer.data.AppThemeMode
 import com.example.chessrepertoiretrainer.data.BoardTheme
@@ -30,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 factory = SettingsViewModel.Factory(repository)
             )
 
-            val settingsState by settingsViewModel.settings.collectAsState()
+            val settingsState by settingsViewModel.settings.collectAsStateWithLifecycle()
 
             val darkTheme = when (settingsState.appThemeMode) {
                 AppThemeMode.SYSTEM -> null

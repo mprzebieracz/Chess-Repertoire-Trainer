@@ -2,7 +2,6 @@ package com.example.chessrepertoiretrainer.ui.viewmodels
 
 import com.example.chessrepertoiretrainer.data.FetchedGame
 import com.example.chessrepertoiretrainer.data.GameWithPgn
-import com.example.chessrepertoiretrainer.ui.viewmodels.OpeningTreeFilterUtils.filterGames
 
 /**
  * Shared helpers for applying opening-tree filters (color + time control)
@@ -45,7 +44,40 @@ object OpeningTreeFilterUtils {
 
             if (categories.isNotEmpty()) {
                 sequence = sequence.filter { gwp ->
-                    matchesTimeControlFilter(gwp.game.timeCategory, categories)
+                    isTimeControlMatch(gwp.game.timeCategory, categories)
+                }
+            }
+        }
+
+        return sequence.toList()
+    }
+
+    /**
+     * Variant of [filterGames] that uses a normalized color string.
+     */
+    fun filterGamesByColor(
+        games: List<GameWithPgn>,
+        color: String,
+        timeControlFilter: String
+    ): List<GameWithPgn> {
+        var sequence = games.asSequence()
+
+        sequence = when (color) {
+            "white" -> sequence.filter { it.game.isUserWhite }
+            "black" -> sequence.filter { !it.game.isUserWhite }
+            else -> sequence
+        }
+
+        val tcRaw = timeControlFilter
+        if (tcRaw.isNotEmpty()) {
+            val categories = tcRaw.split(',')
+                .map { it.trim().lowercase() }
+                .filter { it.isNotEmpty() }
+                .toSet()
+
+            if (categories.isNotEmpty()) {
+                sequence = sequence.filter { gwp ->
+                    isTimeControlMatch(gwp.game.timeCategory, categories)
                 }
             }
         }
@@ -88,12 +120,22 @@ object OpeningTreeFilterUtils {
 
             if (categories.isNotEmpty()) {
                 sequence = sequence.filter { fetched ->
-                    matchesTimeControlFilter(fetched.timeCategory, categories)
+                    isTimeControlMatch(fetched.timeCategory, categories)
                 }
             }
         }
 
         return sequence.toList()
+    }
+
+    private fun isTimeControlMatch(
+        gameTimeCategory: String?,
+        selectedCategories: Set<String>
+    ): Boolean {
+        if (selectedCategories.isEmpty()) return true
+
+        val category = gameTimeCategory?.trim()?.lowercase() ?: return false
+        return category in selectedCategories
     }
 }
 

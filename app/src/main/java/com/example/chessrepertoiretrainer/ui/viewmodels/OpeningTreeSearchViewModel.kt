@@ -4,28 +4,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.data.FetchedGame
-import com.example.chessrepertoiretrainer.data.GameFetcherRegistry
-import com.example.chessrepertoiretrainer.data.GameForOpeningTree
-import com.example.chessrepertoiretrainer.data.OpeningTreeBuilder
-import com.example.chessrepertoiretrainer.data.OpeningTreeCache
-import com.example.chessrepertoiretrainer.data.OpeningTreeCacheKey
-import kotlinx.coroutines.Dispatchers
+import com.example.chessrepertoiretrainer.data.OnlineGamesFetchCoordinator
+import com.example.chessrepertoiretrainer.data.OpeningTreePreparationCoordinator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * ViewModel used by the Opening Tree "search" screen. It fetches games for an
  * arbitrary username from the network only, builds an opening tree entirely in
- * memory, and stores it in [OpeningTreeCache] under a synthetic profile id so
+ * memory, and stores it in the opening-tree cache under a synthetic profile id so
  * that [OpeningTreeViewModel] can display it without persisting anything to
  * the local database.
  */
 class OpeningTreeSearchViewModel(
-    private val fetcherRegistry: GameFetcherRegistry
+    private val onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,
+    private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -55,36 +50,21 @@ class OpeningTreeSearchViewModel(
                 statusMessage = "Fetching games..."
             )
 
-            val normalizedUsername = username.trim()
-            val normalizedPlatform = platform.trim().lowercase()
+            val fetchResult = onlineGamesFetchCoordinator.fetchGames(
+                username = username,
+                platform = platform
+            )
 
-            val fetcher = fetcherRegistry.getFetcher(normalizedPlatform)
-            if (fetcher == null) {
+            if (fetchResult.errorMessage != null) {
                 _uiState.value = _uiState.value.copy(
                     isSyncing = false,
-                    errorMessage = "Unsupported platform: $platform",
+                    errorMessage = fetchResult.errorMessage,
                     statusMessage = null
                 )
                 return@launch
             }
 
-            val fetchedGames: List<FetchedGame> = try {
-                // Do not apply the max-games limit here; use it after applying
-                // color/time-control filters so the limit reflects the final
-                // games used for the tree.
-                fetcher.fetchGamesForUser(
-                    username = normalizedUsername,
-                    since = null,
-                    maxGames = null
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isSyncing = false,
-                    errorMessage = e.message ?: "Unexpected error while fetching games",
-                    statusMessage = null
-                )
-                return@launch
-            }
+            val fetchedGames = fetchResult.games
 
             if (fetchedGames.isEmpty()) {
                 _uiState.value = _uiState.value.copy(
@@ -97,15 +77,16 @@ class OpeningTreeSearchViewModel(
 
             _uiState.value = _uiState.value.copy(statusMessage = "Preparing games...")
 
-            val normalizedColor = color.trim().lowercase().ifEmpty { "both" }
-            val normalizedTimeControl = timeControlFilter.trim()
-
-            val filteredGames = OpeningTreeFilterUtils.filterFetchedGames(
+            val sessionProfileId = allocateSessionProfileId()
+            val gamesUsedForTree = openingTreePreparationCoordinator.prepareFromFetchedGames(
+                profileId = sessionProfileId,
                 games = fetchedGames,
-                color = normalizedColor,
-                timeControlFilter = normalizedTimeControl
+                color = color,
+                timeControlFilter = timeControlFilter,
+                maxGamesForTree = maxGamesForTree
             )
-            if (filteredGames.isEmpty()) {
+
+            if (gamesUsedForTree <= 0) {
                 _uiState.value = _uiState.value.copy(
                     isSyncing = false,
                     lastSyncSummary = "No games match current filters.",
@@ -114,53 +95,9 @@ class OpeningTreeSearchViewModel(
                 return@launch
             }
 
-            val limitedGames = maxGamesForTree?.let { limit ->
-                _uiState.value = _uiState.value.copy(statusMessage = "Limiting to $limit games...")
-                filteredGames.take(limit)
-            } ?: filteredGames
-
-            _uiState.value = _uiState.value.copy(statusMessage = "Building opening tree...")
-
-            val tree = withContext(Dispatchers.Default) {
-                if (limitedGames.isEmpty()) {
-                    null
-                } else {
-                    val gamesForTree = limitedGames.map { fetched ->
-                        GameForOpeningTree(
-                            pgn = fetched.pgn,
-                            isUserWhite = fetched.isUserWhite,
-                            resultTag = fetched.result
-                        )
-                    }
-                    OpeningTreeBuilder.buildTree(gamesForTree)
-                }
-            }
-
-            if (tree == null) {
-                _uiState.value = _uiState.value.copy(
-                    isSyncing = false,
-                    lastSyncSummary = null,
-                    statusMessage = "Failed to build opening tree."
-                )
-                return@launch
-            }
-
-            val sessionProfileId = allocateSessionProfileId()
-
-            // Store the tree in the in-memory cache so OpeningTreeViewModel can
-            // reuse it without touching the database.
-            val cacheKey = OpeningTreeCacheKey(
-                profileId = sessionProfileId,
-                color = normalizedColor,
-                timeControlFilter = normalizedTimeControl,
-                maxGamesForTree = maxGamesForTree
-            )
-            OpeningTreeCache.clearForProfile(sessionProfileId)
-            OpeningTreeCache.put(cacheKey, tree)
-
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,
-                lastSyncSummary = "Prepared opening tree from ${limitedGames.size} games",
+                lastSyncSummary = "Prepared opening tree from $gamesUsedForTree games",
                 statusMessage = "Opening tree ready."
             )
 
@@ -180,11 +117,15 @@ class OpeningTreeSearchViewModel(
     )
 
     class Factory(
-        private val fetcherRegistry: GameFetcherRegistry
+        private val onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,
+        private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            return OpeningTreeSearchViewModel(fetcherRegistry) as T
+            return OpeningTreeSearchViewModel(
+                onlineGamesFetchCoordinator = onlineGamesFetchCoordinator,
+                openingTreePreparationCoordinator = openingTreePreparationCoordinator
+            ) as T
         }
     }
 }

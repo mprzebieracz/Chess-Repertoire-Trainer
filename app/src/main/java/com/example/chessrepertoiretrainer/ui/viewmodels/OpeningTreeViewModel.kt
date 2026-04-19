@@ -35,7 +35,7 @@ class OpeningTreeViewModel(
         viewModelScope.launch {
             // First try to reuse a tree that was eagerly built and cached by
             // one of the preparation viewmodels (e.g. MyStatsViewModel,
-            // OpeningTreeSearchViewModel, PlayerProfilesViewModel). If no
+            // OpeningTreeSearchViewModel). If no
             // matching cached tree exists, fall back to building it on demand
             // as before.
             val cached = getCachedTreeForCurrentFilters()
@@ -267,18 +267,3 @@ class OpeningTreeViewModel(
     }
 }
 
-/**
- * Returns true if a game with the given normalized [gameTimeCategory]
- * (e.g. "bullet", "blitz", "rapid", "classical") belongs to at least one
- * of the [selectedCategories]. When [selectedCategories] is empty, no
- * filtering is applied and the function always returns true.
- */
-internal fun matchesTimeControlFilter(
-    gameTimeCategory: String?,
-    selectedCategories: Set<String>
-): Boolean {
-    if (selectedCategories.isEmpty()) return true
-
-    val category = gameTimeCategory?.trim()?.lowercase() ?: return false
-    return category in selectedCategories
-}

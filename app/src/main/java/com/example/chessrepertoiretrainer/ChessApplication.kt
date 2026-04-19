@@ -1,8 +1,10 @@
 package com.example.chessrepertoiretrainer
 
 import android.app.Application
-import com.example.chessrepertoiretrainer.database.ChessDatabase
+import com.example.chessrepertoiretrainer.data.AppContainer
 
 class ChessApplication : Application() {
-    val database: ChessDatabase by lazy { ChessDatabase.getDatabase(this) }
+    val appContainer: AppContainer by lazy {
+        AppContainer(this)
+    }
 }

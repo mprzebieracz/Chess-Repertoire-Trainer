@@ -14,11 +14,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.ui.components.chess.ChessScreenLayout
 import com.example.chessrepertoiretrainer.ui.viewmodels.TrainingViewModel
 
@@ -28,7 +28,7 @@ fun TrainScreen(
     onBackClick: (() -> Unit)? = null,
     onSessionComplete: (() -> Unit)? = null
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Notify caller when the training session is finished (used for
     // single-line training so the learn flow can continue automatically).

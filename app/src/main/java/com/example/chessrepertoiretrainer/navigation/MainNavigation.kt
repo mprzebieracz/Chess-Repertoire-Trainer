@@ -18,15 +18,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.chessrepertoiretrainer.database.ChessDatabase
-import com.example.chessrepertoiretrainer.data.ChessComGameFetcher
-import com.example.chessrepertoiretrainer.data.DefaultGameStatsRepository
-import com.example.chessrepertoiretrainer.data.GameFetcherRegistry
-import com.example.chessrepertoiretrainer.data.PlayerGamesRepository
-import com.example.chessrepertoiretrainer.data.PlayerProfileRepository
+import com.example.chessrepertoiretrainer.ChessApplication
 import com.example.chessrepertoiretrainer.domain.games.GamesRepository
 import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
-import com.example.chessrepertoiretrainer.data.DefaultPuzzleRepository
 import com.example.chessrepertoiretrainer.ui.screens.AnalysisScreen
 import com.example.chessrepertoiretrainer.ui.screens.ChaptersScreen
 import com.example.chessrepertoiretrainer.ui.screens.HomeScreen
@@ -227,29 +221,11 @@ fun NavGraphBuilder.repertoireGraph(
 @Composable
 fun AppNavigation(settingsViewModel: SettingsViewModel) {
     val navController = rememberNavController()
-    val db = ChessDatabase.getDatabase(LocalContext.current)
-    val repertoireDao = db.repertoireDao()
-    val puzzleDao = db.puzzleDao()
-    val playerProfileDao = db.playerProfileDao()
-    val gameDao = db.gameDao()
-    val gameStatsDao = db.gameStatsDao()
-    val puzzleRepository = DefaultPuzzleRepository(puzzleDao)
-    val playerProfileRepository = PlayerProfileRepository(playerProfileDao)
-    val gameFetcherRegistry = GameFetcherRegistry(
-        listOf(
-            com.example.chessrepertoiretrainer.data.LichessGameFetcher,
-            ChessComGameFetcher
-        )
-    )
-    val playerGamesRepository: GamesRepository = PlayerGamesRepository(
-        gameDao = gameDao,
-        playerProfileDao = playerProfileDao,
-        fetcherRegistry = gameFetcherRegistry
-    )
-    val gameStatsRepository = DefaultGameStatsRepository(
-        gamesRepository = playerGamesRepository,
-        gameStatsDao = gameStatsDao
-    )
+    val appContainer = (LocalContext.current.applicationContext as ChessApplication).appContainer
+
+    val repertoireDao = appContainer.repertoireDao
+    val puzzleRepository = appContainer.puzzleRepository
+    val playerGamesRepository: GamesRepository = appContainer.gamesRepository
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -290,7 +266,8 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                  val vm: OpeningTreeSearchViewModel =
                      viewModel(
                          factory = OpeningTreeSearchViewModel.Factory(
-                             gameFetcherRegistry
+                             appContainer.onlineGamesFetchCoordinator,
+                             appContainer.openingTreePreparationCoordinator
                          )
                      )
 
@@ -362,9 +339,9 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
              composable(Screen.MyStats.route) {
                  val vm: MyStatsViewModel = viewModel(
                      factory = MyStatsViewModel.Factory(
-                         profileRepository = playerProfileRepository,
-                          gamesRepository = playerGamesRepository,
-                          gameStatsRepository = gameStatsRepository
+                         accountSyncCoordinator = appContainer.accountSyncCoordinator,
+                         statsRefreshCoordinator = appContainer.statsRefreshCoordinator,
+                         openingTreePreparationCoordinator = appContainer.openingTreePreparationCoordinator
                      )
                  )
 

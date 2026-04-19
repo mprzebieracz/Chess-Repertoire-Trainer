@@ -4,31 +4,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.data.GameForOpeningTree
+import com.example.chessrepertoiretrainer.data.AccountSyncCoordinator
 import com.example.chessrepertoiretrainer.data.GameWithPgn
-import com.example.chessrepertoiretrainer.data.OpeningTreeBuilder
 import com.example.chessrepertoiretrainer.data.OpeningTreeCache
-import com.example.chessrepertoiretrainer.data.OpeningTreeCacheKey
-import com.example.chessrepertoiretrainer.data.PlayerProfileRepository
+import com.example.chessrepertoiretrainer.data.OpeningTreePreparationCoordinator
+import com.example.chessrepertoiretrainer.data.StatsRefreshCoordinator
 import com.example.chessrepertoiretrainer.domain.games.GamesRepository
-import com.example.chessrepertoiretrainer.domain.stats.GameStatsRepository
 import com.example.chessrepertoiretrainer.domain.stats.GameStatsSummary
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for the "My stats" screen. It works with the persisted
- * [PlayerProfile] and [GamesRepository] to keep the user's own games stored
+ * player profiles and [GamesRepository] to keep the user's own games stored
  * locally and to eagerly build opening trees for their accounts.
  */
  class MyStatsViewModel(
-     private val profileRepository: PlayerProfileRepository,
-     private val gamesRepository: GamesRepository,
-     private val gameStatsRepository: GameStatsRepository
+     private val accountSyncCoordinator: AccountSyncCoordinator,
+     private val statsRefreshCoordinator: StatsRefreshCoordinator,
+     private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
  ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MyStatsUiState())
@@ -67,20 +63,10 @@ import kotlinx.coroutines.withContext
             return
         }
 
-        val profile = try {
-            profileRepository.getOrCreateProfile(trimmed, platform)
-        } catch (_: Exception) {
-            // Surface errors only when the user explicitly triggers sync.
-            return
-        }
+        val profile = accountSyncCoordinator.resolveOrCreateProfile(trimmed, platform)
+            ?: return
 
-        val gamesCount = try {
-            withContext(Dispatchers.IO) {
-                gamesRepository.getGamesWithPgnForProfile(profile.id).size
-            }
-        } catch (_: Exception) {
-            0
-        }
+        val gamesCount = accountSyncCoordinator.getStoredGamesCount(profile.id)
 
         updateAccount(platform) { existing ->
             val base = existing ?: AccountStats(
@@ -101,23 +87,14 @@ import kotlinx.coroutines.withContext
         // "My stats" screen can show a quick overview without having to
         // parse PGNs on every recomposition. This runs off the main thread.
         if (gamesCount > 0) {
-            try {
-                withContext(Dispatchers.Default) {
-                    gameStatsRepository.recomputeStatsForProfile(profile.id)
+            val summary = statsRefreshCoordinator.recomputeAndLoadSummary(profile.id)
+            if (summary != null) {
+                val current = _uiState.value
+                _uiState.value = when (platform.lowercase()) {
+                    "lichess" -> current.copy(lichessStats = summary)
+                    "chess.com" -> current.copy(chessComStats = summary)
+                    else -> current
                 }
-                val summary: GameStatsSummary? = withContext(Dispatchers.IO) {
-                    gameStatsRepository.loadSummaryForProfile(profile.id)
-                }
-                if (summary != null) {
-                    val current = _uiState.value
-                    _uiState.value = when (platform.lowercase()) {
-                        "lichess" -> current.copy(lichessStats = summary)
-                        "chess.com" -> current.copy(chessComStats = summary)
-                        else -> current
-                    }
-                }
-            } catch (_: Exception) {
-                // Stats are best-effort; ignore failures here.
             }
         }
     }
@@ -145,15 +122,12 @@ import kotlinx.coroutines.withContext
 
             if (accountsToUse.isEmpty()) return@launch
 
-            val normalizedColor = color.trim().lowercase().ifEmpty { "both" }
-            val normalizedTimeControl = timeControlFilter.trim()
-
             // Fast path: if we already have a cached combined tree for these
             // filters and no new sync is required, reuse it immediately.
-            val cacheKey = OpeningTreeCacheKey(
+            val cacheKey = openingTreePreparationCoordinator.buildCacheKey(
                 profileId = COMBINED_PROFILE_ID,
-                color = normalizedColor,
-                timeControlFilter = normalizedTimeControl,
+                color = color,
+                timeControlFilter = timeControlFilter,
                 maxGamesForTree = maxGamesForTree
             )
             val cached = OpeningTreeCache.get(cacheKey)
@@ -183,42 +157,23 @@ import kotlinx.coroutines.withContext
             accountsToUse.forEach { acc ->
                 if (acc.gamesCount > 0) return@forEach
 
-                try {
-                    val result = gamesRepository.syncGamesForProfile(acc.profileId, null)
-                    val refreshedProfile = try {
-                        profileRepository.getProfileById(acc.profileId)
-                    } catch (_: Exception) {
-                        null
-                    }
-                    val updatedLastSyncTime = refreshedProfile?.lastSyncTime ?: acc.lastSyncTime
-
-                    updateAccount(acc.platform) { existing ->
-                        val base = existing ?: acc
-                        base.copy(
-                            lastSyncTime = updatedLastSyncTime,
-                            errorMessage = result.errorMessage
-                        )
-                    }
-                } catch (e: Exception) {
-                    updateAccount(acc.platform) { existing ->
-                        val base = existing ?: acc
-                        base.copy(
-                            isSyncing = false,
-                            statusMessage = null,
-                            errorMessage = e.message ?: "Unexpected error during sync"
-                        )
-                    }
+                val sync = accountSyncCoordinator.syncAccount(acc.profileId)
+                updateAccount(acc.platform) { existing ->
+                    val base = existing ?: acc
+                    base.copy(
+                        lastSyncTime = sync.updatedLastSyncTime ?: base.lastSyncTime,
+                        errorMessage = sync.errorMessage
+                    )
                 }
             }
 
             // Gather (optionally limited) games for all selected accounts.
             val allGamesWithPgn = mutableListOf<GameWithPgn>()
             accountsToUse.forEach { acc ->
-                val gamesForProfile = try {
-                    gamesRepository.getGamesWithPgnForProfile(acc.profileId, maxGamesForTree)
-                } catch (_: Exception) {
-                    emptyList()
-                }
+                val gamesForProfile = accountSyncCoordinator.getGamesWithPgnForProfile(
+                    profileId = acc.profileId,
+                    maxGames = maxGamesForTree
+                )
                 allGamesWithPgn += gamesForProfile
 
                 // Keep basic stats up-to-date.
@@ -229,9 +184,9 @@ import kotlinx.coroutines.withContext
             }
 
             val gamesUsedForTree = try {
-                buildAndCacheCombinedOpeningTree(
-                    syntheticProfileId = COMBINED_PROFILE_ID,
-                    allGamesWithPgn = allGamesWithPgn,
+                openingTreePreparationCoordinator.prepareFromStoredGames(
+                    profileId = COMBINED_PROFILE_ID,
+                    games = allGamesWithPgn,
                     color = color,
                     timeControlFilter = timeControlFilter,
                     maxGamesForTree = maxGamesForTree
@@ -261,24 +216,7 @@ import kotlinx.coroutines.withContext
             // sync for some accounts), recompute per-account stats so the UI
             // can immediately show updated numbers.
             accountsToUse.forEach { acc ->
-                try {
-                    withContext(Dispatchers.Default) {
-                        gameStatsRepository.recomputeStatsForProfile(acc.profileId)
-                    }
-                    val summary: GameStatsSummary? = withContext(Dispatchers.IO) {
-                        gameStatsRepository.loadSummaryForProfile(acc.profileId)
-                    }
-                    if (summary != null) {
-                        val current = _uiState.value
-                        _uiState.value = when (acc.platform.lowercase()) {
-                            "lichess" -> current.copy(lichessStats = summary)
-                            "chess.com" -> current.copy(chessComStats = summary)
-                            else -> current
-                        }
-                    }
-                } catch (_: Exception) {
-                    // Stats recompute is best-effort here.
-                }
+                recomputeAndApplySummaryForAccount(acc)
             }
 
             if (gamesUsedForTree > 0) {
@@ -290,7 +228,7 @@ import kotlinx.coroutines.withContext
     /**
      * Explicitly refresh games from the remote APIs for the selected
      * platforms. This will contact Lichess and/or Chess.com, fetch any games
-     * that are newer than [PlayerProfile.lastSyncTime], and store them in the
+     * that are newer than the profile's last sync time, and store them in the
      * local database. It also clears any cached opening trees for the
      * combined "My stats" view so that subsequent tree builds include the
      * newly downloaded games.
@@ -326,48 +264,26 @@ import kotlinx.coroutines.withContext
             // for calling the remote API and returning only games newer than
             // the last sync.
             accountsToUse.forEach { acc ->
-                try {
-                    val result = gamesRepository.syncGamesForProfile(acc.profileId, null)
+                val sync = accountSyncCoordinator.syncAccount(acc.profileId)
 
-                    val refreshedProfile = try {
-                        profileRepository.getProfileById(acc.profileId)
-                    } catch (_: Exception) {
-                        null
-                    }
-                    val updatedLastSyncTime = refreshedProfile?.lastSyncTime ?: acc.lastSyncTime
-
-                    // After sync, recompute how many games we have stored
-                    // locally for this profile.
-                    val gamesCount = try {
-                        gamesRepository.getGamesWithPgnForProfile(acc.profileId).size
-                    } catch (_: Exception) {
-                        acc.gamesCount
-                    }
-
-                    updateAccount(acc.platform) { existing ->
-                        val base = existing ?: acc
-                        base.copy(
-                            isSyncing = false,
-                            statusMessage = null,
-                            lastSyncTime = updatedLastSyncTime,
-                            gamesCount = gamesCount,
-                            lastSyncSummary = if (result.newGames > 0) {
-                                "Downloaded ${result.newGames} new games"
+                updateAccount(acc.platform) { existing ->
+                    val base = existing ?: acc
+                    base.copy(
+                        isSyncing = false,
+                        statusMessage = null,
+                        lastSyncTime = sync.updatedLastSyncTime ?: base.lastSyncTime,
+                        gamesCount = if (sync.gamesCount > 0) sync.gamesCount else base.gamesCount,
+                        lastSyncSummary = if (sync.errorMessage == null) {
+                            if (sync.newGames > 0) {
+                                "Downloaded ${sync.newGames} new games"
                             } else {
                                 "No new games found"
-                            },
-                            errorMessage = result.errorMessage
-                        )
-                    }
-                } catch (e: Exception) {
-                    updateAccount(acc.platform) { existing ->
-                        val base = existing ?: acc
-                        base.copy(
-                            isSyncing = false,
-                            statusMessage = null,
-                            errorMessage = e.message ?: "Unexpected error during sync"
-                        )
-                    }
+                            }
+                        } else {
+                            base.lastSyncSummary
+                        },
+                        errorMessage = sync.errorMessage
+                    )
                 }
             }
 
@@ -383,181 +299,21 @@ import kotlinx.coroutines.withContext
             // After syncing games, recompute per-account stats so the UI can
             // immediately show updated numbers.
             accountsToUse.forEach { acc ->
-                try {
-                    withContext(Dispatchers.Default) {
-                        gameStatsRepository.recomputeStatsForProfile(acc.profileId)
-                    }
-                    val summary: GameStatsSummary? = withContext(Dispatchers.IO) {
-                        gameStatsRepository.loadSummaryForProfile(acc.profileId)
-                    }
-                    if (summary != null) {
-                        val current = _uiState.value
-                        _uiState.value = when (acc.platform.lowercase()) {
-                            "lichess" -> current.copy(lichessStats = summary)
-                            "chess.com" -> current.copy(chessComStats = summary)
-                            else -> current
-                        }
-                    }
-                } catch (_: Exception) {
-                    // Ignore stats recompute failures here; core sync already
-                    // completed.
-                }
+                recomputeAndApplySummaryForAccount(acc)
             }
         }
     }
 
-    private suspend fun buildAndCacheOpeningTreeForProfile(
-        platform: String,
-        profileId: Long,
-        color: String,
-        timeControlFilter: String,
-        maxGamesForTree: Int?
-    ): Int {
-        val normalizedColor = color.trim().lowercase().ifEmpty { "both" }
-        val normalizedTimeControl = timeControlFilter.trim()
-
-        updateAccount(platform) { current ->
-            current?.copy(statusMessage = "Preparing games...")
-        }
-
-        val allGamesWithPgn = gamesRepository.getGamesWithPgnForProfile(profileId)
-        if (allGamesWithPgn.isEmpty()) {
-            OpeningTreeCache.clearForProfile(profileId)
-            updateAccount(platform) { current ->
-                current?.copy(statusMessage = "No games stored for this profile yet.")
-            }
-            return 0
-        }
-
-        updateAccount(platform) { current ->
-            current?.copy(statusMessage = "Applying filters...")
-        }
-
-        val colorEnum = when (normalizedColor) {
-            "white" -> OpeningTreeViewModel.ColorFilter.WHITE_ONLY
-            "black" -> OpeningTreeViewModel.ColorFilter.BLACK_ONLY
-            else -> OpeningTreeViewModel.ColorFilter.BOTH
-        }
-
-        val filteredGames = OpeningTreeFilterUtils.filterGames(
-            games = allGamesWithPgn,
-            colorFilter = colorEnum,
-            timeControlFilter = normalizedTimeControl
-        )
-        if (filteredGames.isEmpty()) {
-            OpeningTreeCache.clearForProfile(profileId)
-            updateAccount(platform) { current ->
-                current?.copy(statusMessage = "No games match current filters.")
-            }
-            return 0
-        }
-
-        val limitedGames = maxGamesForTree?.let { limit ->
-            updateAccount(platform) { current ->
-                current?.copy(statusMessage = "Limiting to $limit games...")
-            }
-            filteredGames.take(limit)
-        } ?: filteredGames
-
-        updateAccount(platform) { current ->
-            current?.copy(statusMessage = "Building opening tree...")
-        }
-
-        val tree = withContext(Dispatchers.Default) {
-            if (limitedGames.isEmpty()) {
-                null
-            } else {
-                val gamesForTree = limitedGames.map { gwp ->
-                    GameForOpeningTree(
-                        pgn = gwp.pgn,
-                        isUserWhite = gwp.game.isUserWhite,
-                        resultTag = gwp.game.result
-                    )
-                }
-                OpeningTreeBuilder.buildTree(gamesForTree)
+    private suspend fun recomputeAndApplySummaryForAccount(account: AccountStats) {
+        val summary = statsRefreshCoordinator.recomputeAndLoadSummary(account.profileId)
+        if (summary != null) {
+            val current = _uiState.value
+            _uiState.value = when (account.platform.lowercase()) {
+                "lichess" -> current.copy(lichessStats = summary)
+                "chess.com" -> current.copy(chessComStats = summary)
+                else -> current
             }
         }
-
-        OpeningTreeCache.clearForProfile(profileId)
-
-        if (tree != null) {
-            val cacheKey = OpeningTreeCacheKey(
-                profileId = profileId,
-                color = normalizedColor,
-                timeControlFilter = normalizedTimeControl,
-                maxGamesForTree = maxGamesForTree
-            )
-            OpeningTreeCache.put(cacheKey, tree)
-            updateAccount(platform) { current ->
-                current?.copy(statusMessage = "Opening tree ready.")
-            }
-            return limitedGames.size
-        }
-
-        return 0
-    }
-
-    private suspend fun buildAndCacheCombinedOpeningTree(
-        syntheticProfileId: Long,
-        allGamesWithPgn: List<GameWithPgn>,
-        color: String,
-        timeControlFilter: String,
-        maxGamesForTree: Int?
-    ): Int {
-        val normalizedColor = color.trim().lowercase().ifEmpty { "both" }
-        val normalizedTimeControl = timeControlFilter.trim()
-
-        if (allGamesWithPgn.isEmpty()) {
-            return 0
-        }
-
-        val colorEnum = when (normalizedColor) {
-            "white" -> OpeningTreeViewModel.ColorFilter.WHITE_ONLY
-            "black" -> OpeningTreeViewModel.ColorFilter.BLACK_ONLY
-            else -> OpeningTreeViewModel.ColorFilter.BOTH
-        }
-
-        val filteredGames = OpeningTreeFilterUtils.filterGames(
-            games = allGamesWithPgn,
-            colorFilter = colorEnum,
-            timeControlFilter = normalizedTimeControl
-        )
-        if (filteredGames.isEmpty()) {
-            return 0
-        }
-
-        val limitedGames = maxGamesForTree?.let { limit ->
-            filteredGames.take(limit)
-        } ?: filteredGames
-
-        val tree = withContext(Dispatchers.Default) {
-            if (limitedGames.isEmpty()) {
-                null
-            } else {
-                val gamesForTree = limitedGames.map { gwp ->
-                    GameForOpeningTree(
-                        pgn = gwp.pgn,
-                        isUserWhite = gwp.game.isUserWhite,
-                        resultTag = gwp.game.result
-                    )
-                }
-                OpeningTreeBuilder.buildTree(gamesForTree)
-            }
-        }
-
-
-        if (tree != null) {
-            val cacheKey = OpeningTreeCacheKey(
-                profileId = syntheticProfileId,
-                color = normalizedColor,
-                timeControlFilter = normalizedTimeControl,
-                maxGamesForTree = maxGamesForTree
-            )
-            OpeningTreeCache.put(cacheKey, tree)
-            return limitedGames.size
-        }
-
-        return 0
     }
 
     // Filtering logic is delegated to OpeningTreeFilterUtils to keep
@@ -611,13 +367,17 @@ import kotlinx.coroutines.withContext
     )
 
     class Factory(
-        private val profileRepository: PlayerProfileRepository,
-        private val gamesRepository: GamesRepository,
-        private val gameStatsRepository: GameStatsRepository
+        private val accountSyncCoordinator: AccountSyncCoordinator,
+        private val statsRefreshCoordinator: StatsRefreshCoordinator,
+        private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            return MyStatsViewModel(profileRepository, gamesRepository, gameStatsRepository) as T
+            return MyStatsViewModel(
+                accountSyncCoordinator = accountSyncCoordinator,
+                statsRefreshCoordinator = statsRefreshCoordinator,
+                openingTreePreparationCoordinator = openingTreePreparationCoordinator
+            ) as T
         }
     }
 }
