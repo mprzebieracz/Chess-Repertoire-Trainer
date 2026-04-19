@@ -4,13 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.chessrepertoiretrainer.data.AppThemeMode
 import com.example.chessrepertoiretrainer.data.BoardTheme
-import com.example.chessrepertoiretrainer.data.UserSettingsRepository
 import com.example.chessrepertoiretrainer.navigation.AppNavigation
 import com.example.chessrepertoiretrainer.ui.components.chess.BlueBoardThemeColors
 import com.example.chessrepertoiretrainer.ui.components.chess.BrownBoardThemeColors
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val repository = remember { UserSettingsRepository(applicationContext) }
+            val repository = (application as ChessApplication).appContainer.userSettingsRepository
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = SettingsViewModel.Factory(repository)
             )
@@ -46,10 +46,10 @@ class MainActivity : ComponentActivity() {
             val useDynamic = settingsState.useDynamicColors
 
             ChessRepertoireTrainerTheme(
-                darkTheme = darkTheme ?: androidx.compose.foundation.isSystemInDarkTheme(),
+                darkTheme = darkTheme ?: isSystemInDarkTheme(),
                 dynamicColor = useDynamic
             ) {
-                androidx.compose.runtime.CompositionLocalProvider(
+                CompositionLocalProvider(
                     LocalBoardThemeColors provides boardColors
                 ) {
                     AppNavigation(settingsViewModel)

@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.ui.components.chess
 
-import android.util.Log
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
@@ -56,7 +55,8 @@ fun uciToMove(uci: String, board: Board): Move? {
 
     return if (promotionPiece == Piece.NONE) {
         Move(from, to)
-    } else {
+    }
+    else {
         Move(from, to, promotionPiece)
     }
 }

@@ -27,10 +27,15 @@ fun AppBottomBar(navController: NavHostController) {
 
     NavigationBar {
         items.forEach { screen ->
-            val isRepertoireFlow = screen == Screen.RepertoireMain &&
-                    currentDestination?.hierarchy?.any { it.route?.contains("chapters") == true || it.route?.contains("lines") == true } == true
+            val isRepertoireFlow =
+                screen == Screen.RepertoireMain && currentDestination?.hierarchy?.any {
+                    it.route?.contains("chapters") == true || it.route?.contains(
+                        "lines"
+                    ) == true
+                } == true
 
-            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true || isRepertoireFlow
+            val selected =
+                currentDestination?.hierarchy?.any { it.route == screen.route } == true || isRepertoireFlow
 
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = screen.title) },
@@ -42,8 +47,7 @@ fun AppBottomBar(navController: NavHostController) {
                         launchSingleTop = true
                         restoreState = true
                     }
-                }
-            )
+                })
         }
     }
 }

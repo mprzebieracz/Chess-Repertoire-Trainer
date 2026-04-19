@@ -12,6 +12,8 @@ import com.example.chessrepertoiretrainer.domain.games.GamesRepository
  */
 class AppContainer(context: Context) {
 
+    val userSettingsRepository = UserSettingsRepository(context.applicationContext)
+
     private val db: ChessDatabase = ChessDatabase.getDatabase(context)
 
     val repertoireDao = db.repertoireDao()

@@ -55,7 +55,7 @@ abstract class ChessDatabase : RoomDatabase() {
                 )
                     // Schema is still evolving; use destructive migration
                     // during development.
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(false)
                     .build()
                 INSTANCE = instance
                 instance

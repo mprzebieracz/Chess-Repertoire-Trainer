@@ -13,13 +13,16 @@ interface ChessBoardController {
     val boardState: String
     val selectedSquare: Square?
     val lastMove: Move?
+
     // Square currently hovered during drag operations.
     var hoveredSquare: Square?
+
     // Square explicitly "marked" by the UI (e.g. puzzle hint). This is kept
     // separate from [hoveredSquare] so that drag feedback does not conflict
     // with persistent hint markers.
     var markedSquare: Square?
     val isFlipped: Boolean
+
     /**
      * When null, board input is unrestricted (both sides can move).
      * When set to a [Side], only that side may initiate moves via user input.

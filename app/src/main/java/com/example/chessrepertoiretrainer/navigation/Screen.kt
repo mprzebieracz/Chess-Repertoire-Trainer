@@ -3,19 +3,22 @@ package com.example.chessrepertoiretrainer.navigation
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.chessrepertoiretrainer.ui.icons.AppIcons
 
- sealed class Screen(val route: String, val title: String = "", val icon: ImageVector = AppIcons.Home) {
-     // Bottom Bar Screens
-     object Home : Screen("home", "Home", AppIcons.Home)
-     object RepertoireMain : Screen("repertoire_main", "Repertoire", AppIcons.Repertoire)
-     object Train : Screen("train", "Train", AppIcons.Train)
-     object Puzzles : Screen("puzzles", "Puzzles", AppIcons.Puzzles)
-      // "Opening tree" tab – opens the OpeningTreeSearchScreen, which can
-      // build an opening tree for any online player (not necessarily you).
-      object YourGames : Screen("games", "Opening tree", AppIcons.OpeningTree)
-     object Settings : Screen("settings", "Settings", AppIcons.Settings)
+sealed class Screen(
+    val route: String, val title: String = "", val icon: ImageVector = AppIcons.Home
+) {
+    // Bottom Bar Screens
+    object Home : Screen("home", "Home", AppIcons.Home)
+    object RepertoireMain : Screen("repertoire_main", "Repertoire", AppIcons.Repertoire)
+    object Train : Screen("train", "Train", AppIcons.Train)
+    object Puzzles : Screen("puzzles", "Puzzles", AppIcons.Puzzles)
 
-     // Root-level statistics / analysis screens (not in bottom bar for now)
-     object MyStats : Screen("my_stats", "My stats", AppIcons.OpeningTree)
+    // "Opening tree" tab – opens the OpeningTreeSearchScreen, which can
+    // build an opening tree for any online player (not necessarily you).
+    object YourGames : Screen("games", "Opening tree", AppIcons.OpeningTree)
+    object Settings : Screen("settings", "Settings", AppIcons.Settings)
+
+    // Root-level statistics / analysis screens (not in bottom bar for now)
+    object MyStats : Screen("my_stats", "My stats", AppIcons.OpeningTree)
 
     // Nested / detail screens (not in bottom bar)
     object CourseOverview : Screen("course_overview/{repertoireId}") {
@@ -50,12 +53,13 @@ import com.example.chessrepertoiretrainer.ui.icons.AppIcons
     object ChapterTraining : Screen("chapter_training/{chapterId}") {
         fun createRoute(chapterId: Int) = "chapter_training/$chapterId"
     }
-
+    
     // Training for a single line, reused from the main TrainingViewModel
     // and TrainScreen logic.
     object LineTraining : Screen("line_training/{lineId}") {
         fun createRoute(lineId: Int) = "line_training/$lineId"
     }
+
     object PuzzleTraining : Screen("puzzle_training")
     object Analysis : Screen("analysis")
 
@@ -65,10 +69,7 @@ import com.example.chessrepertoiretrainer.ui.icons.AppIcons
     // limiting how many filtered games are used to build the tree.
     object OpeningTree : Screen("opening_tree/{profileId}?color={color}&timeControl={timeControl}&maxGames={maxGames}") {
         fun createRoute(
-            profileId: Long,
-            color: String,
-            timeControl: String,
-            maxGames: Int?
+            profileId: Long, color: String, timeControl: String, maxGames: Int?
         ): String {
             val safeColor = color.ifBlank { "both" }
             val safeTc = java.net.URLEncoder.encode(timeControl, Charsets.UTF_8.name())

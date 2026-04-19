@@ -34,8 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 // ==========================================
 // 1. GŁÓWNY UKŁAD (Layout)
@@ -66,7 +64,12 @@ fun ChessScreenLayout(
             PgnViewer(pgnText = chessCtrl.pgnState)
         }
 
-        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Box(
+            modifier = Modifier.padding(
+                horizontal = ChessUiConstants.ScreenChrome.BoardContainer.horizontalPadding,
+                vertical = ChessUiConstants.ScreenChrome.BoardContainer.verticalPadding
+            )
+        ) {
             ChessboardUI(state = chessCtrl)
         }
 
@@ -87,7 +90,7 @@ fun ChessScreenLayout(
             )
         }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.height(ChessUiConstants.ScreenChrome.Spacing.bottomSpacerHeight))
     }
 }
 
@@ -103,7 +106,10 @@ fun ScreenHeader(title: String) {
         fontWeight = FontWeight.Bold,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(
+                horizontal = ChessUiConstants.ScreenChrome.Header.horizontalPadding,
+                vertical = ChessUiConstants.ScreenChrome.Header.verticalPadding
+            )
     )
 }
 
@@ -116,23 +122,28 @@ fun PgnViewer(pgnText: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .height(40.dp),
+            .padding(
+                horizontal = ChessUiConstants.ScreenChrome.Pgn.horizontalPadding,
+                vertical = ChessUiConstants.ScreenChrome.Pgn.verticalPadding
+            )
+            .height(ChessUiConstants.ScreenChrome.Pgn.height),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        shape = RoundedCornerShape(8.dp)
+        ), shape = RoundedCornerShape(ChessUiConstants.ScreenChrome.Pgn.cornerRadius)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .horizontalScroll(scrollState)
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(
+                    horizontal = ChessUiConstants.ScreenChrome.Pgn.textHorizontalPadding,
+                    vertical = ChessUiConstants.ScreenChrome.Pgn.textVerticalPadding
+                )
         ) {
             Text(
                 text = pgnText.ifEmpty { "Waiting for moves..." },
                 fontFamily = FontFamily.Monospace,
-                fontSize = 14.sp,
+                fontSize = ChessUiConstants.ScreenChrome.Pgn.textFontSize,
                 maxLines = 1,
                 softWrap = false,
                 color = if (pgnText.isEmpty()) Color.Gray else MaterialTheme.colorScheme.onSurfaceVariant
@@ -146,25 +157,25 @@ fun BoardNavigationControls(onBack: () -> Unit, onForward: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+                .padding(vertical = ChessUiConstants.ScreenChrome.Navigation.rowPaddingVertical),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
+        IconButton(onClick = onBack, modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.buttonSize)) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Navigate Back",
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.iconSize)
             )
         }
-        Spacer(modifier = Modifier.width(48.dp))
-        IconButton(onClick = onForward, modifier = Modifier.size(40.dp)) {
+        Spacer(modifier = Modifier.width(ChessUiConstants.ScreenChrome.Navigation.spacerWidth))
+        IconButton(onClick = onForward, modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.buttonSize)) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Navigate Forward",
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.iconSize)
             )
         }
     }
@@ -172,15 +183,13 @@ fun BoardNavigationControls(onBack: () -> Unit, onForward: () -> Unit) {
 
 @Composable
 fun BoardActionButtons(
-    onReset: () -> Unit,
-    onFlip: () -> Unit,
-    extraButtons: @Composable RowScope.() -> Unit
+    onReset: () -> Unit, onFlip: () -> Unit, extraButtons: @Composable RowScope.() -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .padding(ChessUiConstants.ScreenChrome.Actions.rowPadding),
+        horizontalArrangement = Arrangement.spacedBy(ChessUiConstants.ScreenChrome.Actions.buttonSpacing)
     ) {
         Button(
             onClick = onReset,
@@ -189,8 +198,7 @@ fun BoardActionButtons(
         ) { Text("Reset") }
 
         Button(
-            onClick = onFlip,
-            modifier = Modifier.weight(1f)
+            onClick = onFlip, modifier = Modifier.weight(1f)
         ) { Text("Flip") }
 
         extraButtons()
@@ -199,18 +207,12 @@ fun BoardActionButtons(
 
 @Composable
 fun BoardBottomBar(
-    chessCtrl: ChessBoardController,
-    extraButtons: @Composable RowScope.() -> Unit = {}
+    chessCtrl: ChessBoardController, extraButtons: @Composable RowScope.() -> Unit = {}
 ) {
     Column {
-        BoardNavigationControls(
-            onBack = { chessCtrl.navigateBack() },
-            onForward = { chessCtrl.navigateForward() }
-        )
+        BoardNavigationControls(onBack = { chessCtrl.navigateBack() }, onForward = { chessCtrl.navigateForward() })
         BoardActionButtons(
-            onReset = { chessCtrl.resetBoard() },
-            onFlip = { chessCtrl.flipBoard() },
-            extraButtons = extraButtons
+            onReset = { chessCtrl.resetBoard() }, onFlip = { chessCtrl.flipBoard() }, extraButtons = extraButtons
         )
     }
 }

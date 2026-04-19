@@ -51,12 +51,11 @@ class DefaultChessBoardController(
         val currentSelected = selectedSquare
         if (currentSelected == null) {
             val piece = board.getPiece(square)
-            if (piece != Piece.NONE &&
-                piece.pieceSide == board.sideToMove
-            ) {
+            if (piece != Piece.NONE && piece.pieceSide == board.sideToMove) {
                 selectedSquare = square
             }
-        } else {
+        }
+        else {
             if (currentSelected == square) {
                 selectedSquare = null
                 return
@@ -71,14 +70,11 @@ class DefaultChessBoardController(
         val piece = board.getPiece(move.from)
 
         val isPawnPromotionMove =
-            (piece == Piece.WHITE_PAWN && move.to.rank == Rank.RANK_8) ||
-                    (piece == Piece.BLACK_PAWN && move.to.rank == Rank.RANK_1)
+            (piece == Piece.WHITE_PAWN && move.to.rank == Rank.RANK_8) || (piece == Piece.BLACK_PAWN && move.to.rank == Rank.RANK_1)
 
         if (isPawnPromotionMove) {
             val promotionMoves = board.legalMoves().filter { legal ->
-                legal.from == move.from &&
-                        legal.to == move.to &&
-                        legal.promotion != Piece.NONE
+                legal.from == move.from && legal.to == move.to && legal.promotion != Piece.NONE
             }
 
             if (promotionMoves.isNotEmpty()) {
@@ -93,11 +89,13 @@ class DefaultChessBoardController(
         val legalMoves = board.legalMoves()
         if (legalMoves.contains(move)) {
             applyMove(move)
-        } else {
+        }
+        else {
             val piece = board.getPiece(move.to)
             if (piece != Piece.NONE && piece.pieceSide == board.sideToMove) {
                 selectedSquare = move.to
-            } else {
+            }
+            else {
                 selectedSquare = null
             }
         }
@@ -115,9 +113,7 @@ class DefaultChessBoardController(
         val pending = pendingPromotion ?: return
 
         val promotionMove = board.legalMoves().firstOrNull { legal ->
-            legal.from == pending.from &&
-                    legal.to == pending.to &&
-                    legal.promotion == promotionPiece
+            legal.from == pending.from && legal.to == pending.to && legal.promotion == promotionPiece
         } ?: return
 
         pendingPromotion = null
@@ -128,9 +124,7 @@ class DefaultChessBoardController(
         if (currentPositionIndex < fullMoveHistory.size - 1) {
             val nextRecordedMove = fullMoveHistory[currentPositionIndex + 1]
             val isSameAsNextRecorded =
-                nextRecordedMove.from == promotionMove.from &&
-                        nextRecordedMove.to == promotionMove.to &&
-                        nextRecordedMove.promotion == promotionMove.promotion
+                nextRecordedMove.from == promotionMove.from && nextRecordedMove.to == promotionMove.to && nextRecordedMove.promotion == promotionMove.promotion
 
             if (isSameAsNextRecorded) {
                 navigateForward()
@@ -196,9 +190,10 @@ class DefaultChessBoardController(
             }
 
             val san = fullSanHistory[i]
-            if (i == currentPositionIndex && currentPositionIndex >= 0) {
+            if (i == currentPositionIndex) {
                 sb.append("[").append(san).append("] ")
-            } else {
+            }
+            else {
                 sb.append(san).append(" ")
             }
         }
