@@ -14,8 +14,7 @@ import com.example.chessrepertoiretrainer.domain.stats.OpeningStatsRow
  * exposes lightweight aggregated summaries for UI consumption.
  */
 class DefaultGameStatsRepository(
-    private val gamesRepository: GamesRepository,
-    private val gameStatsDao: GameStatsDao
+    private val gamesRepository: GamesRepository, private val gameStatsDao: GameStatsDao
 ) : GameStatsRepository {
 
     override suspend fun recomputeStatsForProfile(profileId: Long) {
@@ -30,8 +29,7 @@ class DefaultGameStatsRepository(
             if (sanMoves.isEmpty()) return@mapNotNull null
 
             val openingKey = buildOpeningKey(sanMoves)
-            val result = resultFromUserPerspective(gwp.game.result, gwp.game.isUserWhite)
-                ?: return@mapNotNull null
+            val result = resultFromUserPerspective(gwp.game.result, gwp.game.isUserWhite) ?: return@mapNotNull null
 
             val plyCount = sanMoves.size
             val userMoveCount = countUserMoves(plyCount, gwp.game.isUserWhite)
@@ -53,7 +51,8 @@ class DefaultGameStatsRepository(
 
         if (stats.isEmpty()) {
             gameStatsDao.deleteForProfile(profileId)
-        } else {
+        }
+        else {
             gameStatsDao.deleteForProfile(profileId)
             gameStatsDao.upsertAll(stats)
         }
@@ -91,18 +90,13 @@ class DefaultGameStatsRepository(
 
         val winPercent = (wins * 100) / totalGames
 
-        val topOpenings = byOpening.entries
-            .map { (key, scores) ->
+        val topOpenings = byOpening.entries.map { (key, scores) ->
                 val games = scores.size
                 val avgScore = scores.sum() / games
                 OpeningStatsRow(
-                    openingKey = key,
-                    games = games,
-                    scorePercent = avgScore
+                    openingKey = key, games = games, scorePercent = avgScore
                 )
-            }
-            .sortedWith(compareByDescending<OpeningStatsRow> { it.games }.thenByDescending { it.scorePercent })
-            .take(5)
+            }.sortedWith(compareByDescending<OpeningStatsRow> { it.games }.thenByDescending { it.scorePercent }).take(5)
 
         return GameStatsSummary(
             totalGames = totalGames,
@@ -132,7 +126,8 @@ class DefaultGameStatsRepository(
         // White moves at even plies (0, 2, 4, ...), Black at odd plies.
         return if (isUserWhite) {
             (plyCount + 1) / 2
-        } else {
+        }
+        else {
             plyCount / 2
         }
     }

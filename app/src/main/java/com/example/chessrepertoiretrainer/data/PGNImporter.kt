@@ -13,81 +13,73 @@ import kotlinx.coroutines.withContext
 
 class PgnImporter(private val repertoireDao: RepertoireDao) {
 
-    suspend fun importPgnToChapter(context: Context, pgnString: String, chapterId: Int) =
-        withContext(Dispatchers.IO) {
-            if (pgnString.isBlank()) return@withContext
+    suspend fun importPgnToChapter(context: Context, pgnString: String, chapterId: Int) = withContext(Dispatchers.IO) {
+        if (pgnString.isBlank()) return@withContext
 
-            try {
-                val cleanedPgn = preprocessPgn(pgnString)
+        try {
+            val cleanedPgn = preprocessPgn(pgnString)
 
-                // Podziel cały plik PGN na poszczególne partie (gry) i sparsuj każdą z osobna.
-                val games = splitIntoGames(cleanedPgn)
-                if (games.isEmpty()) {
-                    Log.e("PgnImporter", "Nie znaleziono żadnych partii w PGN.")
-                    return@withContext
-                }
-
-                // Ustal bazową nazwę rozdziału i aktualną liczbę linii w tym rozdziale,
-                // aby nowe linie (również z PGN) były nazywane spójnie jak przy ręcznym dodawaniu:
-                // "{chapter name} #{nr line}".
-                val chapter = repertoireDao.getChapterById(chapterId)
-                val chapterName = chapter?.name ?: "Line"
-                var nextLineNumber = repertoireDao.getLineCountForChapter(chapterId) + 1
-
-                var gamesWithMovetext = 0
-                var gamesWithoutMovetext = 0
-                var totalLinesInserted = 0
-
-                games.forEach { gameText ->
-                    if (gameText.isBlank()) return@forEach
-
-                    // Sprawdź, czy dany blok ma jakąkolwiek treść poza nagłówkami.
-                    val hasMovetext = gameText.lines().any { rawLine ->
-                        val line = rawLine.trim()
-                        line.isNotEmpty() && !(line.startsWith("[") && line.endsWith("]"))
-                    }
-
-                    if (!hasMovetext) {
-                        gamesWithoutMovetext++
-                        return@forEach
-                    }
-
-                    gamesWithMovetext++
-                    val insertedForGame = parseSingleGameAndInsert(
-                        cleanedPgn = gameText,
-                        chapterId = chapterId,
-                        chapterName = chapterName,
-                        startingLineNumber = nextLineNumber
-                    )
-                    totalLinesInserted += insertedForGame
-                    nextLineNumber += insertedForGame
-                }
-
-                Log.i(
-                    "PgnImporter",
-                    "Import PGN zakończony. Partii z treścią=$gamesWithMovetext, bez treści=$gamesWithoutMovetext, dodanych linii=$totalLinesInserted"
-                )
-            } catch (e: Exception) {
-                Log.e("PgnImporter", "Błąd importu PGN: ${e.message}", e)
+            // Podziel cały plik PGN na poszczególne partie (gry) i sparsuj każdą z osobna.
+            val games = splitIntoGames(cleanedPgn)
+            if (games.isEmpty()) {
+                Log.e("PgnImporter", "Nie znaleziono żadnych partii w PGN.")
+                return@withContext
             }
+
+            // Ustal bazową nazwę rozdziału i aktualną liczbę linii w tym rozdziale,
+            // aby nowe linie (również z PGN) były nazywane spójnie jak przy ręcznym dodawaniu:
+            // "{chapter name} #{nr line}".
+            val chapter = repertoireDao.getChapterById(chapterId)
+            val chapterName = chapter?.name ?: "Line"
+            var nextLineNumber = repertoireDao.getLineCountForChapter(chapterId) + 1
+
+            var gamesWithMovetext = 0
+            var gamesWithoutMovetext = 0
+            var totalLinesInserted = 0
+
+            games.forEach { gameText ->
+                if (gameText.isBlank()) return@forEach
+
+                // Sprawdź, czy dany blok ma jakąkolwiek treść poza nagłówkami.
+                val hasMovetext = gameText.lines().any { rawLine ->
+                    val line = rawLine.trim()
+                    line.isNotEmpty() && !(line.startsWith("[") && line.endsWith("]"))
+                }
+
+                if (!hasMovetext) {
+                    gamesWithoutMovetext++
+                    return@forEach
+                }
+
+                gamesWithMovetext++
+                val insertedForGame = parseSingleGameAndInsert(
+                    cleanedPgn = gameText, chapterId = chapterId, chapterName = chapterName, startingLineNumber = nextLineNumber
+                )
+                totalLinesInserted += insertedForGame
+                nextLineNumber += insertedForGame
+            }
+
+            Log.i(
+                "PgnImporter",
+                "Import PGN zakończony. Partii z treścią=$gamesWithMovetext, bez treści=$gamesWithoutMovetext, dodanych linii=$totalLinesInserted"
+            )
         }
+        catch (e: Exception) {
+            Log.e("PgnImporter", "Błąd importu PGN: ${e.message}", e)
+        }
+    }
 
     /**
      * PGN preprocessor: strip GUI/engine inline tags like [%eval ...] while keeping
      * standard headers and curly-brace comments.
      */
     private fun preprocessPgn(raw: String): String {
-        var text = raw
-            .replace("\r\n", "\n")
-            .replace('\r', '\n')
-            .replace('\u00A0', ' ')
+        var text = raw.replace("\r\n", "\n").replace('\r', '\n').replace('\u00A0', ' ')
 
         val inlineEngineTagRegex = Regex("""\[%[^]]*]""")
         text = text.replace(inlineEngineTagRegex, "")
 
-        text = text
-            .lines()
-            .joinToString("\n") { it.trimEnd() }
+        text = text.lines().joinToString("\n") { it.trimEnd() }
 
         return text
     }
@@ -127,10 +119,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
      * Buduje wszystkie linie (główna + warianty) i zapisuje je w bazie.
      */
     private suspend fun parseSingleGameAndInsert(
-        cleanedPgn: String,
-        chapterId: Int,
-        chapterName: String,
-        startingLineNumber: Int
+        cleanedPgn: String, chapterId: Int, chapterName: String, startingLineNumber: Int
     ): Int {
         val headerMap = mutableMapOf<String, String>()
         val bodyBuilder = StringBuilder()
@@ -153,7 +142,8 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                     val value = match.groupValues[2]
                     headerMap[key] = value
                 }
-            } else {
+            }
+            else {
                 inHeaderSection = false
                 if (bodyBuilder.isNotEmpty()) {
                     bodyBuilder.append('\n')
@@ -204,7 +194,8 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
             headerMap["FEN"]?.takeIf { it.isNotBlank() }?.let { fenTag ->
                 try {
                     board.loadFromFen(fenTag)
-                } catch (e: Exception) {
+                }
+                catch (e: Exception) {
                     Log.e("PgnImporter", "Nie udało się załadować FEN z tagu FEN: $fenTag", e)
                 }
             }
@@ -216,8 +207,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
 
                 if (matchingMove == null) {
                     Log.e(
-                        "PgnImporter",
-                        "Nie znaleziono dopasowania SAN dla ruchu '${parsed.san}' w pozycji ${board.fen}"
+                        "PgnImporter", "Nie znaleziono dopasowania SAN dla ruchu '${parsed.san}' w pozycji ${board.fen}"
                     )
                     // Kończymy budowę tej linii w tym miejscu – zachowujemy już
                     // dopasowane ruchy zamiast całkowicie ją odrzucać.
@@ -240,17 +230,14 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
             // unikamy "pustych" lub mało przydatnych linii.
             if (resolvedMoves.size < MIN_MOVES_PER_LINE) {
                 Log.d(
-                    "PgnImporter",
-                    "Pomijam zbyt krótką linię: ${resolvedMoves.size} ruchów dla partii $baseTitle"
+                    "PgnImporter", "Pomijam zbyt krótką linię: ${resolvedMoves.size} ruchów dla partii $baseTitle"
                 )
                 return@forEachIndexed
             }
 
-                Log.d(
-                    "PgnImporter",
-                    "Rozwiązana linia (${resolvedMoves.size} ruchów) dla '$baseTitle' jako '$lineName': " +
-                        resolvedMoves.joinToString(separator = " ") { it.san }
-                )
+            Log.d(
+                "PgnImporter",
+                "Rozwiązana linia (${resolvedMoves.size} ruchów) dla '$baseTitle' jako '$lineName': " + resolvedMoves.joinToString(separator = " ") { it.san })
 
             val lineId = repertoireDao.insertLine(
                 Line(
@@ -266,12 +253,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
             resolvedMoves.forEachIndexed { moveIndex, rm ->
                 repertoireDao.insertLineMove(
                     LineMove(
-                        lineId = lineId,
-                        moveIndex = moveIndex,
-                        moveSan = rm.san,
-                        fen = rm.fen,
-                        comment = rm.comment,
-                        arrows = null
+                        lineId = lineId, moveIndex = moveIndex, moveSan = rm.san, fen = rm.fen, comment = rm.comment, arrows = null
                     )
                 )
             }
@@ -292,8 +274,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
      * Wynik pojedynczego wywołania rekurencyjnego parsera movetextu.
      */
     internal data class ParseResult(
-        val lines: List<List<ParsedMove>>,
-        val nextIndex: Int
+        val lines: List<List<ParsedMove>>, val nextIndex: Int
     )
 
     /**
@@ -311,9 +292,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
      * początku partii do liści drzewa wariantów.
      */
     internal fun parseMovetextRecursive(
-        text: String,
-        startIndex: Int,
-        parentPrefix: List<ParsedMove>
+        text: String, startIndex: Int, parentPrefix: List<ParsedMove>
     ): ParseResult {
         // "current" holds the main line for this subtree. Any variations
         // encountered along the way are collected separately in
@@ -331,14 +310,17 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                 val last = current.last()
                 val combined = if (last.comment.isNullOrEmpty()) {
                     textComment
-                } else {
+                }
+                else {
                     last.comment + "\n" + textComment
                 }
                 current[current.lastIndex] = last.copy(comment = combined)
-            } else {
+            }
+            else {
                 pendingCommentForNext = if (pendingCommentForNext == null) {
                     textComment
-                } else {
+                }
+                else {
                     pendingCommentForNext + "\n" + textComment
                 }
             }
@@ -383,7 +365,8 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                     // więc jako prefiks używamy wszystkich ruchów oprócz ostatniego.
                     val parentForVariation = if (current.isNotEmpty()) {
                         current.dropLast(1)
-                    } else {
+                    }
+                    else {
                         current
                     }
 
@@ -399,10 +382,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                 }
 
                 // Wynik partii – kończymy parsowanie
-                text.startsWith("1-0", i) ||
-                    text.startsWith("0-1", i) ||
-                    text.startsWith("1/2-1/2", i) ||
-                    c == '*' -> {
+                text.startsWith("1-0", i) || text.startsWith("0-1", i) || text.startsWith("1/2-1/2", i) || c == '*' -> {
                     // Konsumujemy wynik i kończymy tę gałąź
                     i += when {
                         text.startsWith("1-0", i) -> 3
@@ -437,14 +417,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                 else -> {
                     // SAN ruchu – czytamy do białego znaku lub nawiasu/klamry
                     var j = i
-                    while (
-                        j < length &&
-                        !text[j].isWhitespace() &&
-                        text[j] != '{' &&
-                        text[j] != '}' &&
-                        text[j] != '(' &&
-                        text[j] != ')'
-                    ) {
+                    while (j < length && !text[j].isWhitespace() && text[j] != '{' && text[j] != '}' && text[j] != '(' && text[j] != ')') {
                         j++
                     }
                     val san = text.substring(i, j).trim()

@@ -8,13 +8,11 @@ class OnlineGamesFetchCoordinator(
 ) {
 
     data class FetchResult(
-        val games: List<FetchedGame>,
-        val errorMessage: String? = null
+        val games: List<FetchedGame>, val errorMessage: String? = null
     )
 
     suspend fun fetchGames(
-        username: String,
-        platform: String
+        username: String, platform: String
     ): FetchResult {
         val normalizedUsername = username.trim()
         val normalizedPlatform = platform.trim().lowercase()
@@ -23,20 +21,17 @@ class OnlineGamesFetchCoordinator(
             return FetchResult(emptyList(), "Username cannot be blank")
         }
 
-        val fetcher = fetcherRegistry.getFetcher(normalizedPlatform)
-            ?: return FetchResult(emptyList(), "Unsupported platform: $platform")
+        val fetcher = fetcherRegistry.getFetcher(normalizedPlatform) ?: return FetchResult(emptyList(), "Unsupported platform: $platform")
 
         return try {
             val games = fetcher.fetchGamesForUser(
-                username = normalizedUsername,
-                since = null,
-                maxGames = null
+                username = normalizedUsername, since = null, maxGames = null
             )
             FetchResult(games = games)
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             FetchResult(
-                games = emptyList(),
-                errorMessage = e.message ?: "Unexpected error while fetching games"
+                games = emptyList(), errorMessage = e.message ?: "Unexpected error while fetching games"
             )
         }
     }

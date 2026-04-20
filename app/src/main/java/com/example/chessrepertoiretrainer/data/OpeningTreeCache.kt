@@ -10,10 +10,7 @@ package com.example.chessrepertoiretrainer.data
  * simply display the prepared tree.
  */
 data class OpeningTreeCacheKey(
-    val profileId: Long,
-    val color: String,
-    val timeControlFilter: String,
-    val maxGamesForTree: Int?
+    val profileId: Long, val color: String, val timeControlFilter: String, val maxGamesForTree: Int?
 )
 
 object OpeningTreeCache {

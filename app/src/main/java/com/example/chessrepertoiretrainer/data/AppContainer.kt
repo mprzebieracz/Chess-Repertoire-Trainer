@@ -4,12 +4,6 @@ import android.content.Context
 import com.example.chessrepertoiretrainer.database.ChessDatabase
 import com.example.chessrepertoiretrainer.domain.games.GamesRepository
 
-/**
- * Simple application-level dependency container.
- *
- * Keeps heavyweight singletons (database, repositories, fetcher registry)
- * out of composables so they are not recreated during recomposition.
- */
 class AppContainer(context: Context) {
 
     val userSettingsRepository = UserSettingsRepository(context.applicationContext)
@@ -27,8 +21,7 @@ class AppContainer(context: Context) {
 
     val gameFetcherRegistry = GameFetcherRegistry(
         listOf(
-            LichessGameFetcher,
-            ChessComGameFetcher
+            LichessGameFetcher, ChessComGameFetcher
         )
     )
 
@@ -36,19 +29,15 @@ class AppContainer(context: Context) {
     val onlineGamesFetchCoordinator = OnlineGamesFetchCoordinator(gameFetcherRegistry)
 
     val gamesRepository: GamesRepository = PlayerGamesRepository(
-        gameDao = gameDao,
-        playerProfileDao = playerProfileDao,
-        fetcherRegistry = gameFetcherRegistry
+        gameDao = gameDao, playerProfileDao = playerProfileDao, fetcherRegistry = gameFetcherRegistry
     )
 
     val gameStatsRepository = DefaultGameStatsRepository(
-        gamesRepository = gamesRepository,
-        gameStatsDao = gameStatsDao
+        gamesRepository = gamesRepository, gameStatsDao = gameStatsDao
     )
 
     val accountSyncCoordinator = AccountSyncCoordinator(
-        profileRepository = playerProfileRepository,
-        gamesRepository = gamesRepository
+        profileRepository = playerProfileRepository, gamesRepository = gamesRepository
     )
 
     val statsRefreshCoordinator = StatsRefreshCoordinator(

@@ -20,19 +20,13 @@ object LichessGameFetcher : GameFetcher {
     override val platformKey: String = "lichess"
 
     override suspend fun fetchGamesForUser(
-        username: String,
-        since: Long?,
-        maxGames: Int?
+        username: String, since: Long?, maxGames: Int?
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim()
         if (normalizedUser.isBlank()) return@withContext emptyList()
 
         val params = mutableListOf(
-            "pgnInJson=true",
-            "clocks=false",
-            "evals=false",
-            "accuracy=false",
-            "opening=true"
+            "pgnInJson=true", "clocks=false", "evals=false", "accuracy=false", "opening=true"
         )
         if (maxGames != null && maxGames > 0) {
             params += "max=$maxGames"
@@ -55,8 +49,7 @@ object LichessGameFetcher : GameFetcher {
         val responseCode = connection.responseCode
         if (responseCode != HttpURLConnection.HTTP_OK) {
             Log.w(
-                "LichessGameFetcher",
-                "HTTP error $responseCode when fetching games for $normalizedUser"
+                "LichessGameFetcher", "HTTP error $responseCode when fetching games for $normalizedUser"
             )
             return@withContext emptyList()
         }
@@ -80,19 +73,11 @@ object LichessGameFetcher : GameFetcher {
                     val whiteObj = playersObj?.optJSONObject("white")
                     val blackObj = playersObj?.optJSONObject("black")
 
-                    val whiteUser =
-                        whiteObj?.optJSONObject("user")?.optString("name")
-                            ?: whiteObj?.optString("userId")
-                            ?: "White"
-                    val blackUser =
-                        blackObj?.optJSONObject("user")?.optString("name")
-                            ?: blackObj?.optString("userId")
-                            ?: "Black"
+                    val whiteUser = whiteObj?.optJSONObject("user")?.optString("name") ?: whiteObj?.optString("userId") ?: "White"
+                    val blackUser = blackObj?.optJSONObject("user")?.optString("name") ?: blackObj?.optString("userId") ?: "Black"
 
-                    val isUserWhite =
-                        normalizedUser.equals(whiteUser, ignoreCase = true)
-                    val isUserBlack =
-                        normalizedUser.equals(blackUser, ignoreCase = true)
+                    val isUserWhite = normalizedUser.equals(whiteUser, ignoreCase = true)
+                    val isUserBlack = normalizedUser.equals(blackUser, ignoreCase = true)
 
                     if (!isUserWhite && !isUserBlack) {
                         // This should not normally happen, but be defensive.
@@ -120,8 +105,7 @@ object LichessGameFetcher : GameFetcher {
                     val lastMoveAt = obj.optLong("lastMoveAt", 0L)
                     val playedAt = if (lastMoveAt > 0L) lastMoveAt else createdAt
 
-                    val platformGameId = obj.optString("id").takeIf { it.isNotBlank() }
-                        ?: "${normalizedUser}_${playedAt}_${resultTag}"
+                    val platformGameId = obj.optString("id").takeIf { it.isNotBlank() } ?: "${normalizedUser}_${playedAt}_${resultTag}"
 
                     result += FetchedGame(
                         platformGameId = platformGameId,
@@ -134,15 +118,15 @@ object LichessGameFetcher : GameFetcher {
                         playedAt = playedAt,
                         pgn = pgn
                     )
-                } catch (e: Exception) {
+                }
+                catch (e: Exception) {
                     Log.e("LichessGameFetcher", "Error parsing game line: ${e.message}", e)
                 }
             }
         }
 
         Log.d(
-            "LichessGameFetcher",
-            "Fetched ${result.size} games for $normalizedUser (since=${since ?: "null"}, max=$maxGames)"
+            "LichessGameFetcher", "Fetched ${result.size} games for $normalizedUser (since=${since ?: "null"}, max=$maxGames)"
         )
 
         return@withContext result

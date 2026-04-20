@@ -21,8 +21,7 @@ class DefaultPuzzleRepository(
         val current = puzzleDao.countUnsolvedPuzzles()
         if (current > 0) {
             Log.d(
-                "DefaultPuzzleRepository",
-                "ensureMinUnsolvedPuzzles: already have $current unsolved puzzles (daily mode)"
+                "DefaultPuzzleRepository", "ensureMinUnsolvedPuzzles: already have $current unsolved puzzles (daily mode)"
             )
             return current
         }
@@ -30,15 +29,13 @@ class DefaultPuzzleRepository(
         // Daily mode: if there are no unsolved puzzles, try to download the
         // current daily puzzle from Lichess and insert it.
         Log.d(
-            "DefaultPuzzleRepository",
-            "ensureMinUnsolvedPuzzles: no unsolved puzzles, fetching daily puzzle from Lichess"
+            "DefaultPuzzleRepository", "ensureMinUnsolvedPuzzles: no unsolved puzzles, fetching daily puzzle from Lichess"
         )
 
         val daily = LichessPuzzleService.fetchDailyPuzzle()
         if (daily == null) {
             Log.w(
-                "DefaultPuzzleRepository",
-                "ensureMinUnsolvedPuzzles: failed to fetch daily puzzle from Lichess"
+                "DefaultPuzzleRepository", "ensureMinUnsolvedPuzzles: failed to fetch daily puzzle from Lichess"
             )
             return 0
         }
@@ -46,24 +43,20 @@ class DefaultPuzzleRepository(
         return try {
             Log.d(
                 "DefaultPuzzleRepository",
-                "Inserting daily puzzle id=${daily.id} rating=${daily.rating} " +
-                        "fen='${daily.fen.take(32)}' movesTokens=${
-                            daily.moves.split(" ").count { it.isNotBlank() }
-                        }"
-            )
+                "Inserting daily puzzle id=${daily.id} rating=${daily.rating} " + "fen='${daily.fen.take(32)}' movesTokens=${
+                    daily.moves.split(" ").count { it.isNotBlank() }
+                }")
             puzzleDao.insertPuzzle(daily)
 
             val finalCount = puzzleDao.countUnsolvedPuzzles()
             Log.d(
-                "DefaultPuzzleRepository",
-                "ensureMinUnsolvedPuzzles: unsolved after=$finalCount (daily mode, requestedMin=$minUnsolved)"
+                "DefaultPuzzleRepository", "ensureMinUnsolvedPuzzles: unsolved after=$finalCount (daily mode, requestedMin=$minUnsolved)"
             )
             finalCount
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(
-                "DefaultPuzzleRepository",
-                "Failed to insert daily puzzle id=${daily.id}: ${e.message}",
-                e
+                "DefaultPuzzleRepository", "Failed to insert daily puzzle id=${daily.id}: ${e.message}", e
             )
             puzzleDao.countUnsolvedPuzzles()
         }

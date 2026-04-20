@@ -2,28 +2,16 @@ package com.example.chessrepertoiretrainer.data
 
 import android.util.Log
 
-/**
- * Simple domain model representing a single remote game fetched from an
- * external platform such as Lichess or Chess.com.
- *
- * @property timeControl Raw time-control string as provided by the platform
- *   (e.g. "600+0", "1/259200"). This is preserved for potential UI display
- *   but is no longer interpreted heuristically for filtering.
- * @property timeCategory Normalized time-control category derived from
- *   provider-specific fields such as Chess.com `time_class` or Lichess
- *   `speed`. Expected values are lowercase strings like "bullet",
- *   "blitz", "rapid", or "classical".
- */
 data class FetchedGame(
-  val platformGameId: String,
-  val opponentName: String,
-  val isUserWhite: Boolean,
-  val result: String,
-  val timeControl: String?,
-  val timeCategory: String?,
-  val rated: Boolean,
-  val playedAt: Long,
-  val pgn: String
+    val platformGameId: String,
+    val opponentName: String,
+    val isUserWhite: Boolean,
+    val result: String,
+    val timeControl: String?,
+    val timeCategory: String?,
+    val rated: Boolean,
+    val playedAt: Long,
+    val pgn: String
 )
 
 /**
@@ -43,9 +31,7 @@ interface GameFetcher {
      * @param maxGames Optional upper bound on number of games to return.
      */
     suspend fun fetchGamesForUser(
-        username: String,
-        since: Long? = null,
-        maxGames: Int? = null
+        username: String, since: Long? = null, maxGames: Int? = null
     ): List<FetchedGame>
 }
 
@@ -55,11 +41,9 @@ interface GameFetcher {
 class GameFetcherRegistry(
     fetchers: List<GameFetcher>
 ) {
-    private val byPlatformKey: Map<String, GameFetcher> =
-        fetchers.associateBy { it.platformKey.lowercase() }
+    private val byPlatformKey: Map<String, GameFetcher> = fetchers.associateBy { it.platformKey.lowercase() }
 
-    fun getFetcher(platform: String): GameFetcher? =
-        byPlatformKey[platform.lowercase()]
+    fun getFetcher(platform: String): GameFetcher? = byPlatformKey[platform.lowercase()]
 }
 
 /**
@@ -79,7 +63,8 @@ internal fun parsePgnHeaders(pgn: String): Map<String, String> {
                 val value = match.groupValues[2]
                 headers[key] = value
             }
-        } else {
+        }
+        else {
             // First non-header, non-empty line – headers section is finished.
             break
         }

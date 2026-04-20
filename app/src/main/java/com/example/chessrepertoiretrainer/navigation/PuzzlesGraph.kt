@@ -16,13 +16,11 @@ fun NavGraphBuilder.puzzlesGraph(
     composable(Screen.Puzzles.route) {
         val vm: PuzzlesViewModel = viewModel(factory = PuzzlesViewModel.Factory(puzzleRepository))
         PuzzlesScreen(
-            viewModel = vm,
-            onStartTraining = { navController.navigate(Screen.PuzzleTraining.route) })
+            viewModel = vm, onStartTraining = { navController.navigate(Screen.PuzzleTraining.route) })
     }
 
     composable(Screen.PuzzleTraining.route) {
-        val vm: PuzzleTrainingViewModel =
-            viewModel(factory = PuzzleTrainingViewModel.Factory(puzzleRepository))
+        val vm: PuzzleTrainingViewModel = viewModel(factory = PuzzleTrainingViewModel.Factory(puzzleRepository))
         PuzzleTrainingScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 }

@@ -6,19 +6,12 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "line_moves",
-    foreignKeys = [
-        ForeignKey(
-            entity = Line::class,
-            parentColumns = ["id"],
-            childColumns = ["lineId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [
-        Index("lineId"),
-        Index("fen")
-    ]
+    tableName = "line_moves", foreignKeys = [ForeignKey(
+        entity = Line::class,
+        parentColumns = ["id"],
+        childColumns = ["lineId"],
+        onDelete = ForeignKey.CASCADE
+    )], indices = [Index("lineId"), Index("fen")]
 )
 data class LineMove(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

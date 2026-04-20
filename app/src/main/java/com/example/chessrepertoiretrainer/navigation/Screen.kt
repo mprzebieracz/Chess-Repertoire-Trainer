@@ -53,7 +53,7 @@ sealed class Screen(
     object ChapterTraining : Screen("chapter_training/{chapterId}") {
         fun createRoute(chapterId: Int) = "chapter_training/$chapterId"
     }
-    
+
     // Training for a single line, reused from the main TrainingViewModel
     // and TrainScreen logic.
     object LineTraining : Screen("line_training/{lineId}") {
@@ -67,7 +67,8 @@ sealed class Screen(
     // Optional query parameters allow filtering which games are included
     // in the tree (e.g. only games as White, by time control, etc.), and
     // limiting how many filtered games are used to build the tree.
-    object OpeningTree : Screen("opening_tree/{profileId}?color={color}&timeControl={timeControl}&maxGames={maxGames}") {
+    object OpeningTree :
+        Screen("opening_tree/{profileId}?color={color}&timeControl={timeControl}&maxGames={maxGames}") {
         fun createRoute(
             profileId: Long, color: String, timeControl: String, maxGames: Int?
         ): String {

@@ -9,19 +9,12 @@ enum class GameOutcome { WIN, DRAW, LOSS }
 
 /** Minimal model used for building the opening tree from PGNs. */
 data class GameForOpeningTree(
-    val pgn: String,
-    val isUserWhite: Boolean,
-    val resultTag: String
+    val pgn: String, val isUserWhite: Boolean, val resultTag: String
 )
 
 /** Aggregated statistics for a specific move from a particular position. */
 data class OpeningTreeMoveAggregate(
-    val moveSan: String,
-    val toFen: String,
-    var games: Int = 0,
-    var wins: Int = 0,
-    var draws: Int = 0,
-    var losses: Int = 0
+    val moveSan: String, val toFen: String, var games: Int = 0, var wins: Int = 0, var draws: Int = 0, var losses: Int = 0
 )
 
 /** Single node in the opening tree, keyed by FEN. */
@@ -34,8 +27,7 @@ data class OpeningTreeNode(
 
 /** In-memory opening tree representation built from the user's games. */
 data class OpeningTree(
-    val rootFen: String,
-    internal val nodesByFen: Map<String, OpeningTreeNode>
+    val rootFen: String, internal val nodesByFen: Map<String, OpeningTreeNode>
 ) {
     fun getNode(fen: String): OpeningTreeNode? = nodesByFen[fen]
 }
@@ -53,9 +45,7 @@ object OpeningTreeBuilder {
         val rootFen = board.fen
         val nodes = mutableMapOf<String, OpeningTreeNode>()
         nodes[rootFen] = OpeningTreeNode(
-            fen = rootFen,
-            parentFen = null,
-            moveSanFromParent = null
+            fen = rootFen, parentFen = null, moveSanFromParent = null
         )
 
         games.forEachIndexed { index, game ->
@@ -66,7 +56,8 @@ object OpeningTreeBuilder {
 
             try {
                 board.loadFromFen(rootFen)
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 Log.e("OpeningTreeBuilder", "Failed to load root FEN: ${e.message}", e)
                 return@forEachIndexed
             }
@@ -76,9 +67,7 @@ object OpeningTreeBuilder {
                     val fenBefore = board.fen
                     val node = nodes.getOrPut(fenBefore) {
                         OpeningTreeNode(
-                            fen = fenBefore,
-                            parentFen = null,
-                            moveSanFromParent = null
+                            fen = fenBefore, parentFen = null, moveSanFromParent = null
                         )
                     }
 
@@ -88,8 +77,7 @@ object OpeningTreeBuilder {
 
                     val childAgg = node.children.getOrPut(san) {
                         OpeningTreeMoveAggregate(
-                            moveSan = san,
-                            toFen = fenAfter
+                            moveSan = san, toFen = fenAfter
                         )
                     }
 
@@ -103,13 +91,12 @@ object OpeningTreeBuilder {
                     // Ensure child node exists with parent pointer on first encounter.
                     if (!nodes.containsKey(fenAfter)) {
                         nodes[fenAfter] = OpeningTreeNode(
-                            fen = fenAfter,
-                            parentFen = fenBefore,
-                            moveSanFromParent = san
+                            fen = fenAfter, parentFen = fenBefore, moveSanFromParent = san
                         )
                     }
                 }
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 Log.e("OpeningTreeBuilder", "Error processing game index=$index: ${e.message}", e)
             }
         }
@@ -164,8 +151,7 @@ object OpeningTreeBuilder {
         val sanMoves = mutableListOf<String>()
         var inBraceComment = false
 
-        fun isGameResultToken(token: String): Boolean =
-            token == "1-0" || token == "0-1" || token == "1/2-1/2" || token == "*"
+        fun isGameResultToken(token: String): Boolean = token == "1-0" || token == "0-1" || token == "1/2-1/2" || token == "*"
 
         fun isMoveNumberToken(token: String): Boolean {
             // Matches things like "1.", "12.", "34..." etc. without using regex.
@@ -190,7 +176,8 @@ object OpeningTreeBuilder {
                 if (end == -1) {
                     line = line.removeRange(start, line.length)
                     break
-                } else {
+                }
+                else {
                     line = line.removeRange(start, end + 1)
                 }
             }

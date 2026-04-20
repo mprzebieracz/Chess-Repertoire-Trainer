@@ -7,9 +7,6 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * Implementation of [GameFetcher] for the public Chess.com archives API.
- */
 object ChessComGameFetcher : GameFetcher {
 
     private const val BASE_URL = "https://api.chess.com/pub/player"
@@ -17,9 +14,7 @@ object ChessComGameFetcher : GameFetcher {
     override val platformKey: String = "chess.com"
 
     override suspend fun fetchGamesForUser(
-        username: String,
-        since: Long?,
-        maxGames: Int?
+        username: String, since: Long?, maxGames: Int?
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim().lowercase()
         if (normalizedUser.isBlank()) return@withContext emptyList()
@@ -120,8 +115,7 @@ object ChessComGameFetcher : GameFetcher {
         }
 
         Log.d(
-            "ChessComGameFetcher",
-            "Fetched ${result.size} games for $normalizedUser (since=${since ?: "null"}, max=$maxGames)"
+            "ChessComGameFetcher", "Fetched ${result.size} games for $normalizedUser (since=${since ?: "null"}, max=$maxGames)"
         )
 
         return@withContext result
@@ -156,7 +150,8 @@ object ChessComGameFetcher : GameFetcher {
             }
 
             connection.inputStream.bufferedReader().use { it.readText() }
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e("ChessComGameFetcher", "HTTP GET error for $urlString: ${e.message}", e)
             null
         }
