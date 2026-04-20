@@ -9,8 +9,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.core.navigation.Screen
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen.ChaptersScreen
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen.CourseOverviewScreen
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen.LearnChapterScreen
@@ -29,17 +29,17 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
 fun NavGraphBuilder.repertoireGraph(
-    navController: NavHostController, repertoireDao: RepertoireDao
+    navController: NavHostController, repertoireRepository: RepertoireRepository
 ) {
     composable(Screen.RepertoireMain.route) {
-        val vm: RepertoiresViewModel = viewModel(factory = RepertoiresViewModel.Factory(repertoireDao))
+        val vm: RepertoiresViewModel = viewModel(factory = RepertoiresViewModel.Factory(repertoireRepository))
         RepertoiresScreen(
             viewModel = vm, onNavigateToChapters = { navController.navigate(Screen.CourseOverview.createRoute(it)) })
     }
     composable(
         Screen.CourseOverview.route, arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
     ) {
-        val vm: CourseOverviewViewModel = viewModel(factory = CourseOverviewViewModel.Factory(repertoireDao))
+        val vm: CourseOverviewViewModel = viewModel(factory = CourseOverviewViewModel.Factory(repertoireRepository))
         CourseOverviewScreen(
             viewModel = vm,
             onBackClick = { navController.popBackStack() },
@@ -52,7 +52,7 @@ fun NavGraphBuilder.repertoireGraph(
     composable(
         Screen.ChapterLearn.route, arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
     ) { backStackEntry ->
-        val vm: LearnChapterViewModel = viewModel(factory = LearnChapterViewModel.Factory(repertoireDao))
+        val vm: LearnChapterViewModel = viewModel(factory = LearnChapterViewModel.Factory(repertoireRepository))
         val savedStateHandle = backStackEntry.savedStateHandle
         val lineTrainingFinished by savedStateHandle.getStateFlow("lineTrainingFinished", false).collectAsStateWithLifecycle()
         LaunchedEffect(lineTrainingFinished) {
@@ -69,14 +69,14 @@ fun NavGraphBuilder.repertoireGraph(
     composable(
         Screen.ChapterReview.route, arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
     ) {
-        val vm: ReviewChapterViewModel = viewModel(factory = ReviewChapterViewModel.Factory(repertoireDao))
+        val vm: ReviewChapterViewModel = viewModel(factory = ReviewChapterViewModel.Factory(repertoireRepository))
         ReviewChapterScreen(
             viewModel = vm, onBackClick = { navController.popBackStack() })
     }
     composable(
         Screen.Chapters.route, arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
     ) {
-        val vm: ChaptersViewModel = viewModel(factory = ChaptersViewModel.Factory(repertoireDao))
+        val vm: ChaptersViewModel = viewModel(factory = ChaptersViewModel.Factory(repertoireRepository))
         ChaptersScreen(
             viewModel = vm,
             onNavigateToLines = { navController.navigate(Screen.Lines.createRoute(it)) },
@@ -85,7 +85,7 @@ fun NavGraphBuilder.repertoireGraph(
     composable(
         Screen.Lines.route, arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
     ) {
-        val vm: LinesViewModel = viewModel(factory = LinesViewModel.Factory(repertoireDao))
+        val vm: LinesViewModel = viewModel(factory = LinesViewModel.Factory(repertoireRepository))
         LinesScreen(
             viewModel = vm,
             onNavigateToLineEditor = { navController.navigate(Screen.LineEditor.createRoute(it)) },
@@ -95,7 +95,7 @@ fun NavGraphBuilder.repertoireGraph(
     composable(
         Screen.LineEditor.route, arguments = listOf(navArgument("lineId") { type = NavType.IntType })
     ) {
-        val vm: LineEditorViewModel = viewModel(factory = LineEditorViewModel.Factory(repertoireDao))
+        val vm: LineEditorViewModel = viewModel(factory = LineEditorViewModel.Factory(repertoireRepository))
         LineEditorScreen(
             viewModel = vm, onBackClick = { navController.popBackStack() })
     }
@@ -103,14 +103,14 @@ fun NavGraphBuilder.repertoireGraph(
     composable(
         Screen.ChapterTraining.route, arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
     ) {
-        val vm: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireDao))
+        val vm: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireRepository))
         TrainScreen(
             viewModel = vm, onBackClick = { navController.popBackStack() })
     }
     composable(
         Screen.LineTraining.route, arguments = listOf(navArgument("lineId") { type = NavType.IntType })
     ) {
-        val vm: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireDao))
+        val vm: TrainingViewModel = viewModel(factory = TrainingViewModel.Factory(repertoireRepository))
         TrainScreen(viewModel = vm, onBackClick = { navController.popBackStack() }, onSessionComplete = {
             navController.previousBackStackEntry?.savedStateHandle?.set(
                 "lineTrainingFinished", true

@@ -19,26 +19,64 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenAnalysis: () -> Unit, onOpenMyStats: () -> Unit
+    onOpenAnalysis: () -> Unit,
+    onOpenMyStats: () -> Unit
 ) {
+    HomeScaffold {
+        HomeContent(
+            onOpenAnalysis = onOpenAnalysis,
+            onOpenMyStats = onOpenMyStats
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeScaffold(content: @Composable () -> Unit) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Home") }) }) { padding ->
+        topBar = { TopAppBar(title = { Text("Home") }) }
+    ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding), contentAlignment = Alignment.Center
+                .padding(padding),
+            contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Welcome to Chess Repertoire Trainer")
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onOpenAnalysis) {
-                    Text("Open analysis board")
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onOpenMyStats) {
-                    Text("My stats")
-                }
-            }
+            content()
         }
+    }
+}
+
+@Composable
+private fun HomeContent(
+    onOpenAnalysis: () -> Unit,
+    onOpenMyStats: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        HomeTitle()
+        HomeActionButtons(
+            onOpenAnalysis = onOpenAnalysis,
+            onOpenMyStats = onOpenMyStats
+        )
+    }
+}
+
+@Composable
+private fun HomeTitle() {
+    Text("Welcome to Chess Repertoire Trainer")
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+private fun HomeActionButtons(
+    onOpenAnalysis: () -> Unit,
+    onOpenMyStats: () -> Unit
+) {
+    Button(onClick = onOpenAnalysis) {
+        Text("Open analysis board")
+    }
+    Spacer(modifier = Modifier.height(16.dp))
+    Button(onClick = onOpenMyStats) {
+        Text("My stats")
     }
 }

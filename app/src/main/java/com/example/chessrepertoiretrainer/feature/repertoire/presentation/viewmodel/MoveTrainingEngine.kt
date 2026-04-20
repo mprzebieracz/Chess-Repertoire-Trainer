@@ -6,14 +6,10 @@ import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import kotlinx.coroutines.delay
 
-/**
- * Shared move-training helper used by both repertoire training and puzzle
- * training. It keeps track of the expected SAN move sequence for both sides
- * and exposes utilities for checking user moves, auto-playing opponent
- * replies, stepping through the solution, and computing simple hints.
- */
+
 class MoveTrainingEngine(
-    private val chessController: DefaultChessBoardController, private val normalizeSan: (String) -> String
+    private val chessController: DefaultChessBoardController,
+    private val normalizeSan: (String) -> String
 ) {
 
     data class Config(

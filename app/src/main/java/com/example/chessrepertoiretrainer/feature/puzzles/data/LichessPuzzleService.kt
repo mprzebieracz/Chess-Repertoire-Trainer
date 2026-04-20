@@ -48,7 +48,8 @@ object LichessPuzzleService {
 
             val responseCode = connection.responseCode
             Log.d(
-                "LichessPuzzleService", "Daily puzzle HTTP response code=$responseCode in ${System.currentTimeMillis() - startTime}ms"
+                "LichessPuzzleService",
+                "Daily puzzle HTTP response code=$responseCode in ${System.currentTimeMillis() - startTime}ms"
             )
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 Log.e("LichessPuzzleService", "HTTP error: $responseCode")
@@ -57,7 +58,8 @@ object LichessPuzzleService {
 
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             Log.d(
-                "LichessPuzzleService", "Daily puzzle raw body length=${body.length}, preview='${body.take(200)}'"
+                "LichessPuzzleService",
+                "Daily puzzle raw body length=${body.length}, preview='${body.take(200)}'"
             )
 
             val root = JSONObject(body)
@@ -88,9 +90,11 @@ object LichessPuzzleService {
         val fenFromPuzzle = puzzleJson.optString("fen", "")
         val fenFromRoot = root.optString("fen", "")
         val fenFromGame = root.optJSONObject("game")?.optString("fen", "") ?: ""
-        val fen = listOf(fenFromPuzzle, fenFromRoot, fenFromGame).firstOrNull { it.isNotBlank() } ?: ""
+        val fen =
+            listOf(fenFromPuzzle, fenFromRoot, fenFromGame).firstOrNull { it.isNotBlank() } ?: ""
         Log.d(
-            "LichessPuzzleService", "[$sourceTag] Puzzle $lichessId rating=$rating fenFromPuzzle='${fenFromPuzzle.take(32)}' fenFromRoot='${
+            "LichessPuzzleService",
+            "[$sourceTag] Puzzle $lichessId rating=$rating fenFromPuzzle='${fenFromPuzzle.take(32)}' fenFromRoot='${
                 fenFromRoot.take(
                     32
                 )
@@ -122,7 +126,8 @@ object LichessPuzzleService {
             token.length in 4..5 && token[0] in 'a'..'h' && token[1] in '1'..'8' && token[2] in 'a'..'h' && token[3] in '1'..'8'
         }
         Log.d(
-            "LichessPuzzleService", "[$sourceTag] Puzzle $lichessId solution tokensCount=${tokens.size} looksLikeUci=$looksLikeUci firstTokens=${
+            "LichessPuzzleService",
+            "[$sourceTag] Puzzle $lichessId solution tokensCount=${tokens.size} looksLikeUci=$looksLikeUci firstTokens=${
                 tokens.take(
                     4
                 )
@@ -131,7 +136,8 @@ object LichessPuzzleService {
 
         if (fen.isBlank() || moves.isBlank()) {
             Log.w(
-                "LichessPuzzleService", "[$sourceTag] Skipping puzzle $lichessId due to missing fen or moves (fen='${
+                "LichessPuzzleService",
+                "[$sourceTag] Skipping puzzle $lichessId due to missing fen or moves (fen='${
                     fen.take(
                         16
                     )
@@ -141,11 +147,18 @@ object LichessPuzzleService {
         }
 
         Log.d(
-            "LichessPuzzleService", "[$sourceTag] Creating local puzzle id=$localId rating=$rating fen='${fen.take(32)}' movesTokens=${tokens.size}"
+            "LichessPuzzleService",
+            "[$sourceTag] Creating local puzzle id=$localId rating=$rating fen='${fen.take(32)}' movesTokens=${tokens.size}"
         )
 
         return Puzzle(
-            id = localId, fen = fen, moves = moves, rating = rating, themes = themes, isSolved = false, attempts = 0
+            id = localId,
+            fen = fen,
+            moves = moves,
+            rating = rating,
+            themes = themes,
+            isSolved = false,
+            attempts = 0
         )
     }
 }

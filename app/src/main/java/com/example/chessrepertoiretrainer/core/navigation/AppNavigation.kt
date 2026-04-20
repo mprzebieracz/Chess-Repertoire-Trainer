@@ -24,7 +24,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
     val navController = rememberNavController()
     val appContainer = (LocalContext.current.applicationContext as ChessApplication).appContainer
 
-    val repertoireDao = appContainer.repertoireDao
+    val repertoireRepository = appContainer.repertoireRepository
     val puzzleRepository = appContainer.puzzleRepository
     val playerGamesRepository: GamesRepository = appContainer.gamesRepository
 
@@ -39,7 +39,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
             navController = navController, startDestination = Screen.Home.route, modifier = Modifier.padding(innerPadding)
         ) {
             homeGraph(navController, settingsViewModel)
-            trainingGraph(navController, repertoireDao)
+            trainingGraph(navController, repertoireRepository)
             gamesGraph(
                 navController = navController,
                 settingsViewModel = settingsViewModel,
@@ -55,7 +55,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                 statsRefreshCoordinator = appContainer.statsRefreshCoordinator,
                 openingTreePreparationCoordinator = appContainer.openingTreePreparationCoordinator
             )
-            repertoireGraph(navController, repertoireDao)
+            repertoireGraph(navController, repertoireRepository)
         }
     }
 }

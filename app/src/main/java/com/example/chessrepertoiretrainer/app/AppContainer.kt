@@ -10,10 +10,12 @@ import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePr
 import com.example.chessrepertoiretrainer.feature.openingtree.data.PlayerGamesRepository
 import com.example.chessrepertoiretrainer.feature.openingtree.domain.GamesRepository
 import com.example.chessrepertoiretrainer.feature.puzzles.data.DefaultPuzzleRepository
+import com.example.chessrepertoiretrainer.feature.repertoire.data.DefaultRepertoireRepository
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 import com.example.chessrepertoiretrainer.feature.stats.data.DefaultGameStatsRepository
-import com.example.chessrepertoiretrainer.feature.stats.data.data.AccountSyncCoordinator
-import com.example.chessrepertoiretrainer.feature.stats.data.data.StatsRefreshCoordinator
+import com.example.chessrepertoiretrainer.feature.stats.data.AccountSyncCoordinator
+import com.example.chessrepertoiretrainer.feature.stats.data.StatsRefreshCoordinator
 import com.example.chessrepertoiretrainer.feature.stats.domain.PlayerProfileRepository
 
 /**
@@ -35,6 +37,7 @@ class AppContainer(context: Context) {
     val gameStatsDao = db.gameStatsDao()
 
     val puzzleRepository = DefaultPuzzleRepository(puzzleDao)
+    val repertoireRepository: RepertoireRepository = DefaultRepertoireRepository(repertoireDao)
     val playerProfileRepository = PlayerProfileRepository(playerProfileDao)
 
     val gameFetcherRegistry = GameFetcherRegistry(
@@ -47,7 +50,9 @@ class AppContainer(context: Context) {
     val onlineGamesFetchCoordinator = OnlineGamesFetchCoordinator(gameFetcherRegistry)
 
     val gamesRepository: GamesRepository = PlayerGamesRepository(
-        gameDao = gameDao, playerProfileDao = playerProfileDao, fetcherRegistry = gameFetcherRegistry
+        gameDao = gameDao,
+        playerProfileDao = playerProfileDao,
+        fetcherRegistry = gameFetcherRegistry
     )
 
     val gameStatsRepository = DefaultGameStatsRepository(

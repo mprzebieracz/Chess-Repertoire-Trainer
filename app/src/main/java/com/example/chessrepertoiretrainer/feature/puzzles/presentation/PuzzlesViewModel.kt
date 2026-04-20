@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
+import com.example.chessrepertoiretrainer.feature.puzzles.domain.config.PuzzleTrainingConfig
+import com.example.chessrepertoiretrainer.feature.puzzles.domain.usecase.EnsureMinUnsolvedUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,14 +18,12 @@ data class PuzzlesUiState(
 )
 
 class PuzzlesViewModel(
+    private val ensureMinUnsolved: EnsureMinUnsolvedUseCase,
     private val repository: PuzzleRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PuzzlesUiState())
     val uiState: StateFlow<PuzzlesUiState> = _uiState.asStateFlow()
-
-    // In daily mode we only need at most one unsolved puzzle available.
-    private val minUnsolvedPuzzles = 1
 
     init {
         viewModelScope.launch {
@@ -35,7 +35,7 @@ class PuzzlesViewModel(
         try {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-            val finalCount = repository.ensureMinUnsolvedPuzzles(minUnsolvedPuzzles)
+            val finalCount = ensureMinUnsolved()
             Log.d(
                 "PuzzlesViewModel", "Unsolved puzzles after ensuring minimum: $finalCount"
             )
@@ -64,7 +64,9 @@ class PuzzlesViewModel(
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            return PuzzlesViewModel(repository) as T
+            val config = PuzzleTrainingConfig()
+            val ensureMinUnsolved = EnsureMinUnsolvedUseCase(repository, config)
+            return PuzzlesViewModel(ensureMinUnsolved, repository) as T
         }
     }
 }

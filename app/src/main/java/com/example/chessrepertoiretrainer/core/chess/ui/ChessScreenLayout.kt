@@ -48,10 +48,17 @@ fun ChessScreenLayout(
     bottomContent: @Composable () -> Unit = {},
     extraButtons: @Composable RowScope.() -> Unit = {},
     showNavigationControls: Boolean = true,
-    showBoardActionButtons: Boolean = true
+    showBoardActionButtons: Boolean = true,
+    enableScreenScroll: Boolean = true
 ) {
+    val layoutModifier = if (enableScreenScroll) {
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+    } else {
+        Modifier.fillMaxSize()
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+        modifier = layoutModifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {

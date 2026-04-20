@@ -1,6 +1,10 @@
 package com.example.chessrepertoiretrainer.core.chess.ui
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -8,7 +12,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.github.bhlangonijr.chesslib.Square
 
@@ -29,8 +38,13 @@ fun ChessboardUI(state: ChessBoardController) {
         } ?: emptyList()
     }
 
-    Box(
-        modifier = Modifier.chessboardFrame { boardSizePx = it }) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .aspectRatio(1f)
+        .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }
+        .shadow(8.dp, RoundedCornerShape(4.dp))
+        .clip(RoundedCornerShape(4.dp))
+        .border(2.dp, Color(0xFF312E2B), RoundedCornerShape(4.dp))) {
         val squareSizePx = if (boardSizePx > 0) boardSizePx / 8 else 0f
 
         ChessboardGrid(
@@ -48,7 +62,8 @@ fun ChessboardUI(state: ChessBoardController) {
             onDragEnd = {
                 draggingSquare = null
                 dragOffset = Offset.Zero
-            })
+            }
+        )
 
         if (draggingSquare != null && squareSizePx > 0f) {
             DraggedPieceLayer(

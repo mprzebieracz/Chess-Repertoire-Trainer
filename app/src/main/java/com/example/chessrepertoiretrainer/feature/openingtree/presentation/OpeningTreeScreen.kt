@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -32,115 +33,168 @@ import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 
 @Composable
 fun OpeningTreeScreen(
-    viewModel: OpeningTreeViewModel, onBackClick: () -> Unit
+    viewModel: OpeningTreeViewModel,
+    onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         bottomBar = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Button(
-                    onClick = { viewModel.onGoBack() }, enabled = uiState.pathMoves.isNotEmpty(), modifier = Modifier.weight(1f)
-                ) {
-                    Text("Back")
-                }
-                Button(
-                    onClick = { viewModel.onGoRoot() }, modifier = Modifier.weight(1f)
-                ) {
-                    Text("Root")
-                }
-            }
-        }) { padding ->
-        if (uiState.isLoading) {
-            // While the opening tree is being prepared, show a simple
-            // full-screen progress view instead of a half-populated board.
-            Box(
-                modifier = Modifier.padding(padding).fillMaxWidth(), contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "Preparing opening tree...", style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        text = uiState.statusMessage ?: "", style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+            if (!uiState.isLoading) {
+                OpeningTreeBottomBar(viewModel = viewModel, uiState = uiState)
             }
         }
-        else {
-            Column(modifier = Modifier.padding(padding)) {
+    ) { padding ->
+        if (uiState.isLoading) {
+            OpeningTreeLoadingState(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
+                statusMessage = uiState.statusMessage
+            )
+        } else {
+            Box(modifier = Modifier.padding(padding)) {
                 ChessScreenLayout(
                     title = "Opening Tree",
                     chessCtrl = viewModel.chessController,
                     showPgnBar = false,
                     showNavigationControls = false,
                     showBoardActionButtons = false,
-                    topContent = {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            IconButton(onClick = onBackClick) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
-                                )
-                            }
-                        }
-                    },
+                    enableScreenScroll = false,
+                    topContent = { OpeningTreeHeader(onBackClick = onBackClick) },
                     bottomContent = {
-                        if (uiState.moves.isNotEmpty()) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = "Next moves", style = MaterialTheme.typography.titleMedium
-                                )
-                                Spacer(modifier = Modifier.size(8.dp))
-                                LazyColumn(
-                                    modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    items(uiState.moves) { move ->
-                                        OpeningTreeMoveCard(move = move) {
-                                            viewModel.onMoveSelected(move.toFen)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            Text(
-                                text = uiState.statusMessage ?: "No further moves from this position",
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
-                        }
-                    })
+                        OpeningTreeMovesPanel(
+                            uiState = uiState,
+                            onMoveSelected = viewModel::onMoveSelected
+                        )
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
+private fun OpeningTreeLoadingState(
+    modifier: Modifier,
+    statusMessage: String?
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = "Preparing opening tree...", style = MaterialTheme.typography.titleMedium)
+            if (!statusMessage.isNullOrBlank()) {
+                Text(text = statusMessage, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OpeningTreeHeader(onBackClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back"
+            )
+        }
+    }
+}
+
+@Composable
+private fun OpeningTreeMovesPanel(
+    uiState: OpeningTreeViewModel.OpeningTreeUiState,
+    onMoveSelected: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        uiState.statusMessage?.let { status ->
+            Text(
+                text = status,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.size(8.dp))
+        }
+
+        if (uiState.moves.isNotEmpty()) {
+            Text(text = "Next moves", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.size(8.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(uiState.moves) { move ->
+                    OpeningTreeMoveCard(move = move) {
+                        onMoveSelected(move.moveSan)
+                    }
+                }
+            }
+        } else {
+            Text(
+                text = uiState.statusMessage ?: "No further moves from this position",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+private fun OpeningTreeBottomBar(
+    viewModel: OpeningTreeViewModel,
+    uiState: OpeningTreeViewModel.OpeningTreeUiState
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Button(
+            onClick = { viewModel.onGoBack() },
+            enabled = uiState.canGoBack,
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Back")
+        }
+        Button(
+            onClick = { viewModel.onGoRoot() },
+            modifier = Modifier.weight(1f)
+        ) {
+            Text("Root")
+        }
+    }
+}
+
+@Composable
 private fun OpeningTreeMoveCard(
-    move: OpeningTreeViewModel.OpeningTreeMoveUi, onClick: () -> Unit
+    move: OpeningTreeViewModel.OpeningTreeMoveUi,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick), colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = move.moveSan, style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = move.moveSan, style = MaterialTheme.typography.bodyMedium)
             Text(
                 text = "W ${move.winPercent}%  D ${move.drawPercent}%  L ${move.lossPercent}%  (${move.games} games)",
                 style = MaterialTheme.typography.bodySmall
@@ -148,5 +202,3 @@ private fun OpeningTreeMoveCard(
         }
     }
 }
-
-

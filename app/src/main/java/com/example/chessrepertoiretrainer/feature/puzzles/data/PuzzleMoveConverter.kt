@@ -1,5 +1,6 @@
-package com.example.chessrepertoiretrainer.core.chess.domain
+package com.example.chessrepertoiretrainer.feature.puzzles.data
 
+import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side

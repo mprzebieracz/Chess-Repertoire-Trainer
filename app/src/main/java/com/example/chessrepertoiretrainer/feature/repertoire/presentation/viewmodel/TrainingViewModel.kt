@@ -6,10 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +34,7 @@ data class TrainingUiState(
 )
 
 class TrainingViewModel(
-    private val repertoireDao: RepertoireDao, savedStateHandle: SavedStateHandle
+    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TrainingUiState())
@@ -62,7 +62,7 @@ class TrainingViewModel(
         viewModelScope.launch {
             // Single-line training mode (used from learn flow)
             if (lineId != null) {
-                val line = repertoireDao.getLineById(lineId)
+                val line = repertoireRepository.getLineById(lineId)
 
                 if (line == null) {
                     _uiState.update {
@@ -80,11 +80,11 @@ class TrainingViewModel(
 
             // Chapter-wide or review-based training
             val flow = if (chapterId != null) {
-                repertoireDao.getLinesForChapter(chapterId)
+                repertoireRepository.getLinesForChapter(chapterId)
             }
             else {
                 val allLinesTime = Long.MAX_VALUE
-                repertoireDao.getLinesToReview(allLinesTime)
+                repertoireRepository.getLinesToReview(allLinesTime)
             }
             flow.collect { loadedLines ->
                 if (loadedLines.isEmpty()) {
@@ -169,8 +169,8 @@ class TrainingViewModel(
         currentLineIndex = index
         val line = lines[index]
 
-        val chapter = repertoireDao.getChapterById(line.chapterId)
-        val repertoire = chapter?.let { repertoireDao.getRepertoireById(it.repertoireId) }
+        val chapter = repertoireRepository.getChapterById(line.chapterId)
+        val repertoire = chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
         val colorString = repertoire?.color ?: "White"
 
         mySide = if (colorString.equals("White", ignoreCase = true)) {
@@ -180,7 +180,7 @@ class TrainingViewModel(
             Side.BLACK
         }
 
-        currentLineMoves = repertoireDao.getMovesForLine(line.id).first()
+        currentLineMoves = repertoireRepository.getMovesForLine(line.id).first()
         moveTrainer.reset(
             MoveTrainingEngine.Config(
                 mySide = mySide, sanMoves = currentLineMoves.map { it.moveSan })
@@ -250,11 +250,11 @@ class TrainingViewModel(
         }
     }
 
-    class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()
-            return TrainingViewModel(repertoireDao, handle) as T
+            return TrainingViewModel(repertoireRepository, handle) as T
         }
     }
 }

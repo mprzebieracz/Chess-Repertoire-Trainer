@@ -6,11 +6,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
-import com.example.chessrepertoiretrainer.core.database.entity.Line
-import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.database.entity.Line
+import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
  *    training session.
  */
 class LearnChapterViewModel(
-    private val repertoireDao: RepertoireDao, savedStateHandle: SavedStateHandle
+    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     enum class LearnPhase {
@@ -80,9 +80,9 @@ class LearnChapterViewModel(
     private suspend fun loadChapterAndLines() {
         _uiState.update { it.copy(isLoading = true, hasNoLines = false, statusMessage = null) }
 
-        val chapter = repertoireDao.getChapterById(chapterId)
+        val chapter = repertoireRepository.getChapterById(chapterId)
         val chapterName = chapter?.name ?: "Chapter"
-        val repertoire = chapter?.let { repertoireDao.getRepertoireById(it.repertoireId) }
+        val repertoire = chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
         val colorString = repertoire?.color ?: "White"
 
         mySide = if (colorString.equals("White", ignoreCase = true)) {
@@ -100,7 +100,7 @@ class LearnChapterViewModel(
             chessController.flipBoard()
         }
 
-        val loadedLines = repertoireDao.getLinesForChapter(chapterId).first()
+        val loadedLines = repertoireRepository.getLinesForChapter(chapterId).first()
         lines = loadedLines
 
         if (loadedLines.isEmpty()) {
@@ -150,7 +150,7 @@ class LearnChapterViewModel(
         currentLineIndex = index
         val line = lines[index]
 
-        currentLineMoves = repertoireDao.getMovesForLine(line.id).first()
+        currentLineMoves = repertoireRepository.getMovesForLine(line.id).first()
         currentMoveIndex = -1
 
         chessController.resetBoard()
@@ -298,7 +298,7 @@ class LearnChapterViewModel(
                         timesTrained = line.timesTrained + 1, lastTrainedAt = now
                     )
                 }
-                repertoireDao.updateLine(updated)
+                repertoireRepository.updateLine(updated)
                 // Keep local cache in sync so that subsequent navigation skips
                 // learned lines correctly.
                 lines = lines.toMutableList().also { list ->
@@ -327,11 +327,11 @@ class LearnChapterViewModel(
         }
     }
 
-    class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()
-            return LearnChapterViewModel(repertoireDao, savedStateHandle) as T
+            return LearnChapterViewModel(repertoireRepository, savedStateHandle) as T
         }
     }
 }

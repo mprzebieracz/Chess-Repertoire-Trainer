@@ -3,9 +3,9 @@ package com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.core.database.entity.Chapter
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,9 +16,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrainingSelectionViewModel(private val repertoireDao: RepertoireDao) : ViewModel() {
+class TrainingSelectionViewModel(private val repertoireRepository: RepertoireRepository) : ViewModel() {
 
-    val repertoires: StateFlow<List<Repertoire>> = repertoireDao.getAllRepertoires().stateIn(
+    val repertoires: StateFlow<List<Repertoire>> = repertoireRepository.getAllRepertoires().stateIn(
         scope = viewModelScope, started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
     )
 
@@ -30,7 +30,7 @@ class TrainingSelectionViewModel(private val repertoireDao: RepertoireDao) : Vie
             flowOf(emptyList())
         }
         else {
-            repertoireDao.getChaptersForRepertoire(id)
+            repertoireRepository.getChaptersForRepertoire(id)
         }
     }.stateIn(
         scope = viewModelScope, started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
@@ -40,10 +40,10 @@ class TrainingSelectionViewModel(private val repertoireDao: RepertoireDao) : Vie
         _selectedRepertoireId.value = id
     }
 
-    class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return TrainingSelectionViewModel(repertoireDao) as T
+            return TrainingSelectionViewModel(repertoireRepository) as T
         }
     }
 }

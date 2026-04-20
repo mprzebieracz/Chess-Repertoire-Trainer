@@ -1,28 +1,29 @@
 package com.example.chessrepertoiretrainer.core.navigation
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import java.net.URLEncoder
 
 sealed class Screen(
     val route: String,
     val title: String = "",
-    val icon: ImageVector = _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.Home
+    val icon: ImageVector = AppIcons.Home
 ) {
     // Bottom Bar Screens
-    object Home : Screen("home", "Home", _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.Home)
+    object Home : Screen("home", "Home", AppIcons.Home)
     object RepertoireMain :
-        Screen("repertoire_main", "Repertoire", _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.Repertoire)
+        Screen("repertoire_main", "Repertoire", AppIcons.Repertoire)
 
-    object Train : Screen("train", "Train", _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.Train)
-    object Puzzles : Screen("puzzles", "Puzzles", _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.Puzzles)
+    object Train : Screen("train", "Train", AppIcons.Train)
+    object Puzzles : Screen("puzzles", "Puzzles", AppIcons.Puzzles)
 
     // "Opening tree" tab – opens the OpeningTreeSearchScreen, which can
     // build an opening tree for any online player (not necessarily you).
-    object YourGames : Screen("games", "Opening tree", _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.OpeningTree)
-    object Settings : Screen("settings", "Settings", _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.Settings)
+    object YourGames : Screen("games", "Opening tree", AppIcons.OpeningTree)
+    object Settings : Screen("settings", "Settings", AppIcons.Settings)
 
     // Root-level statistics / analysis screens (not in bottom bar for now)
-    object MyStats : Screen("my_stats", "My stats", _root_ide_package_.com.example.chessrepertoiretrainer.core.ui.icons.AppIcons.OpeningTree)
+    object MyStats : Screen("my_stats", "My stats", AppIcons.OpeningTree)
 
     // Nested / detail screens (not in bottom bar)
     object CourseOverview : Screen("course_overview/{repertoireId}") {

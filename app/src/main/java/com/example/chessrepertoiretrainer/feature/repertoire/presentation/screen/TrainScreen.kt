@@ -21,16 +21,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
+import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingUiState
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
 @Composable
 fun TrainScreen(
-    viewModel: TrainingViewModel, onBackClick: (() -> Unit)? = null, onSessionComplete: (() -> Unit)? = null
+    viewModel: TrainingViewModel,
+    onBackClick: (() -> Unit)? = null,
+    onSessionComplete: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Notify caller when the training session is finished (used for
-    // single-line training so the learn flow can continue automatically).
     LaunchedEffect(uiState.isSessionComplete) {
         if (uiState.isSessionComplete && onSessionComplete != null) {
             onSessionComplete()
@@ -43,87 +44,122 @@ fun TrainScreen(
         showNavigationControls = false,
         showBoardActionButtons = false,
         topContent = {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-            ) {
-                if (onBackClick != null) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
-                            )
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = "Back", style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-
-                if (uiState.isSessionEmpty) {
-                    Text(
-                        text = "No lines to train. Create lines in your repertoire first.", style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                else {
-                    val currentLineName = uiState.currentLineName
-                    if (currentLineName != null && uiState.totalLines > 0) {
-                        Text(
-                            text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = currentLineName, style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    if (uiState.myColor != null) {
-                        Text(
-                            text = "You play ${uiState.myColor}", style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }
-            }
+            TrainTopContent(uiState = uiState, onBackClick = onBackClick)
         },
         bottomContent = {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                when {
-                    uiState.isSessionComplete -> {
-                        Text(
-                            text = uiState.statusMessage ?: "Training complete",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
+            TrainBottomContent(uiState = uiState)
+        }
+    )
+}
 
-                    uiState.lastMoveWasCorrect == true -> {
-                        Text(
-                            text = "Correct move", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+@Composable
+private fun TrainTopContent(
+    uiState: TrainingUiState,
+    onBackClick: (() -> Unit)?
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+        if (onBackClick != null) {
+            TrainBackRow(onBackClick = onBackClick)
+        }
 
-                    uiState.lastMoveWasCorrect == false -> {
-                        Text(
-                            text = "Incorrect move", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+        TrainHeader(uiState = uiState)
+    }
+}
 
-                    !uiState.isSessionEmpty && !uiState.isSessionComplete -> {
-                        Text(
-                            text = if (uiState.isWaitingForUserMove) {
-                                "Your turn: follow the repertoire moves."
-                            }
-                            else {
-                                "Waiting for training session..."
-                            }, style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            }
-        })
+@Composable
+private fun TrainBackRow(onBackClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBackClick) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
+
+        Spacer(Modifier.width(8.dp))
+
+        Text(text = "Back", style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun TrainHeader(uiState: TrainingUiState) {
+    if (uiState.isSessionEmpty) {
+        Text(
+            text = "No lines to train. Create lines in your repertoire first.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+        return
+    }
+
+    uiState.currentLineName?.let { currentLineName ->
+        if (uiState.totalLines > 0) {
+            Text(
+                text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        Text(text = currentLineName, style = MaterialTheme.typography.bodyMedium)
+    }
+
+    uiState.myColor?.let { color ->
+        Text(text = "You play $color", style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun TrainBottomContent(uiState: TrainingUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        TrainStatusMessage(uiState = uiState)
+    }
+}
+
+@Composable
+private fun TrainStatusMessage(uiState: TrainingUiState) {
+    when {
+        uiState.isSessionComplete -> {
+            Text(
+                text = uiState.statusMessage ?: "Training complete",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+
+        uiState.lastMoveWasCorrect == true -> {
+            Text(
+                text = "Correct move",
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        uiState.lastMoveWasCorrect == false -> {
+            Text(
+                text = "Incorrect move",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        !uiState.isSessionEmpty && !uiState.isSessionComplete -> {
+            Text(
+                text = if (uiState.isWaitingForUserMove) {
+                    "Your turn: follow the repertoire moves."
+                } else {
+                    "Waiting for training session..."
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
 }

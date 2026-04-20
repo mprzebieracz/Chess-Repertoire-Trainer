@@ -8,8 +8,8 @@ import androidx.navigation.compose.composable
 import com.example.chessrepertoiretrainer.core.navigation.Screen
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
-import com.example.chessrepertoiretrainer.feature.stats.data.data.AccountSyncCoordinator
-import com.example.chessrepertoiretrainer.feature.stats.data.data.StatsRefreshCoordinator
+import com.example.chessrepertoiretrainer.feature.stats.data.AccountSyncCoordinator
+import com.example.chessrepertoiretrainer.feature.stats.data.StatsRefreshCoordinator
 import com.example.chessrepertoiretrainer.feature.stats.presentation.MyStatsScreen
 import com.example.chessrepertoiretrainer.feature.stats.presentation.MyStatsViewModel
 
@@ -32,10 +32,15 @@ fun NavGraphBuilder.statsGraph(
         val settings = settingsViewModel.settings.collectAsStateWithLifecycle().value
 
         MyStatsScreen(
-            viewModel = vm, settings = settings, onOpenProfileTree = { profileId, color, timeControl, maxGames ->
+            viewModel = vm,
+            settings = settings,
+            onOpenProfileTree = { profileId, color, timeControl, maxGames ->
                 navController.navigate(
                     Screen.OpeningTree.createRoute(
-                        profileId = profileId, color = color, timeControl = timeControl, maxGames = maxGames
+                        profileId = profileId,
+                        color = color,
+                        timeControl = timeControl,
+                        maxGames = maxGames
                     )
                 )
             })

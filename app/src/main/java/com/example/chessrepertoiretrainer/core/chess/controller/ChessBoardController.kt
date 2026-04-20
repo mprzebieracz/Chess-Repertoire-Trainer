@@ -15,8 +15,11 @@ class DefaultChessBoardController(
     override var onMoveListener: ((Move, String, String) -> Unit)? = null
 ) : ChessBoardController {
 
+    override var onFenChangedListener: ((String) -> Unit)? = null
+
     companion object {
-        private const val STARTING_POSITION_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        private const val STARTING_POSITION_FEN =
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     }
 
     private val board = Board()
@@ -140,9 +143,12 @@ class DefaultChessBoardController(
     private fun updateAfterNavigation() {
         boardState = board.fen
         selectedSquare = null
+        hoveredSquare = null
+        markedSquare = null
         pendingPromotion = null
         lastMove = if (currentPositionIndex >= 0) fullMoveHistory[currentPositionIndex] else null
         updatePgn()
+        onFenChangedListener?.invoke(board.fen)
     }
 
     private fun applyMove(move: Move) {
@@ -164,6 +170,7 @@ class DefaultChessBoardController(
         pendingPromotion = null
 
         onMoveListener?.invoke(move, san, board.fen)
+        onFenChangedListener?.invoke(board.fen)
     }
 
     private fun updatePgn() {
@@ -240,5 +247,7 @@ class DefaultChessBoardController(
         hoveredSquare = null
         markedSquare = null
         pendingPromotion = null
+        updatePgn()
+        onFenChangedListener?.invoke(board.fen)
     }
 }

@@ -11,7 +11,9 @@ fun PieceDisplay(piece: Piece, modifier: Modifier = Modifier) {
     val drawableRes = pieceDrawableRes(piece)
     if (drawableRes != 0) {
         Image(
-            painter = painterResource(id = drawableRes), contentDescription = piece.name, modifier = modifier
+            painter = painterResource(id = drawableRes),
+            contentDescription = piece.name,
+            modifier = modifier
         )
     }
 }

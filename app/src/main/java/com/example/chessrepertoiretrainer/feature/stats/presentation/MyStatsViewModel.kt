@@ -7,8 +7,8 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.feature.openingtree.data.GameWithPgn
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeCache
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
-import com.example.chessrepertoiretrainer.feature.stats.data.data.AccountSyncCoordinator
-import com.example.chessrepertoiretrainer.feature.stats.data.data.StatsRefreshCoordinator
+import com.example.chessrepertoiretrainer.feature.stats.data.AccountSyncCoordinator
+import com.example.chessrepertoiretrainer.feature.stats.data.StatsRefreshCoordinator
 import com.example.chessrepertoiretrainer.feature.stats.domain.GameStatsSummary
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -103,7 +103,12 @@ class MyStatsViewModel(
      * tree cached under a synthetic profile id.
      */
     fun syncAndPrepareTreeForSelection(
-        useLichess: Boolean, useChessCom: Boolean, color: String, timeControlFilter: String, maxGamesForTree: Int?, onProfileReady: (Long) -> Unit
+        useLichess: Boolean,
+        useChessCom: Boolean,
+        color: String,
+        timeControlFilter: String,
+        maxGamesForTree: Int?,
+        onProfileReady: (Long) -> Unit
     ) {
         viewModelScope.launch {
             val current = _uiState.value
@@ -116,7 +121,10 @@ class MyStatsViewModel(
             // Fast path: if we already have a cached combined tree for these
             // filters and no new sync is required, reuse it immediately.
             val cacheKey = openingTreePreparationCoordinator.buildCacheKey(
-                profileId = COMBINED_PROFILE_ID, color = color, timeControlFilter = timeControlFilter, maxGamesForTree = maxGamesForTree
+                profileId = COMBINED_PROFILE_ID,
+                color = color,
+                timeControlFilter = timeControlFilter,
+                maxGamesForTree = maxGamesForTree
             )
             val cached = OpeningTreeCache.get(cacheKey)
             if (cached != null) {
@@ -129,7 +137,10 @@ class MyStatsViewModel(
                 updateAccount(acc.platform) { existing ->
                     val base = existing ?: acc
                     base.copy(
-                        isSyncing = true, statusMessage = "Preparing games...", errorMessage = null, lastSyncSummary = null
+                        isSyncing = true,
+                        statusMessage = "Preparing games...",
+                        errorMessage = null,
+                        lastSyncSummary = null
                     )
                 }
             }
@@ -146,7 +157,8 @@ class MyStatsViewModel(
                 updateAccount(acc.platform) { existing ->
                     val base = existing ?: acc
                     base.copy(
-                        lastSyncTime = sync.updatedLastSyncTime ?: base.lastSyncTime, errorMessage = sync.errorMessage
+                        lastSyncTime = sync.updatedLastSyncTime ?: base.lastSyncTime,
+                        errorMessage = sync.errorMessage
                     )
                 }
             }
@@ -184,7 +196,9 @@ class MyStatsViewModel(
                 updateAccount(acc.platform) { existing ->
                     val base = existing ?: acc
                     base.copy(
-                        isSyncing = false, statusMessage = null, lastSyncSummary = if (gamesUsedForTree > 0) {
+                        isSyncing = false,
+                        statusMessage = null,
+                        lastSyncSummary = if (gamesUsedForTree > 0) {
                             "Prepared opening tree from $gamesUsedForTree games"
                         }
                         else {
@@ -232,7 +246,10 @@ class MyStatsViewModel(
                 updateAccount(acc.platform) { existing ->
                     val base = existing ?: acc
                     base.copy(
-                        isSyncing = true, statusMessage = "Checking for new games...", errorMessage = null, lastSyncSummary = null
+                        isSyncing = true,
+                        statusMessage = "Checking for new games...",
+                        errorMessage = null,
+                        lastSyncSummary = null
                     )
                 }
             }

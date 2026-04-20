@@ -5,13 +5,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
-import com.example.chessrepertoiretrainer.feature.openingtree.data.GameForOpeningTree
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTree
-import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeBuilder
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeCache
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeCacheKey
+import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeMoveAggregate
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeNode
 import com.example.chessrepertoiretrainer.feature.openingtree.domain.GamesRepository
+import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 class OpeningTreeViewModel(
     private val profileId: Long,
     private val gamesRepository: GamesRepository,
+    private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator,
     private val colorFilter: ColorFilter = ColorFilter.BOTH,
     private val timeControlFilter: String? = null,
     private val maxGamesForTree: Int? = null
@@ -33,17 +35,19 @@ class OpeningTreeViewModel(
     val uiState: StateFlow<OpeningTreeUiState> = _uiState.asStateFlow()
 
     init {
+        chessController.onFenChangedListener = { fen ->
+            val tree = openingTree
+            if (tree != null && _uiState.value.currentFen != fen) {
+                applyFen(fen, tree, updateBoard = false)
+            }
+        }
+
         viewModelScope.launch {
-            // First try to reuse a tree that was eagerly built and cached by
-            // one of the preparation viewmodels (e.g. MyStatsViewModel,
-            // OpeningTreeSearchViewModel). If no
-            // matching cached tree exists, fall back to building it on demand
-            // as before.
             val cached = getCachedTreeForCurrentFilters()
             if (cached != null) {
                 openingTree = cached
                 updateBoardOrientation()
-                applyFen(cached.rootFen, cached)
+                applyFen(cached.rootFen, cached, updateBoard = true)
             }
             else {
                 rebuildOpeningTree()
@@ -52,115 +56,78 @@ class OpeningTreeViewModel(
     }
 
     private fun getCachedTreeForCurrentFilters(): OpeningTree? {
-        val normalizedColor = when (colorFilter) {
-            ColorFilter.WHITE_ONLY -> "white"
-            ColorFilter.BLACK_ONLY -> "black"
-            ColorFilter.BOTH -> "both"
-        }
-        val normalizedTimeControl = timeControlFilter?.trim().orEmpty()
-
-        val key = OpeningTreeCacheKey(
-            profileId = profileId, color = normalizedColor, timeControlFilter = normalizedTimeControl, maxGamesForTree = maxGamesForTree
-        )
-
-        return OpeningTreeCache.get(key)
+        return OpeningTreeCache.get(currentCacheKey())
     }
 
     private suspend fun rebuildOpeningTree() {
-        // Step 1: gather games from local database.
-        _uiState.value = OpeningTreeUiState(
-            isLoading = true, statusMessage = "Gathering games..."
-        )
+        _uiState.value = OpeningTreeUiState(isLoading = true, statusMessage = "Gathering games...")
 
         val allGamesWithPgn = gamesRepository.getGamesWithPgnForProfile(profileId)
 
         if (allGamesWithPgn.isEmpty()) {
-            openingTree = null
-            _uiState.value = OpeningTreeUiState(
-                isLoading = false,
-                statusMessage = "No games stored for this profile yet.",
-                currentFen = null,
-                pathMoves = emptyList(),
-                moves = emptyList()
-            )
-            chessController.resetBoard()
+            showEmptyState("No games stored for this profile yet.")
             return
         }
 
-        // Step 2: apply color / time-control filters.
-        _uiState.value = _uiState.value.copy(statusMessage = "Applying filters...")
-        val filteredGames = OpeningTreeFilterUtils.filterGames(
-            games = allGamesWithPgn, colorFilter = colorFilter, timeControlFilter = timeControlFilter
-        )
-        val gamesWithPgn = maxGamesForTree?.let { limit ->
-            filteredGames.take(limit)
-        } ?: filteredGames
-
-        if (gamesWithPgn.isEmpty()) {
-            openingTree = null
-            _uiState.value = OpeningTreeUiState(
-                isLoading = false, statusMessage = "No games match current filters.", currentFen = null, pathMoves = emptyList(), moves = emptyList()
-            )
-            chessController.resetBoard()
-            return
-        }
-
-        // Step 3: build the opening tree from PGNs.
         _uiState.value = _uiState.value.copy(statusMessage = "Building opening tree...")
 
-        val gamesForTree = gamesWithPgn.map { gwp ->
-            GameForOpeningTree(
-                pgn = gwp.pgn, isUserWhite = gwp.game.isUserWhite, resultTag = gwp.game.result
-            )
-        }
+        val gamesUsedForTree = openingTreePreparationCoordinator.prepareFromStoredGames(
+            profileId = profileId,
+            games = allGamesWithPgn,
+            color = currentColorFilterValue(),
+            timeControlFilter = currentTimeControlFilterValue(),
+            maxGamesForTree = maxGamesForTree
+        )
 
-        openingTree = OpeningTreeBuilder.buildTree(gamesForTree)
-        val tree = openingTree
-        if (tree == null) {
-            _uiState.value = OpeningTreeUiState(
-                isLoading = false, statusMessage = "Failed to build opening tree.", currentFen = null, pathMoves = emptyList(), moves = emptyList()
-            )
-            chessController.resetBoard()
-        }
-        else {
-            // Step 4: analyze statistics / prepare first position.
-            _uiState.value = _uiState.value.copy(statusMessage = "Analyzing statistics...")
-            updateBoardOrientation()
-            applyFen(tree.rootFen, tree)
-        }
-    }
-
-    private fun applyFen(fen: String, tree: OpeningTree) {
-        val node = tree.getNode(fen) ?: run {
-            _uiState.value = OpeningTreeUiState()
-            chessController.resetBoard()
+        val tree = getCachedTreeForCurrentFilters()
+        if (tree == null || gamesUsedForTree <= 0) {
+            showEmptyState("No games match current filters or the opening tree could not be built.")
             return
         }
 
-        val movesUi = node.children.values.sortedByDescending { it.games }.map { agg ->
-            val total = if (agg.games <= 0) 1 else agg.games
-            val winPercent = (agg.wins * 100) / total
-            val drawPercent = (agg.draws * 100) / total
-            val lossPercent = (agg.losses * 100) / total
+        openingTree = tree
+        updateBoardOrientation()
+        applyFen(tree.rootFen, tree, updateBoard = true)
+    }
 
-            OpeningTreeMoveUi(
-                moveSan = agg.moveSan,
-                toFen = agg.toFen,
-                games = agg.games,
-                winPercent = winPercent,
-                drawPercent = drawPercent,
-                lossPercent = lossPercent
+    private fun applyFen(fen: String, tree: OpeningTree, updateBoard: Boolean) {
+        val node = tree.getNode(fen)
+        if (node == null) {
+            // Position can be outside the opening tree; keep board interactive and show no moves.
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                statusMessage = null,
+                currentFen = fen,
+                pathMoves = emptyList(),
+                moves = emptyList(),
+                canGoBack = fen != tree.rootFen
             )
+            if (updateBoard) {
+                chessController.loadPositionFromFen(fen)
+            }
+            return
         }
 
         val path = buildPathForNode(node, tree)
+        val movesUi = node.children.values
+            .asSequence()
+            .sortedByDescending { it.games }
+            .map(::toMoveUi)
+            .toList()
 
         val previous = _uiState.value
         _uiState.value = previous.copy(
-            isLoading = false, statusMessage = null, currentFen = fen, pathMoves = path, moves = movesUi
+            isLoading = false,
+            statusMessage = null,
+            currentFen = fen,
+            pathMoves = path,
+            moves = movesUi,
+            canGoBack = fen != tree.rootFen
         )
 
-        chessController.loadPositionFromFen(fen)
+        if (updateBoard) {
+            chessController.loadPositionFromFen(fen)
+        }
     }
 
     private fun buildPathForNode(
@@ -176,24 +143,71 @@ class OpeningTreeViewModel(
         return path.asReversed()
     }
 
-    fun onMoveSelected(targetFen: String) {
-        val tree = openingTree ?: return
-        val node = tree.getNode(targetFen) ?: return
-        applyFen(node.fen, tree)
+    private fun toMoveUi(aggregate: OpeningTreeMoveAggregate): OpeningTreeMoveUi {
+        val totalGames = aggregate.games.takeIf { it > 0 } ?: 1
+        return OpeningTreeMoveUi(
+            moveSan = aggregate.moveSan,
+            toFen = aggregate.toFen,
+            games = aggregate.games,
+            winPercent = (aggregate.wins * 100) / totalGames,
+            drawPercent = (aggregate.draws * 100) / totalGames,
+            lossPercent = (aggregate.losses * 100) / totalGames
+        )
+    }
+
+    private fun showEmptyState(message: String) {
+        openingTree = null
+        _uiState.value = OpeningTreeUiState(
+            isLoading = false,
+            statusMessage = message,
+            currentFen = null,
+            pathMoves = emptyList(),
+            moves = emptyList(),
+            canGoBack = false
+        )
+        chessController.resetBoard()
+    }
+
+    private fun currentColorFilterValue(): String {
+        return when (colorFilter) {
+            ColorFilter.WHITE_ONLY -> "white"
+            ColorFilter.BLACK_ONLY -> "black"
+            ColorFilter.BOTH -> "both"
+        }
+    }
+
+    private fun currentTimeControlFilterValue(): String {
+        return timeControlFilter?.trim().orEmpty()
+    }
+
+    private fun currentCacheKey(): OpeningTreeCacheKey {
+        return openingTreePreparationCoordinator.buildCacheKey(
+            profileId = profileId,
+            color = currentColorFilterValue(),
+            timeControlFilter = currentTimeControlFilterValue(),
+            maxGamesForTree = maxGamesForTree
+        )
+    }
+
+    fun onMoveSelected(moveSan: String) {
+        val board = chessController.getBoard()
+        val move = board.legalMoves().firstOrNull { board.toSan(it) == moveSan }
+        if (move != null) {
+            chessController.onMove(move)
+        } else {
+            _uiState.value = _uiState.value.copy(
+                statusMessage = "Selected move $moveSan is invalid on the board."
+            )
+        }
     }
 
     fun onGoBack() {
-        val tree = openingTree ?: return
-        val currentFen = _uiState.value.currentFen ?: return
-        val node = tree.getNode(currentFen) ?: return
-        val parentFen = node.parentFen ?: return
-        val parentNode = tree.getNode(parentFen) ?: return
-        applyFen(parentNode.fen, tree)
+        chessController.navigateBack()
     }
 
     fun onGoRoot() {
         val tree = openingTree ?: return
-        applyFen(tree.rootFen, tree)
+        applyFen(tree.rootFen, tree, updateBoard = true)
     }
 
     data class OpeningTreeMoveUi(
@@ -205,7 +219,8 @@ class OpeningTreeViewModel(
         val statusMessage: String? = null,
         val currentFen: String? = null,
         val pathMoves: List<String> = emptyList(),
-        val moves: List<OpeningTreeMoveUi> = emptyList()
+        val moves: List<OpeningTreeMoveUi> = emptyList(),
+        val canGoBack: Boolean = false
     )
 
     private fun updateBoardOrientation() {
@@ -225,6 +240,7 @@ class OpeningTreeViewModel(
     class Factory(
         private val profileId: Long,
         private val gamesRepository: GamesRepository,
+        private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator,
         private val colorFilter: ColorFilter,
         private val timeControlFilter: String?,
         private val maxGamesForTree: Int?
@@ -234,6 +250,7 @@ class OpeningTreeViewModel(
             return OpeningTreeViewModel(
                 profileId = profileId,
                 gamesRepository = gamesRepository,
+                openingTreePreparationCoordinator = openingTreePreparationCoordinator,
                 colorFilter = colorFilter,
                 timeControlFilter = timeControlFilter,
                 maxGamesForTree = maxGamesForTree

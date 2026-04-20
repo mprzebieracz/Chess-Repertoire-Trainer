@@ -14,7 +14,12 @@ data class GameForOpeningTree(
 
 /** Aggregated statistics for a specific move from a particular position. */
 data class OpeningTreeMoveAggregate(
-    val moveSan: String, val toFen: String, var games: Int = 0, var wins: Int = 0, var draws: Int = 0, var losses: Int = 0
+    val moveSan: String,
+    val toFen: String,
+    var games: Int = 0,
+    var wins: Int = 0,
+    var draws: Int = 0,
+    var losses: Int = 0
 )
 
 /** Single node in the opening tree, keyed by FEN. */
@@ -49,52 +54,16 @@ object OpeningTreeBuilder {
         )
 
         games.forEachIndexed { index, game ->
-            val outcome = outcomeFromResult(game.resultTag, game.isUserWhite) ?: return@forEachIndexed
-
+            val outcome =
+                outcomeFromResult(game.resultTag, game.isUserWhite) ?: return@forEachIndexed
             val sanMoves = extractSanMovesFromPgn(game.pgn)
             if (sanMoves.isEmpty()) return@forEachIndexed
 
             try {
                 board.loadFromFen(rootFen)
-            }
-            catch (e: Exception) {
-                Log.e("OpeningTreeBuilder", "Failed to load root FEN: ${e.message}", e)
-                return@forEachIndexed
-            }
-
-            try {
-                for (san in sanMoves) {
-                    val fenBefore = board.fen
-                    val node = nodes.getOrPut(fenBefore) {
-                        OpeningTreeNode(
-                            fen = fenBefore, parentFen = null, moveSanFromParent = null
-                        )
-                    }
-
-                    val move = board.moveFromSan(san) ?: break
-                    board.doMove(move)
-                    val fenAfter = board.fen
-
-                    val childAgg = node.children.getOrPut(san) {
-                        OpeningTreeMoveAggregate(
-                            moveSan = san, toFen = fenAfter
-                        )
-                    }
-
-                    childAgg.games++
-                    when (outcome) {
-                        GameOutcome.WIN -> childAgg.wins++
-                        GameOutcome.DRAW -> childAgg.draws++
-                        GameOutcome.LOSS -> childAgg.losses++
-                    }
-
-                    // Ensure child node exists with parent pointer on first encounter.
-                    if (!nodes.containsKey(fenAfter)) {
-                        nodes[fenAfter] = OpeningTreeNode(
-                            fen = fenAfter, parentFen = fenBefore, moveSanFromParent = san
-                        )
-                    }
-                }
+                applyGameMoves(
+                    board = board, nodes = nodes, sanMoves = sanMoves, outcome = outcome
+                )
             }
             catch (e: Exception) {
                 Log.e("OpeningTreeBuilder", "Error processing game index=$index: ${e.message}", e)
@@ -102,6 +71,45 @@ object OpeningTreeBuilder {
         }
 
         return OpeningTree(rootFen = rootFen, nodesByFen = nodes)
+    }
+
+    private fun applyGameMoves(
+        board: Board,
+        nodes: MutableMap<String, OpeningTreeNode>,
+        sanMoves: List<String>,
+        outcome: GameOutcome
+    ) {
+        for (san in sanMoves) {
+            val fenBefore = board.fen
+            val node = nodes.getOrPut(fenBefore) {
+                OpeningTreeNode(
+                    fen = fenBefore, parentFen = null, moveSanFromParent = null
+                )
+            }
+
+            val move = board.moveFromSan(san) ?: break
+            board.doMove(move)
+            val fenAfter = board.fen
+
+            val aggregate = node.children.getOrPut(san) {
+                OpeningTreeMoveAggregate(
+                    moveSan = san, toFen = fenAfter
+                )
+            }
+
+            aggregate.games++
+            when (outcome) {
+                GameOutcome.WIN -> aggregate.wins++
+                GameOutcome.DRAW -> aggregate.draws++
+                GameOutcome.LOSS -> aggregate.losses++
+            }
+
+            if (!nodes.containsKey(fenAfter)) {
+                nodes[fenAfter] = OpeningTreeNode(
+                    fen = fenAfter, parentFen = fenBefore, moveSanFromParent = san
+                )
+            }
+        }
     }
 
     private fun outcomeFromResult(resultTag: String, isUserWhite: Boolean): GameOutcome? {
@@ -121,37 +129,12 @@ object OpeningTreeBuilder {
     internal fun extractSanMovesFromPgn(pgn: String): List<String> {
         if (pgn.isBlank()) return emptyList()
 
-        // 1. Drop header lines ([Event ...]) and leading blank lines. Keep only the movetext.
-        val bodyLines = mutableListOf<String>()
         var inBody = false
-
-        pgn.lineSequence().forEach { rawLine ->
-            val line = rawLine.trim()
-            if (!inBody) {
-                if (line.startsWith("[")) {
-                    // Header line – skip
-                    return@forEach
-                }
-                if (line.isBlank()) {
-                    // Blank line between headers and body – skip
-                    return@forEach
-                }
-                // First non-header, non-blank line – movetext begins here.
-                inBody = true
-            }
-
-            if (inBody) {
-                bodyLines += rawLine
-            }
-        }
-
-        if (bodyLines.isEmpty()) return emptyList()
-
-        // 2. Tokenize manually while skipping comments, NAGs, engine tags, and move numbers.
         val sanMoves = mutableListOf<String>()
         var inBraceComment = false
 
-        fun isGameResultToken(token: String): Boolean = token == "1-0" || token == "0-1" || token == "1/2-1/2" || token == "*"
+        fun isGameResultToken(token: String): Boolean =
+            token == "1-0" || token == "0-1" || token == "1/2-1/2" || token == "*"
 
         fun isMoveNumberToken(token: String): Boolean {
             // Matches things like "1.", "12.", "34..." etc. without using regex.
@@ -166,55 +149,64 @@ object OpeningTreeBuilder {
             return i == n
         }
 
-        for (rawLine in bodyLines) {
-            var line = rawLine
-            // Very simple removal of engine tags [%...]; safe even with nested brackets.
-            while (true) {
-                val start = line.indexOf("[%")
-                if (start == -1) break
-                val end = line.indexOf(']', start + 2)
-                if (end == -1) {
-                    line = line.removeRange(start, line.length)
-                    break
+        for (rawLine in pgn.lineSequence()) {
+            val line = rawLine.trim()
+            if (!inBody) {
+                if (line.startsWith("[") || line.isBlank()) {
+                    // keep skipping header / blank lines until movetext starts
                 }
                 else {
-                    line = line.removeRange(start, end + 1)
+                    inBody = true
                 }
             }
 
-            val pieces = line.split(' ', '\t')
-            for (piece in pieces) {
-                var token = piece.trim()
-                if (token.isEmpty()) continue
-
-                // Handle comments in { ... }
-                if (inBraceComment) {
-                    if (token.contains('}')) {
-                        inBraceComment = false
+            if (inBody) {
+                var sanitizedLine = rawLine
+                // Very simple removal of engine tags [%...]; safe even with nested brackets.
+                while (true) {
+                    val start = sanitizedLine.indexOf("[%")
+                    if (start == -1) break
+                    val end = sanitizedLine.indexOf(']', start + 2)
+                    if (end == -1) {
+                        sanitizedLine = sanitizedLine.removeRange(start, sanitizedLine.length)
+                        break
                     }
-                    continue
-                }
-                if (token.startsWith("{")) {
-                    if (!token.contains('}')) {
-                        inBraceComment = true
+                    else {
+                        sanitizedLine = sanitizedLine.removeRange(start, end + 1)
                     }
-                    continue
                 }
 
-                // Numeric annotation glyphs like $1, $15 – skip.
-                if (token.startsWith('$') && token.drop(1).all { it.isDigit() }) continue
+                var stopParsing = false
+                for (piece in sanitizedLine.splitToSequence(' ', '\t')) {
+                    val token = piece.trim()
+                    if (token.isNotEmpty()) {
+                        if (inBraceComment) {
+                            if (token.contains('}')) {
+                                inBraceComment = false
+                            }
+                        }
+                        else if (token.startsWith("{")) {
+                            if (!token.contains('}')) {
+                                inBraceComment = true
+                            }
+                        }
+                        else if (token.startsWith('$') && token.drop(1).all { it.isDigit() }) {
+                            // skip numeric annotation glyphs
+                        }
+                        else if (isGameResultToken(token)) {
+                            stopParsing = true
+                            break
+                        }
+                        else {
+                            val cleaned = token.trim('(', ')')
+                            if (cleaned.isNotEmpty() && !isMoveNumberToken(cleaned)) {
+                                sanMoves += cleaned
+                            }
+                        }
+                    }
+                }
 
-                // Game result token – stop.
-                if (isGameResultToken(token)) break
-
-                // Strip simple surrounding parentheses used for variations.
-                token = token.trim('(', ')')
-                if (token.isEmpty()) continue
-
-                // Move numbers like 1. or 12... – skip.
-                if (isMoveNumberToken(token)) continue
-
-                sanMoves += token
+                if (stopParsing) break
             }
         }
 

@@ -16,23 +16,31 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun DraggedPieceLayer(
-    piece: Piece, square: Square, squareSizePx: Float, isFlipped: Boolean, initialTouchOffset: Offset, dragOffset: Offset
+    piece: Piece,
+    square: Square,
+    squareSizePx: Float,
+    isFlipped: Boolean,
+    initialTouchOffset: Offset,
+    dragOffset: Offset
 ) {
     val density = LocalDensity.current
     val visual = visualPosition(square, isFlipped)
 
     val startXPx = visual.file * squareSizePx
     val startYPx = visual.rank * squareSizePx
-    val dragScale = ChessUiConstants.DragPreview.scale
+    val dragScale = 1.2f
     val sizeDp = with(density) { (squareSizePx * dragScale).toDp() }
 
     Box(
-        modifier = Modifier.size(sizeDp).offset {
+        modifier = Modifier
+            .size(sizeDp)
+            .offset {
                 IntOffset(
                     (startXPx + initialTouchOffset.x + dragOffset.x - (squareSizePx * dragScale / 2)).roundToInt(),
                     (startYPx + initialTouchOffset.y + dragOffset.y - (squareSizePx * dragScale / 2)).roundToInt()
                 )
-            }, contentAlignment = Alignment.Center
+            },
+        contentAlignment = Alignment.Center
     ) {
         PieceDisplay(piece, modifier = Modifier.fillMaxSize())
     }

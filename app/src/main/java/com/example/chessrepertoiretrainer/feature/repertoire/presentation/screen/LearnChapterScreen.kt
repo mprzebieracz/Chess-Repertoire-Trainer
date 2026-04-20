@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessboardUI
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.LearnChapterViewModel
 
@@ -41,200 +42,254 @@ fun LearnChapterScreen(
     onStartLineTraining: (lineId: Int) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val chessCtrl = viewModel.chessController
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Top: back button and basic info
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Back", style = MaterialTheme.typography.bodyMedium
-                )
-            }
+    LearnChapterScaffold(
+        uiState = uiState,
+        chessCtrl = viewModel.chessController,
+        onBackClick = onBackClick,
+        onStartChapterTraining = onStartChapterTraining,
+        onStartLineTraining = onStartLineTraining,
+        onPreviousMove = viewModel::onPreviousMove,
+        onNextMove = viewModel::onNextMove,
+        onRestartCurrentLine = viewModel::restartCurrentLine,
+        onSkipTrainingForCurrentLine = viewModel::skipTrainingForCurrentLine
+    )
+}
 
-            if (uiState.hasNoLines) {
-                Text(
-                    text = "No lines in this chapter yet.", style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            else if (!uiState.isLoading && uiState.totalLines > 0) {
-                Text(
-                    text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                uiState.currentLineName?.let { name ->
-                    Text(
-                        text = name, style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                uiState.myColor?.let { color ->
-                    Text(
-                        text = "You play $color", style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
+@Composable
+private fun LearnChapterScaffold(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    chessCtrl: ChessBoardController,
+    onBackClick: () -> Unit,
+    onStartChapterTraining: (chapterId: Int) -> Unit,
+    onStartLineTraining: (lineId: Int) -> Unit,
+    onPreviousMove: () -> Unit,
+    onNextMove: () -> Unit,
+    onRestartCurrentLine: () -> Unit,
+    onSkipTrainingForCurrentLine: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        LearnChapterTopSection(uiState = uiState, onBackClick = onBackClick)
 
         when {
-            uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Loading chapter...", style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
+            uiState.isLoading -> LearnChapterLoadingState()
+            uiState.hasNoLines -> LearnChapterEmptyState(uiState = uiState)
+            uiState.phase == LearnChapterViewModel.LearnPhase.CHAPTER_COMPLETE -> LearnChapterCompleteState(
+                uiState = uiState,
+                onStartChapterTraining = onStartChapterTraining,
+                onBackClick = onBackClick
+            )
+            else -> LearnChapterPlayState(
+                uiState = uiState,
+                chessCtrl = chessCtrl,
+                onStartLineTraining = onStartLineTraining,
+                onPreviousMove = onPreviousMove,
+                onNextMove = onNextMove,
+                onRestartCurrentLine = onRestartCurrentLine,
+                onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
+            )
+        }
+    }
+}
 
-            uiState.hasNoLines -> {
-                Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = uiState.statusMessage ?: "No lines in this chapter. Use edit mode to add lines.",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-            }
+@Composable
+private fun LearnChapterTopSection(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    onBackClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+        LearnChapterBackRow(onBackClick = onBackClick)
+        LearnChapterHeader(uiState = uiState)
+    }
+}
 
-            uiState.phase == LearnChapterViewModel.LearnPhase.CHAPTER_COMPLETE -> {
-                Box(
-                    modifier = Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    ) {
-                        Text(
-                            text = uiState.statusMessage ?: "You have gone through all lines in this chapter.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = { onStartChapterTraining(uiState.chapterId) }, modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Final chapter training")
-                            }
-                            OutlinedButton(
-                                onClick = onBackClick, modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Finish")
-                            }
-                        }
-                    }
-                }
-            }
+@Composable
+private fun LearnChapterBackRow(onBackClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onBackClick) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(text = "Back", style = MaterialTheme.typography.bodyMedium)
+    }
+}
 
-            else -> {
-                // Board in the middle
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    ChessboardUI(state = chessCtrl)
-                }
+@Composable
+private fun LearnChapterHeader(uiState: LearnChapterViewModel.LearnChapterUiState) {
+    if (uiState.hasNoLines) {
+        Text("No lines in this chapter yet.", style = MaterialTheme.typography.bodyMedium)
+    } else if (!uiState.isLoading && uiState.totalLines > 0) {
+        Text(
+            text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        uiState.currentLineName?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
+        uiState.myColor?.let { Text(text = "You play $it", style = MaterialTheme.typography.bodySmall) }
+    }
+}
 
-                // Bottom section: comment box (scrollable) + navigation + train/skip
-                Column(
-                    modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    // Comment box
-                    Card(
-                        modifier = Modifier.fillMaxWidth().weight(1f), colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        val scrollState = rememberScrollState()
-                        Column(
-                            modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(12.dp)
-                        ) {
-                            uiState.statusMessage?.let { message ->
-                                Text(
-                                    text = message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(Modifier.height(4.dp))
-                            }
+@Composable
+private fun LearnChapterLoadingState() {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Loading chapter...", style = MaterialTheme.typography.bodyMedium)
+    }
+}
 
-                            val comment = uiState.currentMoveComment
-                            if (comment.isNullOrBlank()) {
-                                Text(
-                                    text = "No comment for this move.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            else {
-                                Text(
-                                    text = comment, style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                    }
+@Composable
+private fun LearnChapterEmptyState(uiState: LearnChapterViewModel.LearnChapterUiState) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = uiState.statusMessage ?: "No lines in this chapter. Use edit mode to add lines.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
 
-                    Spacer(Modifier.height(8.dp))
-
-                    // Navigation row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { viewModel.onPreviousMove() }, modifier = Modifier.weight(1f), enabled = !uiState.isAtLineStart
-                        ) {
-                            Text("Back")
-                        }
-
-                        Button(
-                            onClick = { viewModel.onNextMove() }, modifier = Modifier.weight(1f), enabled = !uiState.isAtLineEnd
-                        ) {
-                            Text("Next")
-                        }
-
-                        OutlinedButton(
-                            onClick = { viewModel.restartCurrentLine() }, modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Restart")
-                        }
-                    }
-
-                    if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val lineId = uiState.currentLineId
-                            Button(
-                                onClick = {
-                                    if (lineId != null) {
-                                        onStartLineTraining(lineId)
-                                    }
-                                }, modifier = Modifier.weight(1f), enabled = lineId != null
-                            ) {
-                                Text("Train this line")
-                            }
-                            TextButton(
-                                onClick = { viewModel.skipTrainingForCurrentLine() }, modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Skip test")
-                            }
-                        }
-                    }
-                }
+@Composable
+private fun LearnChapterCompleteState(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    onStartChapterTraining: (chapterId: Int) -> Unit,
+    onBackClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            Text(
+                text = uiState.statusMessage ?: "You have gone through all lines in this chapter.",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { onStartChapterTraining(uiState.chapterId) }) { Text("Final chapter training") }
+                OutlinedButton(onClick = onBackClick) { Text("Finish") }
             }
         }
+    }
+}
+
+@Composable
+private fun LearnChapterPlayState(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    chessCtrl: ChessBoardController,
+    onStartLineTraining: (lineId: Int) -> Unit,
+    onPreviousMove: () -> Unit,
+    onNextMove: () -> Unit,
+    onRestartCurrentLine: () -> Unit,
+    onSkipTrainingForCurrentLine: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        ChessboardUI(state = chessCtrl)
+        LearnChapterBottomSection(
+            uiState = uiState,
+            onStartLineTraining = onStartLineTraining,
+            onPreviousMove = onPreviousMove,
+            onNextMove = onNextMove,
+            onRestartCurrentLine = onRestartCurrentLine,
+            onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
+        )
+    }
+}
+
+@Composable
+private fun LearnChapterBottomSection(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    onStartLineTraining: (lineId: Int) -> Unit,
+    onPreviousMove: () -> Unit,
+    onNextMove: () -> Unit,
+    onRestartCurrentLine: () -> Unit,
+    onSkipTrainingForCurrentLine: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        LearnChapterCommentCard(uiState = uiState)
+        Spacer(Modifier.height(8.dp))
+        LearnChapterMoveNavigationRow(
+            uiState = uiState,
+            onPreviousMove = onPreviousMove,
+            onNextMove = onNextMove,
+            onRestartCurrentLine = onRestartCurrentLine
+        )
+
+        if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
+            Spacer(Modifier.height(8.dp))
+            LearnChapterLineActionsRow(
+                uiState = uiState,
+                onStartLineTraining = onStartLineTraining,
+                onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
+            )
+        }
+    }
+}
+
+@Composable
+private fun LearnChapterCommentCard(uiState: LearnChapterViewModel.LearnChapterUiState) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        val scrollState = rememberScrollState()
+        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(12.dp)) {
+            uiState.statusMessage?.let {
+                Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.height(4.dp))
+            }
+
+            val comment = uiState.currentMoveComment
+            if (comment.isNullOrBlank()) {
+                Text(
+                    text = "No comment for this move.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(text = comment, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun LearnChapterMoveNavigationRow(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    onPreviousMove: () -> Unit,
+    onNextMove: () -> Unit,
+    onRestartCurrentLine: () -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
+        Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
+        OutlinedButton(onClick = onRestartCurrentLine) { Text("Restart") }
+    }
+}
+
+@Composable
+private fun LearnChapterLineActionsRow(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    onStartLineTraining: (lineId: Int) -> Unit,
+    onSkipTrainingForCurrentLine: () -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val lineId = uiState.currentLineId
+        Button(
+            onClick = { if (lineId != null) onStartLineTraining(lineId) },
+            enabled = lineId != null
+        ) { Text("Train this line") }
+        TextButton(onClick = onSkipTrainingForCurrentLine) { Text("Skip test") }
     }
 }

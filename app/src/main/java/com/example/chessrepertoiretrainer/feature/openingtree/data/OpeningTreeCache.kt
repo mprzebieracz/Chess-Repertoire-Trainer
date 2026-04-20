@@ -31,17 +31,13 @@ object OpeningTreeCache {
      */
     @Synchronized
     fun clearForProfile(profileId: Long) {
-        val keysToRemove = cache.keys.filter { it.profileId == profileId }
-        keysToRemove.forEach { cache.remove(it) }
+        val iterator = cache.keys.iterator()
+        while (iterator.hasNext()) {
+            if (iterator.next().profileId == profileId) {
+                iterator.remove()
+            }
+        }
     }
 
-    /**
-     * Clear the entire cache. Currently unused but handy for debugging and
-     * potential future settings.
-     */
-    @Synchronized
-    fun clearAll() {
-        cache.clear()
-    }
 }
 

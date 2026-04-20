@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.feature.stats.data.data
+package com.example.chessrepertoiretrainer.feature.stats.data
 
 import com.example.chessrepertoiretrainer.feature.stats.domain.GameStatsRepository
 import com.example.chessrepertoiretrainer.feature.stats.domain.GameStatsSummary

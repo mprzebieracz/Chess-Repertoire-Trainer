@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.feature.stats.data.data
+package com.example.chessrepertoiretrainer.feature.stats.data
 
 import com.example.chessrepertoiretrainer.core.database.entity.PlayerProfile
 import com.example.chessrepertoiretrainer.feature.openingtree.data.GameWithPgn
@@ -9,11 +9,15 @@ import com.example.chessrepertoiretrainer.feature.stats.domain.PlayerProfileRepo
  * Handles profile resolution and game synchronization for stats-focused flows.
  */
 class AccountSyncCoordinator(
-    private val profileRepository: PlayerProfileRepository, private val gamesRepository: GamesRepository
+    private val profileRepository: PlayerProfileRepository,
+    private val gamesRepository: GamesRepository
 ) {
 
     data class SyncResult(
-        val newGames: Int, val gamesCount: Int, val updatedLastSyncTime: Long?, val errorMessage: String?
+        val newGames: Int,
+        val gamesCount: Int,
+        val updatedLastSyncTime: Long?,
+        val errorMessage: String?
     )
 
     suspend fun resolveOrCreateProfile(
@@ -63,7 +67,10 @@ class AccountSyncCoordinator(
         }
         catch (e: Exception) {
             SyncResult(
-                newGames = 0, gamesCount = 0, updatedLastSyncTime = null, errorMessage = e.message ?: "Unexpected error during sync"
+                newGames = 0,
+                gamesCount = 0,
+                updatedLastSyncTime = null,
+                errorMessage = e.message ?: "Unexpected error during sync"
             )
         }
     }

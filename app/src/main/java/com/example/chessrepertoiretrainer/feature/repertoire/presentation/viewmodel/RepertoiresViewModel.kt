@@ -3,8 +3,9 @@ package com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapLatest
@@ -18,12 +19,13 @@ data class CourseProgress(
         get() = if (totalLines == 0) 0f else learnedLines.toFloat() / totalLines
 }
 
-class RepertoiresViewModel(private val repertoireDao: RepertoireDao) : ViewModel() {
+@OptIn(ExperimentalCoroutinesApi::class)
+class RepertoiresViewModel(private val repertoireRepository: RepertoireRepository) : ViewModel() {
 
-    val courses: StateFlow<List<CourseProgress>> = repertoireDao.getAllRepertoires().mapLatest { repertoires ->
+    val courses: StateFlow<List<CourseProgress>> = repertoireRepository.getAllRepertoires().mapLatest { repertoires ->
         repertoires.map { rep ->
-            val total = repertoireDao.getLineCountForRepertoire(rep.id)
-            val learned = repertoireDao.getLearnedLineCountForRepertoire(rep.id)
+            val total = repertoireRepository.getLineCountForRepertoire(rep.id)
+            val learned = repertoireRepository.getLearnedLineCountForRepertoire(rep.id)
             CourseProgress(
                 repertoire = rep, totalLines = total, learnedLines = learned
             )
@@ -34,20 +36,20 @@ class RepertoiresViewModel(private val repertoireDao: RepertoireDao) : ViewModel
 
     fun addRepertoire(name: String, color: String) {
         viewModelScope.launch {
-            repertoireDao.insertRepertoire(Repertoire(name = name, color = color))
+            repertoireRepository.insertRepertoire(Repertoire(name = name, color = color))
         }
     }
 
     fun deleteRepertoire(repertoire: Repertoire) {
         viewModelScope.launch {
-            repertoireDao.deleteRepertoire(repertoire)
+            repertoireRepository.deleteRepertoire(repertoire)
         }
     }
 
-    class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return RepertoiresViewModel(repertoireDao) as T
+            return RepertoiresViewModel(repertoireRepository) as T
         }
     }
 }

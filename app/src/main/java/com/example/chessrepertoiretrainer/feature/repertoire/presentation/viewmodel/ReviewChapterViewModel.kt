@@ -6,11 +6,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
-import com.example.chessrepertoiretrainer.core.database.entity.Line
-import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.database.entity.Line
+import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
  * state. It is intended as a quick way to browse/check lines.
  */
 class ReviewChapterViewModel(
-    private val repertoireDao: RepertoireDao, savedStateHandle: SavedStateHandle
+    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     data class UiState(
@@ -68,9 +68,9 @@ class ReviewChapterViewModel(
     private suspend fun loadChapterAndLines() {
         _uiState.update { it.copy(isLoading = true, hasNoLines = false, statusMessage = null) }
 
-        val chapter = repertoireDao.getChapterById(chapterId)
+        val chapter = repertoireRepository.getChapterById(chapterId)
         val chapterName = chapter?.name ?: "Chapter"
-        val repertoire = chapter?.let { repertoireDao.getRepertoireById(it.repertoireId) }
+        val repertoire = chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
         val colorString = repertoire?.color ?: "White"
 
         mySide = if (colorString.equals("White", ignoreCase = true)) {
@@ -88,7 +88,7 @@ class ReviewChapterViewModel(
             chessController.flipBoard()
         }
 
-        val loadedLines = repertoireDao.getLinesForChapter(chapterId).first()
+        val loadedLines = repertoireRepository.getLinesForChapter(chapterId).first()
         lines = loadedLines
 
         if (loadedLines.isEmpty()) {
@@ -121,7 +121,7 @@ class ReviewChapterViewModel(
         currentLineIndex = index
         val line = lines[index]
 
-        currentLineMoves = repertoireDao.getMovesForLine(line.id).first()
+        currentLineMoves = repertoireRepository.getMovesForLine(line.id).first()
         currentMoveIndex = -1
 
         chessController.resetBoard()
@@ -241,11 +241,11 @@ class ReviewChapterViewModel(
         }
     }
 
-    class Factory(private val repertoireDao: RepertoireDao) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()
-            return ReviewChapterViewModel(repertoireDao, savedStateHandle) as T
+            return ReviewChapterViewModel(repertoireRepository, savedStateHandle) as T
         }
     }
 }

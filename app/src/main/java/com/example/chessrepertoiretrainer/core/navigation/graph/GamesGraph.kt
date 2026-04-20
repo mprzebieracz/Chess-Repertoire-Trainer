@@ -72,6 +72,7 @@ fun NavGraphBuilder.gamesGraph(
             factory = OpeningTreeViewModel.Factory(
                 profileId = profileId,
                 gamesRepository = playerGamesRepository,
+                openingTreePreparationCoordinator = openingTreePreparationCoordinator,
                 colorFilter = colorFilter,
                 timeControlFilter = timeControlArg.ifBlank { null },
                 maxGamesForTree = maxGamesForTree
