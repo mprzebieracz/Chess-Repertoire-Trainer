@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,7 +53,6 @@ fun LearnChapterScreen(
         onStartLineTraining = onStartLineTraining,
         onPreviousMove = viewModel::onPreviousMove,
         onNextMove = viewModel::onNextMove,
-        onRestartCurrentLine = viewModel::restartCurrentLine,
         onSkipTrainingForCurrentLine = viewModel::skipTrainingForCurrentLine
     )
 }
@@ -65,29 +66,42 @@ private fun LearnChapterScaffold(
     onStartLineTraining: (lineId: Int) -> Unit,
     onPreviousMove: () -> Unit,
     onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit,
     onSkipTrainingForCurrentLine: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        LearnChapterTopSection(uiState = uiState, onBackClick = onBackClick)
+    Scaffold(
+        bottomBar = {
+            if (!uiState.isLoading && !uiState.hasNoLines && uiState.phase != LearnChapterViewModel.LearnPhase.CHAPTER_COMPLETE) {
+                LearnChapterBottomBar(
+                    uiState = uiState,
+                    onStartLineTraining = onStartLineTraining,
+                    onPreviousMove = onPreviousMove,
+                    onNextMove = onNextMove,
+                    onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
+                )
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            LearnChapterTopSection(uiState = uiState, onBackClick = onBackClick)
 
-        when {
-            uiState.isLoading -> LearnChapterLoadingState()
-            uiState.hasNoLines -> LearnChapterEmptyState(uiState = uiState)
-            uiState.phase == LearnChapterViewModel.LearnPhase.CHAPTER_COMPLETE -> LearnChapterCompleteState(
-                uiState = uiState,
-                onStartChapterTraining = onStartChapterTraining,
-                onBackClick = onBackClick
-            )
-            else -> LearnChapterPlayState(
-                uiState = uiState,
-                chessCtrl = chessCtrl,
-                onStartLineTraining = onStartLineTraining,
-                onPreviousMove = onPreviousMove,
-                onNextMove = onNextMove,
-                onRestartCurrentLine = onRestartCurrentLine,
-                onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
-            )
+            when {
+                uiState.isLoading -> LearnChapterLoadingState()
+                uiState.hasNoLines -> LearnChapterEmptyState(uiState = uiState)
+                uiState.phase == LearnChapterViewModel.LearnPhase.CHAPTER_COMPLETE -> LearnChapterCompleteState(
+                    uiState = uiState,
+                    onStartChapterTraining = onStartChapterTraining,
+                    onBackClick = onBackClick
+                )
+                else -> LearnChapterPlayState(
+                    uiState = uiState,
+                    chessCtrl = chessCtrl,
+                    onStartLineTraining = onStartLineTraining
+                )
+            }
         }
     }
 }
@@ -188,21 +202,13 @@ private fun LearnChapterCompleteState(
 private fun LearnChapterPlayState(
     uiState: LearnChapterViewModel.LearnChapterUiState,
     chessCtrl: ChessBoardController,
-    onStartLineTraining: (lineId: Int) -> Unit,
-    onPreviousMove: () -> Unit,
-    onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit,
-    onSkipTrainingForCurrentLine: () -> Unit
+    onStartLineTraining: (lineId: Int) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         ChessboardUI(state = chessCtrl)
         LearnChapterBottomSection(
             uiState = uiState,
-            onStartLineTraining = onStartLineTraining,
-            onPreviousMove = onPreviousMove,
-            onNextMove = onNextMove,
-            onRestartCurrentLine = onRestartCurrentLine,
-            onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
+            onStartLineTraining = onStartLineTraining
         )
     }
 }
@@ -210,29 +216,48 @@ private fun LearnChapterPlayState(
 @Composable
 private fun LearnChapterBottomSection(
     uiState: LearnChapterViewModel.LearnChapterUiState,
-    onStartLineTraining: (lineId: Int) -> Unit,
-    onPreviousMove: () -> Unit,
-    onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit,
-    onSkipTrainingForCurrentLine: () -> Unit
+    onStartLineTraining: (lineId: Int) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         LearnChapterCommentCard(uiState = uiState)
-        Spacer(Modifier.height(8.dp))
-        LearnChapterMoveNavigationRow(
-            uiState = uiState,
-            onPreviousMove = onPreviousMove,
-            onNextMove = onNextMove,
-            onRestartCurrentLine = onRestartCurrentLine
-        )
+        if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE && uiState.currentLineId != null) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Line complete - use bottom actions to train this line or skip test.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun LearnChapterBottomBar(
+    uiState: LearnChapterViewModel.LearnChapterUiState,
+    onStartLineTraining: (lineId: Int) -> Unit,
+    onPreviousMove: () -> Unit,
+    onNextMove: () -> Unit,
+    onSkipTrainingForCurrentLine: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
+        if (uiState.phase != LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
+            Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
+        }
 
         if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
-            Spacer(Modifier.height(8.dp))
-            LearnChapterLineActionsRow(
-                uiState = uiState,
-                onStartLineTraining = onStartLineTraining,
-                onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
-            )
+            val lineId = uiState.currentLineId
+            Button(onClick = { if (lineId != null) onStartLineTraining(lineId) }, enabled = lineId != null) {
+                Text("Train line")
+            }
+            TextButton(onClick = onSkipTrainingForCurrentLine) { Text("Skip training") }
         }
     }
 }

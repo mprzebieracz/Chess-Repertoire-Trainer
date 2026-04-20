@@ -35,7 +35,7 @@ class OpeningTreeViewModel(
     val uiState: StateFlow<OpeningTreeUiState> = _uiState.asStateFlow()
 
     init {
-        chessController.onFenChangedListener = { fen ->
+        chessController.onMoveListener = { _, _, fen ->
             val tree = openingTree
             if (tree != null && _uiState.value.currentFen != fen) {
                 applyFen(fen, tree, updateBoard = false)
@@ -202,7 +202,9 @@ class OpeningTreeViewModel(
     }
 
     fun onGoBack() {
+        val tree = openingTree ?: return
         chessController.navigateBack()
+        applyFen(chessController.boardState, tree, updateBoard = false)
     }
 
     fun onGoRoot() {

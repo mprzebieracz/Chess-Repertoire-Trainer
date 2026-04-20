@@ -31,7 +31,6 @@ interface ChessBoardController {
      */
     var allowedMoveSide: Side?
     var onMoveListener: ((Move, String, String) -> Unit)?
-    var onFenChangedListener: ((String) -> Unit)?
     val pendingPromotion: PendingPromotion?
     fun getBoard(): Board
     fun onSquareClick(square: Square)

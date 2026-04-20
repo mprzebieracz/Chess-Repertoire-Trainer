@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -66,21 +68,40 @@ private fun ReviewChapterScaffold(
     onGoToPreviousLine: () -> Unit,
     onGoToNextLine: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        ReviewChapterTopSection(uiState = uiState, onBackClick = onBackClick)
+    Scaffold(
+        bottomBar = {
+            if (!uiState.isLoading && !uiState.hasNoLines) {
+                ReviewChapterBottomBar(
+                    uiState = uiState,
+                    onPreviousMove = onPreviousMove,
+                    onNextMove = onNextMove,
+                    onRestartCurrentLine = onRestartCurrentLine,
+                    onGoToPreviousLine = onGoToPreviousLine,
+                    onGoToNextLine = onGoToNextLine
+                )
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            ReviewChapterTopSection(uiState = uiState, onBackClick = onBackClick)
 
-        when {
-            uiState.isLoading -> ReviewChapterLoadingState()
-            uiState.hasNoLines -> ReviewChapterEmptyState(uiState = uiState)
-            else -> ReviewChapterBody(
-                uiState = uiState,
-                chessCtrl = chessCtrl,
-                onPreviousMove = onPreviousMove,
-                onNextMove = onNextMove,
-                onRestartCurrentLine = onRestartCurrentLine,
-                onGoToPreviousLine = onGoToPreviousLine,
-                onGoToNextLine = onGoToNextLine
-            )
+            when {
+                uiState.isLoading -> ReviewChapterLoadingState()
+                uiState.hasNoLines -> ReviewChapterEmptyState(uiState = uiState)
+                else -> ReviewChapterBody(
+                    uiState = uiState,
+                    chessCtrl = chessCtrl,
+                    onPreviousMove = onPreviousMove,
+                    onNextMove = onNextMove,
+                    onRestartCurrentLine = onRestartCurrentLine,
+                    onGoToPreviousLine = onGoToPreviousLine,
+                    onGoToNextLine = onGoToNextLine
+                )
+            }
         }
     }
 }
@@ -164,19 +185,21 @@ private fun ReviewChapterBody(
             ChessboardUI(state = chessCtrl)
         }
 
-        ReviewChapterBottomSection(
-            uiState = uiState,
-            onPreviousMove = onPreviousMove,
-            onNextMove = onNextMove,
-            onRestartCurrentLine = onRestartCurrentLine,
-            onGoToPreviousLine = onGoToPreviousLine,
-            onGoToNextLine = onGoToNextLine
-        )
+        ReviewChapterBottomSection(uiState = uiState)
     }
 }
 
 @Composable
 private fun ReviewChapterBottomSection(
+    uiState: ReviewChapterViewModel.UiState
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        ReviewChapterCommentCard(uiState = uiState)
+    }
+}
+
+@Composable
+private fun ReviewChapterBottomBar(
     uiState: ReviewChapterViewModel.UiState,
     onPreviousMove: () -> Unit,
     onNextMove: () -> Unit,
@@ -184,20 +207,19 @@ private fun ReviewChapterBottomSection(
     onGoToPreviousLine: () -> Unit,
     onGoToNextLine: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        ReviewChapterCommentCard(uiState = uiState)
-        Spacer(Modifier.height(8.dp))
-        ReviewChapterMoveNavigationRow(
-            uiState = uiState,
-            onPreviousMove = onPreviousMove,
-            onNextMove = onNextMove,
-            onRestartCurrentLine = onRestartCurrentLine
-        )
-        Spacer(Modifier.height(8.dp))
-        ReviewChapterLineNavigationRow(
-            onGoToPreviousLine = onGoToPreviousLine,
-            onGoToNextLine = onGoToNextLine
-        )
+    val scrollState = rememberScrollState()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
+        Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
+        OutlinedButton(onClick = onRestartCurrentLine) { Text("Restart") }
+        OutlinedButton(onClick = onGoToPreviousLine) { Text("Prev line") }
+        OutlinedButton(onClick = onGoToNextLine) { Text("Next line") }
     }
 }
 
