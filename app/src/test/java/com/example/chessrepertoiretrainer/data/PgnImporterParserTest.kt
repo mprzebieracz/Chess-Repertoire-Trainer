@@ -1,10 +1,11 @@
 package com.example.chessrepertoiretrainer.data
 
-import com.example.chessrepertoiretrainer.database.dao.RepertoireDao
-import com.example.chessrepertoiretrainer.database.entities.Chapter
-import com.example.chessrepertoiretrainer.database.entities.Line
-import com.example.chessrepertoiretrainer.database.entities.LineMove
-import com.example.chessrepertoiretrainer.database.entities.Repertoire
+import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
+import com.example.chessrepertoiretrainer.core.database.entity.Chapter
+import com.example.chessrepertoiretrainer.core.database.entity.Line
+import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
+import com.example.chessrepertoiretrainer.feature.repertoire.data.PgnImporter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
@@ -31,8 +32,7 @@ class PgnImporterParserTest {
         override suspend fun updateRepertoire(repertoire: Repertoire) = error("Not used")
         override suspend fun deleteRepertoire(repertoire: Repertoire) = error("Not used")
 
-        override fun getChaptersForRepertoire(repertoireId: Int): Flow<List<Chapter>> =
-            flowOf(emptyList())
+        override fun getChaptersForRepertoire(repertoireId: Int): Flow<List<Chapter>> = flowOf(emptyList())
 
         override suspend fun getChapterById(id: Int): Chapter? = null
         override suspend fun insertChapter(chapter: Chapter): Long = error("Not used")
@@ -73,9 +73,7 @@ class PgnImporterParserTest {
 
     @Test
     fun `parse comments before and after moves`() {
-        val movetext = "{" +
-                "initial comment" +
-                "} 1. e4 {after e4} e5 {after e5} *"
+        val movetext = "{" + "initial comment" + "} 1. e4 {after e4} e5 {after e5} *"
 
         val lines = importer.parseLinesFromMovetext(movetext)
         assertEquals(1, lines.size)
@@ -125,9 +123,7 @@ class PgnImporterParserTest {
 
         // Upewnij się, że w którejś z linii w ogóle występuje ruch Bf5
         assertTrue(
-            "Expected at least one Bf5 move among parsed lines",
-            lines.flatten().any { it.san == "Bf5" }
-        )
+            "Expected at least one Bf5 move among parsed lines", lines.flatten().any { it.san == "Bf5" })
     }
 }
 
