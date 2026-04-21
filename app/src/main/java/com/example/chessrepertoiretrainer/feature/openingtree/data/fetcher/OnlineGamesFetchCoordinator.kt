@@ -8,7 +8,13 @@ class OnlineGamesFetchCoordinator(
         val games: List<FetchedGame>, val errorMessage: String? = null
     )
 
-    suspend fun fetchGames(username: String, platform: String): FetchResult {
+    suspend fun fetchGames(
+        username: String,
+        platform: String,
+        maxGames: Int?,
+        colorFilter: String,
+        timeControlFilter: String
+    ): FetchResult {
         val normalizedUsername = username.trim()
 
         if (normalizedUsername.isBlank()) {
@@ -16,13 +22,15 @@ class OnlineGamesFetchCoordinator(
         }
 
         val fetcher = fetcherRegistry.getFetcher(platform) ?: return FetchResult(
-            emptyList(),
-            "Unsupported platform: $platform"
+            emptyList(), "Unsupported platform: $platform"
         )
 
         return runCatching {
             fetcher.fetchGamesForUser(
-                username = normalizedUsername, since = null, maxGames = null
+                username = normalizedUsername,
+                maxGames = maxGames,
+                colorFilter = colorFilter,
+                timeControlFilter = timeControlFilter
             )
         }.fold(onSuccess = { FetchResult(games = it) }, onFailure = {
             FetchResult(

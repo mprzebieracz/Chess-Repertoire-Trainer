@@ -18,7 +18,10 @@ interface GameFetcher {
     val platformKey: String
 
     suspend fun fetchGamesForUser(
-        username: String, since: Long? = null, maxGames: Int? = null
+        username: String,
+        maxGames: Int? = null,
+        colorFilter: String = "both",
+        timeControlFilter: String = ""
     ): List<FetchedGame>
 }
 

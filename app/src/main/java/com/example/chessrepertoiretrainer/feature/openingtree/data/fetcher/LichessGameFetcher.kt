@@ -13,29 +13,39 @@ object LichessGameFetcher : GameFetcher {
     override val platformKey: String = "lichess"
 
     override suspend fun fetchGamesForUser(
-        username: String, since: Long?, maxGames: Int?
+        username: String, maxGames: Int?, colorFilter: String, timeControlFilter: String
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim()
         if (normalizedUser.isBlank()) return@withContext emptyList()
 
-        val urlString = buildRequestUrl(normalizedUser, since, maxGames)
+        val urlString = buildRequestUrl(normalizedUser, maxGames, colorFilter, timeControlFilter)
         Log.d("LichessGameFetcher", "Requesting games from $urlString")
 
         val result = streamGames(urlString, normalizedUser)
 
-        Log.d(
-            "LichessGameFetcher",
-            "Fetched ${result.size} games for $normalizedUser (since=$since, max=$maxGames)"
-        )
+        Log.d("LichessGameFetcher", "Fetched ${result.size} games for $normalizedUser")
         return@withContext result
     }
 
-    private fun buildRequestUrl(username: String, since: Long?, maxGames: Int?): String {
+    private fun buildRequestUrl(
+        username: String, maxGames: Int?, colorFilter: String, timeControlFilter: String
+    ): String {
         val params = mutableListOf(
             "pgnInJson=true", "clocks=false", "evals=false", "accuracy=false", "opening=true"
         )
         if (maxGames != null && maxGames > 0) params += "max=$maxGames"
-        if (since != null && since > 0L) params += "since=$since"
+
+        if (colorFilter == "white" || colorFilter == "black") {
+            params += "color=$colorFilter"
+        }
+
+        if (timeControlFilter.isNotBlank()) {
+            val perfTypes = timeControlFilter.split(",").map { it.trim().lowercase() }
+                .filter { it.isNotBlank() }.joinToString(",")
+            if (perfTypes.isNotBlank()) {
+                params += "perfType=$perfTypes"
+            }
+        }
 
         return "$BASE_URL/$username?${params.joinToString("&")}"
     }
@@ -104,8 +114,6 @@ object LichessGameFetcher : GameFetcher {
                 playedAt = playedAt,
                 pgn = pgn
             )
-        }.onFailure {
-            Log.e("LichessGameFetcher", "Error parsing game line: ${it.message}")
         }.getOrNull()
     }
 

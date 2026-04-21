@@ -13,7 +13,7 @@ object ChessComGameFetcher : GameFetcher {
     override val platformKey: String = "chess.com"
 
     override suspend fun fetchGamesForUser(
-        username: String, since: Long?, maxGames: Int?
+        username: String, maxGames: Int?, colorFilter: String, timeControlFilter: String
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim().lowercase()
         if (normalizedUser.isBlank()) return@withContext emptyList()
@@ -22,23 +22,33 @@ object ChessComGameFetcher : GameFetcher {
         if (archiveUrls.isEmpty()) return@withContext emptyList()
 
         val effectiveMaxGames = maxGames?.coerceAtLeast(1) ?: Int.MAX_VALUE
+        val timeControls =
+            timeControlFilter.split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
+                .toSet()
         val result = mutableListOf<FetchedGame>()
-
-        // Process archives from newest to oldest
+        
         for (archiveUrl in archiveUrls.asReversed()) {
             if (result.size >= effectiveMaxGames) break
 
-            val gamesInArchive = fetchGamesFromArchive(archiveUrl, normalizedUser, since)
+            val gamesInArchive = fetchGamesFromArchive(archiveUrl, normalizedUser)
             for (game in gamesInArchive) {
                 if (result.size >= effectiveMaxGames) break
+
+                // 1. Color Filter
+                if (colorFilter == "white" && !game.isUserWhite) continue
+                if (colorFilter == "black" && game.isUserWhite) continue
+
+                // 2. Time Control Filter
+                if (timeControls.isNotEmpty()) {
+                    val category = game.timeCategory ?: continue
+                    if (category !in timeControls) continue
+                }
+
                 result.add(game)
             }
         }
 
-        Log.d(
-            "ChessComGameFetcher",
-            "Fetched ${result.size} games for $normalizedUser (since=$since, max=$maxGames)"
-        )
+        Log.d("ChessComGameFetcher", "Fetched ${result.size} games for $normalizedUser")
         return@withContext result
     }
 
@@ -49,36 +59,21 @@ object ChessComGameFetcher : GameFetcher {
         return List(array.length()) { array.optString(it) }.filter { it.isNotBlank() }
     }
 
-    private fun fetchGamesFromArchive(
-        archiveUrl: String,
-        username: String,
-        since: Long?
-    ): List<FetchedGame> {
+    private fun fetchGamesFromArchive(archiveUrl: String, username: String): List<FetchedGame> {
         val body = httpGet(archiveUrl) ?: return emptyList()
         val gamesArray = JSONObject(body).optJSONArray("games") ?: return emptyList()
 
         return List(gamesArray.length()) { gamesArray.optJSONObject(it) }.mapNotNull {
-                parseChessComGame(
-                    it,
-                    username,
-                    since
-                )
-            }
+            parseChessComGame(it, username)
+        }
     }
 
-    private fun parseChessComGame(
-        gameJson: JSONObject?,
-        username: String,
-        since: Long?
-    ): FetchedGame? {
+    private fun parseChessComGame(gameJson: JSONObject?, username: String): FetchedGame? {
         if (gameJson == null) return null
         val pgn = gameJson.optString("pgn", "")
         if (pgn.isBlank()) return null
 
         val playedAt = gameJson.optLong("end_time", 0L) * 1000L
-        if (since != null && since > 0L && playedAt in 1..since) {
-            return null // Skip games older than our sync threshold
-        }
 
         val whiteUser = gameJson.optJSONObject("white")?.optString("username", "") ?: ""
         val blackUser = gameJson.optJSONObject("black")?.optString("username", "") ?: ""
@@ -89,10 +84,7 @@ object ChessComGameFetcher : GameFetcher {
 
         val headers = parsePgnHeaders(pgn)
         val resultTag = headers["Result"] ?: "*"
-
         val timeControlFromJson = gameJson.optString("time_control", "").takeIf { it.isNotBlank() }
-        val timeControl = headers["TimeControl"] ?: timeControlFromJson
-
         val uuid = gameJson.optString("uuid", "").takeIf { it.isNotBlank() }
         val url = gameJson.optString("url", "").takeIf { it.isNotBlank() }
 
@@ -101,7 +93,7 @@ object ChessComGameFetcher : GameFetcher {
             opponentName = if (isUserWhite) blackUser else whiteUser,
             isUserWhite = isUserWhite,
             result = resultTag,
-            timeControl = timeControl,
+            timeControl = headers["TimeControl"] ?: timeControlFromJson,
             timeCategory = mapTimeClassToCategory(gameJson.optString("time_class", "")),
             rated = gameJson.optBoolean("rated", false),
             playedAt = playedAt,
@@ -114,7 +106,7 @@ object ChessComGameFetcher : GameFetcher {
             "bullet" -> "bullet"
             "blitz" -> "blitz"
             "rapid" -> "rapid"
-            "daily" -> "classical" // Chess.com correspondence
+            "daily" -> "classical"
             else -> null
         }
     }
@@ -130,11 +122,8 @@ object ChessComGameFetcher : GameFetcher {
                 connection.inputStream.bufferedReader().use { it.readText() }
             }
             else {
-                Log.w("ChessComGameFetcher", "HTTP error ${connection.responseCode} for $urlString")
                 null
             }
-        }.onFailure {
-            Log.e("ChessComGameFetcher", "HTTP GET error for $urlString: ${it.message}")
         }.getOrNull()
     }
 }

@@ -38,7 +38,11 @@ class OpeningTreeSearchViewModel(
             )
 
             val fetchResult = onlineGamesFetchCoordinator.fetchGames(
-                username = username, platform = platform
+                username = username,
+                platform = platform,
+                maxGames = maxGamesForTree,
+                colorFilter = color,
+                timeControlFilter = timeControlFilter
             )
 
             if (fetchResult.errorMessage != null) {
@@ -53,13 +57,13 @@ class OpeningTreeSearchViewModel(
             if (fetchedGames.isEmpty()) {
                 _uiState.value = _uiState.value.copy(
                     isSyncing = false,
-                    lastSyncSummary = "No games found for this user",
+                    lastSyncSummary = "No games found matching filters.",
                     statusMessage = null
                 )
                 return@launch
             }
 
-            _uiState.value = _uiState.value.copy(statusMessage = "Preparing games...")
+            _uiState.value = _uiState.value.copy(statusMessage = "Preparing opening tree...")
 
             val gamesUsedForTree = openingTreePreparationCoordinator.prepareFromFetchedGames(
                 username = username,
@@ -69,15 +73,6 @@ class OpeningTreeSearchViewModel(
                 timeControlFilter = timeControlFilter,
                 maxGamesForTree = maxGamesForTree
             )
-
-            if (gamesUsedForTree <= 0) {
-                _uiState.value = _uiState.value.copy(
-                    isSyncing = false,
-                    lastSyncSummary = "No games match current filters.",
-                    statusMessage = null
-                )
-                return@launch
-            }
 
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,

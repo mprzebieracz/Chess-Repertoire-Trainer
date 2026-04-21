@@ -1,7 +1,6 @@
 package com.example.chessrepertoiretrainer.feature.openingtree.data
 
 import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.FetchedGame
-import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeFilterUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -17,7 +16,7 @@ class OpeningTreePreparationCoordinator {
         return OpeningTreeCacheKey(
             username = username.trim(),
             platform = platform.trim().lowercase(),
-            color = normalizeColor(color),
+            color = color.trim().lowercase().ifEmpty { "both" },
             timeControlFilter = timeControlFilter.trim(),
             maxGamesForTree = maxGamesForTree
         )
@@ -26,7 +25,7 @@ class OpeningTreePreparationCoordinator {
     suspend fun prepareFromFetchedGames(
         username: String,
         platform: String,
-        games: List<FetchedGame>,
+        games: List<FetchedGame>, // These are ALREADY filtered by the Fetchers!
         color: String,
         timeControlFilter: String,
         maxGamesForTree: Int?
@@ -36,24 +35,8 @@ class OpeningTreePreparationCoordinator {
             return 0
         }
 
-        val normalizedColor = normalizeColor(color)
-        val normalizedTimeControl = timeControlFilter.trim()
-        val filtered =
-            OpeningTreeFilterUtils.filterFetchedGames(games, normalizedColor, normalizedTimeControl)
-
-        if (filtered.isEmpty()) {
-            OpeningTreeCache.clearForUser(username, platform)
-            return 0
-        }
-
-        val limited = maxGamesForTree?.let { filtered.take(it) } ?: filtered
-        if (limited.isEmpty()) {
-            OpeningTreeCache.clearForUser(username, platform)
-            return 0
-        }
-
         val tree = withContext(Dispatchers.Default) {
-            OpeningTreeBuilder.buildTree(limited.map {
+            OpeningTreeBuilder.buildTree(games.map {
                 GameForOpeningTree(
                     pgn = it.pgn, isUserWhite = it.isUserWhite, resultTag = it.result
                 )
@@ -61,23 +44,20 @@ class OpeningTreePreparationCoordinator {
         }
 
         OpeningTreeCache.clearForUser(username, platform)
+
         if (tree != null) {
             OpeningTreeCache.put(
                 buildCacheKey(
                     username = username,
                     platform = platform,
-                    color = normalizedColor,
-                    timeControlFilter = normalizedTimeControl,
+                    color = color,
+                    timeControlFilter = timeControlFilter,
                     maxGamesForTree = maxGamesForTree
                 ), tree
             )
-            return limited.size
+            return games.size
         }
 
         return 0
-    }
-
-    private fun normalizeColor(color: String): String {
-        return color.trim().lowercase().ifEmpty { "both" }
     }
 }
