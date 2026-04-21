@@ -16,7 +16,7 @@ class AppContainer(context: Context) {
 
     val userSettingsRepository = UserSettingsRepository(context.applicationContext)
 
-    private val db: ChessDatabase = ChessDatabase.Companion.getDatabase(context)
+    private val db: ChessDatabase = ChessDatabase.getDatabase(context)
 
     val repertoireDao = db.repertoireDao()
     val puzzleDao = db.puzzleDao()

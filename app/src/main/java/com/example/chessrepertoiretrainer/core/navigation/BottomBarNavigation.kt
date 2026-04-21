@@ -17,7 +17,11 @@ fun AppBottomBar(navController: NavHostController) {
     val currentDestination = navBackStackEntry?.destination
 
     val items = listOf(
-        Screen.Home, Screen.RepertoireMain, Screen.Puzzles, Screen.YourGames, Screen.Settings
+        Screen.Home,
+        Screen.RepertoireMain,
+        Screen.Puzzles,
+        Screen.OpeningTreeSearch,
+        Screen.Settings
     )
 
     NavigationBar {

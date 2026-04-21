@@ -1,7 +1,5 @@
 package com.example.chessrepertoiretrainer.core.chess.ui
 
-import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,20 +13,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 
-private val selectedSquareColor = Color(0xBBF5F682)
-private val lastMoveHighlightColor = Color(0x88F5F682)
-private val markedSquareColor = Color(0xFFFFC107)
+private val selectedSquareColor = ChessUiConstants.BoardHighlights.selectedSquare
+private val lastMoveHighlightColor = ChessUiConstants.BoardHighlights.lastMove
+private val markedSquareColor = ChessUiConstants.BoardHighlights.markedBorder
 
 @Composable
 internal fun ChessboardGrid(
@@ -121,14 +120,19 @@ private fun ChessSquare(
             if (piece != Piece.NONE) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize(0.9f)
-                        .border(4.dp, Color(0x40000000), CircleShape)
+                        .fillMaxSize(ChessUiConstants.BoardHighlights.legalMoveFillScale)
+                        .border(
+                            ChessUiConstants.BoardHighlights.legalMoveBorderWidth,
+                            ChessUiConstants.BoardHighlights.legalMove,
+                            CircleShape
+                        )
                 )
-            } else {
+            }
+            else {
                 Box(
                     modifier = Modifier
-                        .size(16.dp)
-                        .background(Color(0x40000000), CircleShape)
+                        .size(ChessUiConstants.BoardHighlights.legalMoveDotSize)
+                        .background(ChessUiConstants.BoardHighlights.legalMove, CircleShape)
                 )
             }
         }
@@ -137,15 +141,22 @@ private fun ChessSquare(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(2.dp, Color(0x33000000))
+                    .border(
+                        ChessUiConstants.BoardHighlights.hoverBorderWidth,
+                        ChessUiConstants.BoardHighlights.hoverBorder
+                    )
             )
         }
 
         if (isMarked) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize(0.8f)
-                    .border(3.dp, markedSquareColor, CircleShape)
+                    .fillMaxSize(ChessUiConstants.BoardHighlights.markedSquareScale)
+                    .border(
+                        ChessUiConstants.BoardHighlights.markedBorderWidth,
+                        markedSquareColor,
+                        CircleShape
+                    )
             )
         }
 
@@ -167,17 +178,16 @@ internal fun Modifier.setupDragGestures(
     onDragStart: (Square, Offset) -> Unit,
     onDragUpdate: (Offset) -> Unit,
     onDragEnd: () -> Unit
-): Modifier = this
-    .clickable { state.onSquareClick(square) }
-    .pointerInput(isFlipped, piece, sideToMove) {
-        detectDragGestures(
-            onDragStart = { offset ->
+): Modifier =
+    this
+        .clickable { state.onSquareClick(square) }
+        .pointerInput(isFlipped, piece, sideToMove) {
+            detectDragGestures(onDragStart = { offset ->
                 if (piece != Piece.NONE && piece.pieceSide == sideToMove) {
                     onDragStart(square, offset)
                     state.onSquareClick(square)
                 }
-            },
-            onDrag = { change, dragAmount ->
+            }, onDrag = { change, dragAmount ->
                 change.consume()
                 onDragUpdate(dragAmount)
 
@@ -193,8 +203,7 @@ internal fun Modifier.setupDragGestures(
                 if (state.hoveredSquare != newHovered) {
                     state.hoveredSquare = newHovered
                 }
-            },
-            onDragEnd = {
+            }, onDragEnd = {
                 state.hoveredSquare?.let { target ->
                     if (target != square) {
                         state.onMove(Move(square, target))
@@ -202,13 +211,11 @@ internal fun Modifier.setupDragGestures(
                 }
                 state.hoveredSquare = null
                 onDragEnd()
-            },
-            onDragCancel = {
+            }, onDragCancel = {
                 state.hoveredSquare = null
                 onDragEnd()
-            }
-        )
-    }
+            })
+        }
 
 
 

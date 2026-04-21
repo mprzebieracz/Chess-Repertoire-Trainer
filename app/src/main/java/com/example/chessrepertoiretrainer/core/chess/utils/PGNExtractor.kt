@@ -20,7 +20,6 @@ class PGNExtractor {
                 while (i < n && token[i].isDigit()) i++
                 if (i == 0 || i >= n) return false
                 if (token[i] != '.') return false
-                // allow one or more dots, e.g. "1.", "1..."
                 while (i < n && token[i] == '.') i++
                 return i == n
             }

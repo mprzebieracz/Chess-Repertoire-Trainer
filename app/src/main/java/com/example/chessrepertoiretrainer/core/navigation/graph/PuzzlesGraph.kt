@@ -20,7 +20,7 @@ fun NavGraphBuilder.puzzlesGraph(
             viewModel = vm,
             onStartTraining = { navController.navigate(Screen.PuzzleTraining.route) })
     }
-
+ 
     composable(Screen.PuzzleTraining.route) {
         val vm: PuzzleTrainingViewModel =
             viewModel(factory = PuzzleTrainingViewModel.Factory(puzzleRepository))

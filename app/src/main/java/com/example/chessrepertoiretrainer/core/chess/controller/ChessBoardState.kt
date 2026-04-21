@@ -17,9 +17,6 @@ interface ChessBoardController {
     // Square currently hovered during drag operations.
     var hoveredSquare: Square?
 
-    // Square explicitly "marked" by the UI (e.g. puzzle hint). This is kept
-    // separate from [hoveredSquare] so that drag feedback does not conflict
-    // with persistent hint markers.
     var markedSquare: Square?
     val isFlipped: Boolean
 

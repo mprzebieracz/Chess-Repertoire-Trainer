@@ -13,7 +13,7 @@ sealed class Screen(
     object Train : Screen("train", "Train", AppIcons.Train)
     object Puzzles : Screen("puzzles", "Puzzles", AppIcons.Puzzles)
 
-    object YourGames : Screen("games", "Openingtree", AppIcons.OpeningTree)
+    object OpeningTreeSearch : Screen("games", "Openingtree", AppIcons.OpeningTree)
     object Settings : Screen("settings", "Settings", AppIcons.Settings)
 
     // Other Screens

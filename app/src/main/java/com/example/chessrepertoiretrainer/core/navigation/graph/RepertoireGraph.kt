@@ -38,6 +38,7 @@ fun NavGraphBuilder.repertoireGraph(
             viewModel = vm,
             onNavigateToChapters = { navController.navigate(Screen.CourseOverview.createRoute(it)) })
     }
+
     composable(
         Screen.CourseOverview.route,
         arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
@@ -53,6 +54,7 @@ fun NavGraphBuilder.repertoireGraph(
             onOpenChapterTrain = { navController.navigate(Screen.ChapterTraining.createRoute(it)) },
             onOpenChapterReview = { navController.navigate(Screen.ChapterReview.createRoute(it)) })
     }
+
     composable(
         Screen.ChapterLearn.route,
         arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
@@ -73,6 +75,7 @@ fun NavGraphBuilder.repertoireGraph(
             onStartChapterTraining = { navController.navigate(Screen.ChapterTraining.createRoute(it)) },
             onStartLineTraining = { navController.navigate(Screen.LineTraining.createRoute(it)) })
     }
+
     composable(
         Screen.ChapterReview.route,
         arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
@@ -82,6 +85,7 @@ fun NavGraphBuilder.repertoireGraph(
         ReviewChapterScreen(
             viewModel = vm, onBackClick = { navController.popBackStack() })
     }
+
     composable(
         Screen.Chapters.route,
         arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
@@ -93,6 +97,7 @@ fun NavGraphBuilder.repertoireGraph(
             onNavigateToLines = { navController.navigate(Screen.Lines.createRoute(it)) },
             onBackClick = { navController.popBackStack() })
     }
+
     composable(
         Screen.Lines.route, arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
     ) {
@@ -103,6 +108,7 @@ fun NavGraphBuilder.repertoireGraph(
             onBackClick = { navController.popBackStack() },
             onNavigateToTraining = { navController.navigate(Screen.ChapterTraining.createRoute(it)) })
     }
+
     composable(
         Screen.LineEditor.route,
         arguments = listOf(navArgument("lineId") { type = NavType.IntType })
@@ -122,6 +128,7 @@ fun NavGraphBuilder.repertoireGraph(
         TrainScreen(
             viewModel = vm, onBackClick = { navController.popBackStack() })
     }
+
     composable(
         Screen.LineTraining.route,
         arguments = listOf(navArgument("lineId") { type = NavType.IntType })

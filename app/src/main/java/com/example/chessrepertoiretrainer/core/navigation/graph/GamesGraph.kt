@@ -22,7 +22,7 @@ fun NavGraphBuilder.gamesGraph(
     onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,
     openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
 ) {
-    composable(Screen.YourGames.route) {
+    composable(Screen.OpeningTreeSearch.route) {
         val vm: OpeningTreeSearchViewModel = viewModel(
             factory = OpeningTreeSearchViewModel.Factory(
                 onlineGamesFetchCoordinator, openingTreePreparationCoordinator
@@ -37,7 +37,6 @@ fun NavGraphBuilder.gamesGraph(
             defaultChessComUsername = settings.chessComUsername,
             defaultPlatform = settings.defaultOnlinePlatform,
             onOpenTree = { username, platform, color, timeControl, maxGames ->
-                // Call createRoute directly with new parameters
                 navController.navigate(
                     Screen.OpeningTree.createRoute(
                         username = username,
