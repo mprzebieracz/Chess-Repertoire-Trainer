@@ -8,8 +8,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.chessrepertoiretrainer.core.navigation.Screen
-import com.example.chessrepertoiretrainer.feature.openingtree.data.OnlineGamesFetchCoordinator
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.OnlineGamesFetchCoordinator
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeScreen
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeSearchScreen
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeSearchViewModel
@@ -59,7 +59,8 @@ fun NavGraphBuilder.gamesGraph(
             navArgument("timeControl") { type = NavType.StringType; defaultValue = "none" },
             navArgument("maxGames") {
                 type = NavType.IntType; defaultValue = -1
-            })) { backStackEntry ->
+            })
+    ) { backStackEntry ->
         val username = backStackEntry.arguments?.getString("username") ?: return@composable
         val platform = backStackEntry.arguments?.getString("platform") ?: return@composable
         val colorArg = backStackEntry.arguments?.getString("color") ?: "both"

@@ -2,11 +2,11 @@ package com.example.chessrepertoiretrainer.app
 
 import android.content.Context
 import com.example.chessrepertoiretrainer.core.database.ChessDatabase
-import com.example.chessrepertoiretrainer.feature.openingtree.data.ChessComGameFetcher
-import com.example.chessrepertoiretrainer.feature.openingtree.data.GameFetcherRegistry
-import com.example.chessrepertoiretrainer.feature.openingtree.data.LichessGameFetcher
-import com.example.chessrepertoiretrainer.feature.openingtree.data.OnlineGamesFetchCoordinator
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.ChessComGameFetcher
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.GameFetcherRegistry
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.LichessGameFetcher
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.OnlineGamesFetchCoordinator
 import com.example.chessrepertoiretrainer.feature.puzzles.data.DefaultPuzzleRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.data.DefaultRepertoireRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
@@ -20,8 +20,6 @@ class AppContainer(context: Context) {
 
     val repertoireDao = db.repertoireDao()
     val puzzleDao = db.puzzleDao()
-    val playerProfileDao = db.playerProfileDao()
-    val gameDao = db.gameDao()
 
     val puzzleRepository = DefaultPuzzleRepository(puzzleDao)
     val repertoireRepository: RepertoireRepository = DefaultRepertoireRepository(repertoireDao)

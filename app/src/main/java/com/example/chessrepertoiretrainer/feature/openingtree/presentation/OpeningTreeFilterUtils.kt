@@ -1,6 +1,6 @@
 package com.example.chessrepertoiretrainer.feature.openingtree.presentation
 
-import com.example.chessrepertoiretrainer.feature.openingtree.data.FetchedGame
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.FetchedGame
 
 object OpeningTreeFilterUtils {
 

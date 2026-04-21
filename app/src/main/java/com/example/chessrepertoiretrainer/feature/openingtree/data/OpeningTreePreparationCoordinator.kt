@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.feature.openingtree.data
 
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.FetchedGame
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeFilterUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
