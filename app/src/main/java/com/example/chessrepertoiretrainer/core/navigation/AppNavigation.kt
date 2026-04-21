@@ -15,7 +15,6 @@ import com.example.chessrepertoiretrainer.core.navigation.graph.homeGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.puzzlesGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.repertoireGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.trainingGraph
-import com.example.chessrepertoiretrainer.feature.openingtree.domain.GamesRepository
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
 
 @Composable
@@ -25,7 +24,6 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
 
     val repertoireRepository = appContainer.repertoireRepository
     val puzzleRepository = appContainer.puzzleRepository
-    val playerGamesRepository: GamesRepository = appContainer.gamesRepository
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = shouldShowBottomBar(navBackStackEntry?.destination)
@@ -46,7 +44,6 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                 settingsViewModel = settingsViewModel,
                 onlineGamesFetchCoordinator = appContainer.onlineGamesFetchCoordinator,
                 openingTreePreparationCoordinator = appContainer.openingTreePreparationCoordinator,
-                playerGamesRepository = playerGamesRepository
             )
             puzzlesGraph(navController, puzzleRepository)
             repertoireGraph(navController, repertoireRepository)

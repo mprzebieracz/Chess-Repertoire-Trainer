@@ -2,7 +2,6 @@ package com.example.chessrepertoiretrainer.core.navigation
 
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
-import java.net.URLEncoder
 
 sealed class Screen(
     val route: String, val title: String = "", val icon: ImageVector = AppIcons.Home
@@ -55,14 +54,13 @@ sealed class Screen(
     object Analysis : Screen("analysis")
 
     object OpeningTree :
-        Screen("opening_tree/{profileId}?color={color}&timeControl={timeControl}&maxGames={maxGames}") {
+        Screen("opening_tree/{username}/{platform}/{color}/{timeControl}/{maxGames}") {
         fun createRoute(
-            profileId: Long, color: String, timeControl: String, maxGames: Int?
+            username: String, platform: String, color: String, timeControl: String, maxGames: Int?
         ): String {
-            val safeColor = color.ifBlank { "both" }
-            val safeTc = URLEncoder.encode(timeControl, Charsets.UTF_8.name())
-            val safeMax = maxGames?.toString() ?: "-1"
-            return "opening_tree/$profileId?color=$safeColor&timeControl=$safeTc&maxGames=$safeMax"
+            val tc = timeControl.ifEmpty { "none" }
+            val mg = maxGames ?: -1
+            return "opening_tree/$username/$platform/$color/$tc/$mg"
         }
     }
 }

@@ -10,7 +10,6 @@ import androidx.navigation.navArgument
 import com.example.chessrepertoiretrainer.core.navigation.Screen
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OnlineGamesFetchCoordinator
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
-import com.example.chessrepertoiretrainer.feature.openingtree.domain.GamesRepository
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeScreen
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeSearchScreen
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeSearchViewModel
@@ -21,8 +20,7 @@ fun NavGraphBuilder.gamesGraph(
     navController: NavHostController,
     settingsViewModel: SettingsViewModel,
     onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,
-    openingTreePreparationCoordinator: OpeningTreePreparationCoordinator,
-    playerGamesRepository: GamesRepository
+    openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
 ) {
     composable(Screen.YourGames.route) {
         val vm: OpeningTreeSearchViewModel = viewModel(
@@ -38,10 +36,12 @@ fun NavGraphBuilder.gamesGraph(
             defaultLichessUsername = settings.lichessUsername,
             defaultChessComUsername = settings.chessComUsername,
             defaultPlatform = settings.defaultOnlinePlatform,
-            onOpenProfileTree = { profileId, color, timeControl, maxGames ->
+            onOpenTree = { username, platform, color, timeControl, maxGames ->
+                // Call createRoute directly with new parameters
                 navController.navigate(
                     Screen.OpeningTree.createRoute(
-                        profileId = profileId,
+                        username = username,
+                        platform = platform,
                         color = color,
                         timeControl = timeControl,
                         maxGames = maxGames
@@ -53,18 +53,21 @@ fun NavGraphBuilder.gamesGraph(
     composable(
         route = Screen.OpeningTree.route,
         arguments = listOf(
-            navArgument("profileId") { type = NavType.LongType },
+            navArgument("username") { type = NavType.StringType },
+            navArgument("platform") { type = NavType.StringType },
             navArgument("color") { type = NavType.StringType; defaultValue = "both" },
-            navArgument("timeControl") { type = NavType.StringType; defaultValue = "" },
+            navArgument("timeControl") { type = NavType.StringType; defaultValue = "none" },
             navArgument("maxGames") {
                 type = NavType.IntType; defaultValue = -1
-            })
-    ) { backStackEntry ->
-        val profileId = backStackEntry.arguments?.getLong("profileId") ?: return@composable
+            })) { backStackEntry ->
+        val username = backStackEntry.arguments?.getString("username") ?: return@composable
+        val platform = backStackEntry.arguments?.getString("platform") ?: return@composable
         val colorArg = backStackEntry.arguments?.getString("color") ?: "both"
-        val timeControlArg = backStackEntry.arguments?.getString("timeControl") ?: ""
+        val timeControlArg = backStackEntry.arguments?.getString("timeControl") ?: "none"
         val maxGamesArg = backStackEntry.arguments?.getInt("maxGames") ?: -1
+
         val maxGamesForTree = maxGamesArg.takeIf { it > 0 }
+        val finalTimeControl = if (timeControlArg == "none") "" else timeControlArg
 
         val colorFilter = when (colorArg.lowercase()) {
             "white" -> OpeningTreeViewModel.ColorFilter.WHITE_ONLY
@@ -74,11 +77,11 @@ fun NavGraphBuilder.gamesGraph(
 
         val vm: OpeningTreeViewModel = viewModel(
             factory = OpeningTreeViewModel.Factory(
-                profileId = profileId,
-                gamesRepository = playerGamesRepository,
+                username = username,
+                platform = platform,
                 openingTreePreparationCoordinator = openingTreePreparationCoordinator,
                 colorFilter = colorFilter,
-                timeControlFilter = timeControlArg.ifBlank { null },
+                timeControlFilter = finalTimeControl.ifBlank { null },
                 maxGamesForTree = maxGamesForTree
             )
         )

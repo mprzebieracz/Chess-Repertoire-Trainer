@@ -7,8 +7,6 @@ import com.example.chessrepertoiretrainer.feature.openingtree.data.GameFetcherRe
 import com.example.chessrepertoiretrainer.feature.openingtree.data.LichessGameFetcher
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OnlineGamesFetchCoordinator
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
-import com.example.chessrepertoiretrainer.feature.openingtree.data.PlayerGamesRepository
-import com.example.chessrepertoiretrainer.feature.openingtree.domain.GamesRepository
 import com.example.chessrepertoiretrainer.feature.puzzles.data.DefaultPuzzleRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.data.DefaultRepertoireRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
@@ -28,18 +26,7 @@ class AppContainer(context: Context) {
     val puzzleRepository = DefaultPuzzleRepository(puzzleDao)
     val repertoireRepository: RepertoireRepository = DefaultRepertoireRepository(repertoireDao)
 
-    val gameFetcherRegistry = GameFetcherRegistry(
-        listOf(
-            LichessGameFetcher, ChessComGameFetcher
-        )
-    )
-
+    val gameFetcherRegistry = GameFetcherRegistry(listOf(LichessGameFetcher, ChessComGameFetcher))
     val openingTreePreparationCoordinator = OpeningTreePreparationCoordinator()
     val onlineGamesFetchCoordinator = OnlineGamesFetchCoordinator(gameFetcherRegistry)
-
-    val gamesRepository: GamesRepository = PlayerGamesRepository(
-        gameDao = gameDao,
-        playerProfileDao = playerProfileDao,
-        fetcherRegistry = gameFetcherRegistry
-    )
 }
