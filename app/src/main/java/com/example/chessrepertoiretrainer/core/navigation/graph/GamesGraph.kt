@@ -41,14 +41,18 @@ fun NavGraphBuilder.gamesGraph(
             onOpenProfileTree = { profileId, color, timeControl, maxGames ->
                 navController.navigate(
                     Screen.OpeningTree.createRoute(
-                        profileId = profileId, color = color, timeControl = timeControl, maxGames = maxGames
+                        profileId = profileId,
+                        color = color,
+                        timeControl = timeControl,
+                        maxGames = maxGames
                     )
                 )
             })
     }
 
     composable(
-        route = Screen.OpeningTree.route, arguments = listOf(
+        route = Screen.OpeningTree.route,
+        arguments = listOf(
             navArgument("profileId") { type = NavType.LongType },
             navArgument("color") { type = NavType.StringType; defaultValue = "both" },
             navArgument("timeControl") { type = NavType.StringType; defaultValue = "" },

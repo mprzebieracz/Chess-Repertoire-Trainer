@@ -17,18 +17,20 @@ fun AppBottomBar(navController: NavHostController) {
     val currentDestination = navBackStackEntry?.destination
 
     val items = listOf(
-        Screen.Home, Screen.RepertoireMain, Screen.Puzzles, Screen.MyStats, Screen.YourGames, Screen.Settings
+        Screen.Home, Screen.RepertoireMain, Screen.Puzzles, Screen.YourGames, Screen.Settings
     )
 
     NavigationBar {
         items.forEach { screen ->
-            val isRepertoireFlow = screen == Screen.RepertoireMain && currentDestination?.hierarchy?.any {
-                it.route?.contains("chapters") == true || it.route?.contains(
-                    "lines"
-                ) == true
-            } == true
+            val isRepertoireFlow =
+                screen == Screen.RepertoireMain && currentDestination?.hierarchy?.any {
+                    it.route?.contains("chapters") == true || it.route?.contains(
+                        "lines"
+                    ) == true
+                } == true
 
-            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true || isRepertoireFlow
+            val selected =
+                currentDestination?.hierarchy?.any { it.route == screen.route } == true || isRepertoireFlow
 
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = screen.title) },

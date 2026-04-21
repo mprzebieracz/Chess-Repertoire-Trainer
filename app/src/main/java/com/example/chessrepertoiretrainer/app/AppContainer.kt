@@ -13,17 +13,7 @@ import com.example.chessrepertoiretrainer.feature.puzzles.data.DefaultPuzzleRepo
 import com.example.chessrepertoiretrainer.feature.repertoire.data.DefaultRepertoireRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
-import com.example.chessrepertoiretrainer.feature.stats.data.DefaultGameStatsRepository
-import com.example.chessrepertoiretrainer.feature.stats.data.AccountSyncCoordinator
-import com.example.chessrepertoiretrainer.feature.stats.data.StatsRefreshCoordinator
-import com.example.chessrepertoiretrainer.feature.stats.domain.PlayerProfileRepository
 
-/**
- * Simple application-level dependency container.
- *
- * Keeps heavyweight singletons (database, repositories, fetcher registry)
- * out of composables so they are not recreated during recomposition.
- */
 class AppContainer(context: Context) {
 
     val userSettingsRepository = UserSettingsRepository(context.applicationContext)
@@ -34,11 +24,9 @@ class AppContainer(context: Context) {
     val puzzleDao = db.puzzleDao()
     val playerProfileDao = db.playerProfileDao()
     val gameDao = db.gameDao()
-    val gameStatsDao = db.gameStatsDao()
 
     val puzzleRepository = DefaultPuzzleRepository(puzzleDao)
     val repertoireRepository: RepertoireRepository = DefaultRepertoireRepository(repertoireDao)
-    val playerProfileRepository = PlayerProfileRepository(playerProfileDao)
 
     val gameFetcherRegistry = GameFetcherRegistry(
         listOf(
@@ -53,17 +41,5 @@ class AppContainer(context: Context) {
         gameDao = gameDao,
         playerProfileDao = playerProfileDao,
         fetcherRegistry = gameFetcherRegistry
-    )
-
-    val gameStatsRepository = DefaultGameStatsRepository(
-        gamesRepository = gamesRepository, gameStatsDao = gameStatsDao
-    )
-
-    val accountSyncCoordinator = AccountSyncCoordinator(
-        profileRepository = playerProfileRepository, gamesRepository = gamesRepository
-    )
-
-    val statsRefreshCoordinator = StatsRefreshCoordinator(
-        gameStatsRepository = gameStatsRepository
     )
 }
