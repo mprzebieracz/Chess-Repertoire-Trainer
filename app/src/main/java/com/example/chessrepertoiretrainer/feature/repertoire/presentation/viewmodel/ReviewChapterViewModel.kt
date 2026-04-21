@@ -19,13 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the simple "review" flow for a chapter.
- *
- * This is a read-only mode: you can step through the moves of each line and
- * move between lines quickly, but we do not modify any learning/progress
- * state. It is intended as a quick way to browse/check lines.
- */
+
 class ReviewChapterViewModel(
     private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -107,7 +101,9 @@ class ReviewChapterViewModel(
         startLine(0, chapterName = chapterName, colorString = colorString)
     }
 
-    private suspend fun startLine(index: Int, chapterName: String? = null, colorString: String? = null) {
+    private suspend fun startLine(
+        index: Int, chapterName: String? = null, colorString: String? = null
+    ) {
         if (index !in lines.indices) {
             // Out of range – nothing to show.
             _uiState.update {
@@ -144,7 +140,6 @@ class ReviewChapterViewModel(
         }
     }
 
-    /** Step forward by one move in the current line, if possible. */
     fun onNextMove() {
         val moves = currentLineMoves
         if (moves.isEmpty()) {
@@ -178,12 +173,14 @@ class ReviewChapterViewModel(
         val comment = moves.getOrNull(currentMoveIndex)?.comment?.takeIf { it.isNotBlank() }
         _uiState.update {
             it.copy(
-                isAtLineStart = currentMoveIndex < 0, isAtLineEnd = isEnd, statusMessage = null, currentMoveComment = comment
+                isAtLineStart = currentMoveIndex < 0,
+                isAtLineEnd = isEnd,
+                statusMessage = null,
+                currentMoveComment = comment
             )
         }
     }
 
-    /** Step back by one move in the current line, if possible. */
     fun onPreviousMove() {
         val moves = currentLineMoves
         if (moves.isEmpty()) return
@@ -202,12 +199,14 @@ class ReviewChapterViewModel(
 
         _uiState.update {
             it.copy(
-                isAtLineStart = currentMoveIndex < 0, isAtLineEnd = isEnd, statusMessage = null, currentMoveComment = comment
+                isAtLineStart = currentMoveIndex < 0,
+                isAtLineEnd = isEnd,
+                statusMessage = null,
+                currentMoveComment = comment
             )
         }
     }
 
-    /** Restart the current line from the initial position. */
     fun restartCurrentLine() {
         if (currentLineIndex !in lines.indices) return
 
@@ -216,12 +215,14 @@ class ReviewChapterViewModel(
 
         _uiState.update {
             it.copy(
-                isAtLineStart = true, isAtLineEnd = currentLineMoves.isEmpty(), statusMessage = null, currentMoveComment = null
+                isAtLineStart = true,
+                isAtLineEnd = currentLineMoves.isEmpty(),
+                statusMessage = null,
+                currentMoveComment = null
             )
         }
     }
 
-    /** Go to the previous line in the chapter, if any. */
     fun goToPreviousLine() {
         viewModelScope.launch {
             val prevIndex = currentLineIndex - 1
@@ -230,8 +231,7 @@ class ReviewChapterViewModel(
             }
         }
     }
-
-    /** Go to the next line in the chapter, if any. */
+    
     fun goToNextLine() {
         viewModelScope.launch {
             val nextIndex = currentLineIndex + 1
@@ -241,7 +241,8 @@ class ReviewChapterViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()

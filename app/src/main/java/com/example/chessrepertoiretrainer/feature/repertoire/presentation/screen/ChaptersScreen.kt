@@ -36,24 +36,19 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChaptersScreen(
-    viewModel: ChaptersViewModel,
-    onNavigateToLines: (Int) -> Unit,
-    onBackClick: () -> Unit
+    viewModel: ChaptersViewModel, onNavigateToLines: (Int) -> Unit, onBackClick: () -> Unit
 ) {
     val chapters by viewModel.chapters.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
 
     ChaptersScaffold(
-        onBackClick = onBackClick,
-        onAddClick = { showDialog = true }
-    ) { padding ->
+        onBackClick = onBackClick, onAddClick = { showDialog = true }) { padding ->
         ChaptersList(
             chapters = chapters,
             padding = padding,
             onNavigateToLines = onNavigateToLines,
-            onDeleteChapter = { viewModel.deleteChapter(it) }
-        )
+            onDeleteChapter = { viewModel.deleteChapter(it) })
     }
 
     if (showDialog) {
@@ -67,8 +62,7 @@ fun ChaptersScreen(
                     name = ""
                     showDialog = false
                 }
-            }
-        )
+            })
     }
 }
 
@@ -79,16 +73,13 @@ private fun ChaptersScaffold(
     onAddClick: () -> Unit,
     content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            ChaptersTopBar(onBackClick = onBackClick)
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Add Chapter")
-            }
+    Scaffold(topBar = {
+        ChaptersTopBar(onBackClick = onBackClick)
+    }, floatingActionButton = {
+        FloatingActionButton(onClick = onAddClick) {
+            Icon(Icons.Default.Add, contentDescription = "Add Chapter")
         }
-    ) { padding ->
+    }) { padding ->
         content(padding)
     }
 }
@@ -96,14 +87,11 @@ private fun ChaptersScaffold(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChaptersTopBar(onBackClick: () -> Unit) {
-    TopAppBar(
-        title = { Text("Chapters") },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
+    TopAppBar(title = { Text("Chapters") }, navigationIcon = {
+        IconButton(onClick = onBackClick) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
-    )
+    })
 }
 
 @Composable
@@ -130,50 +118,35 @@ private fun ChaptersList(
 
 @Composable
 private fun ChapterListItem(
-    chapter: Chapter,
-    onNavigateToLines: (Int) -> Unit,
-    onDeleteChapter: (Chapter) -> Unit
+    chapter: Chapter, onNavigateToLines: (Int) -> Unit, onDeleteChapter: (Chapter) -> Unit
 ) {
-    ListItem(
-        headlineContent = { Text(chapter.name) },
-        trailingContent = {
-            IconButton(onClick = { onDeleteChapter(chapter) }) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete")
-            }
-        },
-        modifier = Modifier.clickable { onNavigateToLines(chapter.id) }
-    )
+    ListItem(headlineContent = { Text(chapter.name) }, trailingContent = {
+        IconButton(onClick = { onDeleteChapter(chapter) }) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete")
+        }
+    }, modifier = Modifier.clickable { onNavigateToLines(chapter.id) })
     HorizontalDivider()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddChapterDialog(
-    name: String,
-    onNameChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    name: String, onNameChange: (String) -> Unit, onDismiss: () -> Unit, onConfirm: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add Chapter") },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text("Chapter Name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text("Add")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Add Chapter") }, text = {
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text("Chapter Name") },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }, confirmButton = {
+        Button(onClick = onConfirm) {
+            Text("Add")
         }
-    )
+    }, dismissButton = {
+        TextButton(onClick = onDismiss) {
+            Text("Cancel")
+        }
+    })
 }

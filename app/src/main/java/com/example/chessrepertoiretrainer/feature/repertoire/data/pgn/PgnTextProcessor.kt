@@ -2,10 +2,6 @@ package com.example.chessrepertoiretrainer.feature.repertoire.data.pgn
 
 class PgnTextProcessor {
 
-    /**
-     * PGN preprocessor: strip GUI/engine inline tags like [%eval ...] while keeping
-     * standard headers and curly-brace comments.
-     */
     fun preprocess(raw: String): String {
         var text = raw.replace("\r\n", "\n").replace('\r', '\n').replace('\u00A0', ' ')
         val inlineEngineTagRegex = Regex("""\[%[^]]*]""")
@@ -13,10 +9,6 @@ class PgnTextProcessor {
         return text.lines().joinToString("\n") { it.trimEnd() }
     }
 
-    /**
-     * Splits whole PGN text into games. Every game starts from a header line
-     * enclosed in square brackets.
-     */
     fun splitIntoGames(cleanedPgn: String): List<String> {
         val games = mutableListOf<StringBuilder>()
         var current: StringBuilder? = null

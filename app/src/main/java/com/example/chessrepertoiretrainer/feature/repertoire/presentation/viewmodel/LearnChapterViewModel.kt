@@ -19,18 +19,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the dedicated "learn" flow for a chapter.
- *
- * Responsibilities:
- *  - Load all lines for a chapter and step through them one by one.
- *  - For each line, let the user step through the moves from the starting
- *    position to the final position (no editing).
- *  - After the last move of a line, expose actions to either train that line
- *    (via a separate training screen) or skip training and go to the next line.
- *  - After all lines are processed, allow starting a final chapter-wide
- *    training session.
- */
+
 class LearnChapterViewModel(
     private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -136,12 +125,18 @@ class LearnChapterViewModel(
         startLine(firstUnlearnedIndex, chapterName = chapterName, colorString = colorString)
     }
 
-    private suspend fun startLine(index: Int, chapterName: String? = null, colorString: String? = null) {
+    private suspend fun startLine(
+        index: Int,
+        chapterName: String? = null,
+        colorString: String? = null
+    ) {
         if (index !in lines.indices) {
             // No more lines – chapter is complete.
             _uiState.update {
                 it.copy(
-                    isLoading = false, phase = LearnPhase.CHAPTER_COMPLETE, statusMessage = "You have gone through all lines in this chapter."
+                    isLoading = false,
+                    phase = LearnPhase.CHAPTER_COMPLETE,
+                    statusMessage = "You have gone through all lines in this chapter."
                 )
             }
             return
@@ -290,7 +285,10 @@ class LearnChapterViewModel(
                 val now = System.currentTimeMillis()
                 val updated = if (!line.isLearned) {
                     line.copy(
-                        isLearned = true, learnedAt = now, timesTrained = line.timesTrained + 1, lastTrainedAt = now
+                        isLearned = true,
+                        learnedAt = now,
+                        timesTrained = line.timesTrained + 1,
+                        lastTrainedAt = now
                     )
                 }
                 else {
@@ -312,12 +310,15 @@ class LearnChapterViewModel(
 
     private fun goToNextLine() {
         viewModelScope.launch {
-            val nextIndex = (currentLineIndex + 1 until lines.size).firstOrNull { !lines[it].isLearned }
+            val nextIndex =
+                (currentLineIndex + 1 until lines.size).firstOrNull { !lines[it].isLearned }
 
             if (nextIndex == null) {
                 _uiState.update {
                     it.copy(
-                        phase = LearnPhase.CHAPTER_COMPLETE, isAtLineEnd = true, statusMessage = "You have gone through all lines in this chapter."
+                        phase = LearnPhase.CHAPTER_COMPLETE,
+                        isAtLineEnd = true,
+                        statusMessage = "You have gone through all lines in this chapter."
                     )
                 }
             }
@@ -327,7 +328,8 @@ class LearnChapterViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()

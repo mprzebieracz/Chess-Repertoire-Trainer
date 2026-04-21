@@ -10,7 +10,15 @@ data class OpeningTreeCacheKey(
 
 object OpeningTreeCache {
 
-    private val cache = mutableMapOf<OpeningTreeCacheKey, OpeningTree>()
+    private const val MAX_ENTRIES = 5
+
+    private val cache = object : LinkedHashMap<OpeningTreeCacheKey, OpeningTree>(
+        MAX_ENTRIES, 0.75f, true
+    ) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<OpeningTreeCacheKey, OpeningTree>?): Boolean {
+            return size > MAX_ENTRIES
+        }
+    }
 
     @Synchronized
     fun put(key: OpeningTreeCacheKey, tree: OpeningTree) {
@@ -21,17 +29,17 @@ object OpeningTreeCache {
     fun get(key: OpeningTreeCacheKey): OpeningTree? = cache[key]
 
     @Synchronized
-    fun clearForUser(username: String, platform: String) {
-        val iterator = cache.keys.iterator()
-        while (iterator.hasNext()) {
-            val key = iterator.next()
-            if (key.username.equals(username, ignoreCase = true) && key.platform.equals(
-                    platform,
-                    ignoreCase = true
-                )
-            ) {
-                iterator.remove()
-            }
-        }
+    fun remove(key: OpeningTreeCacheKey) {
+        cache.remove(key)
+    }
+
+    @Synchronized
+    fun clearAll() {
+        cache.clear()
+    }
+
+    @Synchronized
+    fun getRecentKeys(): List<OpeningTreeCacheKey> {
+        return cache.keys.toList().reversed()
     }
 }

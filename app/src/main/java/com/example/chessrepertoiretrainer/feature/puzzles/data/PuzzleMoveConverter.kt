@@ -7,21 +7,6 @@ import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 
-/**
- * Utility functions for working with puzzle move sequences.
- *
- * - [uciToMove] converts a single UCI string into a chesslib [Move] in the
- *   context of a given [Board].
- * - [convertUciSequenceToSan] converts a full solution sequence in UCI
- *   notation into SAN moves starting from a given FEN.
- *
- * We deliberately **trust** Lichess' UCI solutions here and avoid an extra
- * legality check against [Board.legalMoves]. If a move is syntactically
- * invalid or the board fails to apply it (e.g. a hard mismatch between FEN
- * and UCI), we return an empty list and log a warning, but we no longer treat
- * differences in how chesslib represents moves as fatal.
- */
-
 fun uciToMove(uci: String, board: Board): Move? {
     if (uci.length !in 4..5) return null
 
@@ -62,11 +47,6 @@ fun uciToMove(uci: String, board: Board): Move? {
     }
 }
 
-/**
- * Convert the full UCI solution sequence to SAN from the given FEN, using
- * a separate working board. Returns an empty list if any step is invalid
- * or illegal.
- */
 fun convertUciSequenceToSan(fen: String, tokens: List<String>): List<String> {
     if (tokens.isEmpty()) return emptyList()
 
@@ -75,10 +55,7 @@ fun convertUciSequenceToSan(fen: String, tokens: List<String>): List<String> {
 
     for (uci in tokens) {
         val move = uciToMove(uci, workingBoard) ?: return emptyList()
-
-        // We intentionally do not pre‑check against legalMoves(); if the board
-        // rejects the move internally this will throw, which we treat as a
-        // hard failure by returning an empty list.
+        
         val san = workingBoard.toSan(move)
         workingBoard.doMove(move)
         sanMoves.add(san)

@@ -5,8 +5,7 @@ class PgnMovetextParser {
     data class ParsedMove(val san: String, val comment: String?)
 
     data class ParseResult(
-        val lines: List<List<ParsedMove>>,
-        val nextIndex: Int
+        val lines: List<List<ParsedMove>>, val nextIndex: Int
     )
 
     fun parseLinesFromMovetext(text: String): List<List<ParsedMove>> {
@@ -15,9 +14,7 @@ class PgnMovetextParser {
     }
 
     fun parseMovetextRecursive(
-        text: String,
-        startIndex: Int,
-        parentPrefix: List<ParsedMove>
+        text: String, startIndex: Int, parentPrefix: List<ParsedMove>
     ): ParseResult {
         val variationLines = mutableListOf<List<ParsedMove>>()
         val current = parentPrefix.map { it.copy() }.toMutableList()
@@ -29,14 +26,17 @@ class PgnMovetextParser {
                 val last = current.last()
                 val combined = if (last.comment.isNullOrEmpty()) {
                     textComment
-                } else {
+                }
+                else {
                     last.comment + "\n" + textComment
                 }
                 current[current.lastIndex] = last.copy(comment = combined)
-            } else {
+            }
+            else {
                 pendingCommentForNext = if (pendingCommentForNext == null) {
                     textComment
-                } else {
+                }
+                else {
                     pendingCommentForNext + "\n" + textComment
                 }
             }
@@ -61,6 +61,7 @@ class PgnMovetextParser {
                     }
                     i = if (j < length) j + 1 else j
                 }
+
                 c == '[' -> {
                     var j = i + 1
                     while (j < length && text[j] != ']') {
@@ -68,10 +69,12 @@ class PgnMovetextParser {
                     }
                     i = if (j < length) j + 1 else j
                 }
+
                 c == '(' -> {
                     val parentForVariation = if (current.isNotEmpty()) {
                         current.dropLast(1)
-                    } else {
+                    }
+                    else {
                         current
                     }
 
@@ -79,11 +82,16 @@ class PgnMovetextParser {
                     variationLines.addAll(result.lines)
                     i = result.nextIndex
                 }
+
                 c == ')' -> {
                     i++
                     break
                 }
-                text.startsWith("1-0", i) || text.startsWith("0-1", i) || text.startsWith("1/2-1/2", i) || c == '*' -> {
+
+                text.startsWith("1-0", i) || text.startsWith("0-1", i) || text.startsWith(
+                    "1/2-1/2",
+                    i
+                ) || c == '*' -> {
                     i += when {
                         text.startsWith("1-0", i) -> 3
                         text.startsWith("0-1", i) -> 3
@@ -92,6 +100,7 @@ class PgnMovetextParser {
                     }
                     break
                 }
+
                 c == '$' -> {
                     var j = i + 1
                     while (j < length && text[j].isDigit()) {
@@ -99,6 +108,7 @@ class PgnMovetextParser {
                     }
                     i = j
                 }
+
                 c.isDigit() -> {
                     var j = i
                     while (j < length && text[j].isDigit()) {
@@ -109,16 +119,10 @@ class PgnMovetextParser {
                     }
                     i = j
                 }
+
                 else -> {
                     var j = i
-                    while (
-                        j < length &&
-                            !text[j].isWhitespace() &&
-                            text[j] != '{' &&
-                            text[j] != '}' &&
-                            text[j] != '(' &&
-                            text[j] != ')'
-                    ) {
+                    while (j < length && !text[j].isWhitespace() && text[j] != '{' && text[j] != '}' && text[j] != '(' && text[j] != ')') {
                         j++
                     }
                     val san = text.substring(i, j).trim()

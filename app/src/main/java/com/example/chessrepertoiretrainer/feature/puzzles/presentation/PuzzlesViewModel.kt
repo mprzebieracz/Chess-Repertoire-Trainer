@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.puzzles.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -36,16 +35,11 @@ class PuzzlesViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             val finalCount = ensureMinUnsolved()
-            Log.d(
-                "PuzzlesViewModel", "Unsolved puzzles after ensuring minimum: $finalCount"
-            )
             _uiState.value = PuzzlesUiState(
                 isLoading = false, unsolvedCount = finalCount, errorMessage = null
             )
         }
         catch (e: Exception) {
-            // Even if ensuring the minimum failed (e.g. network error), we may
-            // still have some puzzles already stored locally.
             val existingCount = try {
                 repository.getUnsolvedCount()
             }
@@ -54,7 +48,9 @@ class PuzzlesViewModel(
             }
 
             _uiState.value = PuzzlesUiState(
-                isLoading = false, unsolvedCount = existingCount, errorMessage = e.message ?: "Unknown error"
+                isLoading = false,
+                unsolvedCount = existingCount,
+                errorMessage = e.message ?: "Unknown error"
             )
         }
     }

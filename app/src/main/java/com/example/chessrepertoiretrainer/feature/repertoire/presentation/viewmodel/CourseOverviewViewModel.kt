@@ -18,13 +18,6 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the repertoire "course overview" screen.
- *
- * It exposes the selected repertoire together with its chapters and some
- * lightweight statistics (for now, just total line count per chapter). This
- * screen is the natural entry point for learning/training a course.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CourseOverviewViewModel(
     private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
@@ -39,17 +32,20 @@ class CourseOverviewViewModel(
         val chapter: Chapter, val totalLines: Int, val learnedLines: Int
     )
 
-    val chaptersWithStats: StateFlow<List<ChapterWithStats>> = repertoireRepository.getChaptersForRepertoire(repertoireId).mapLatest { chapters ->
-        chapters.map { chapter ->
-            val total = repertoireRepository.getLineCountForChapter(chapter.id)
-            val learned = repertoireRepository.getLearnedLineCountForChapter(chapter.id)
-            ChapterWithStats(
-                chapter = chapter, totalLines = total, learnedLines = learned
-            )
-        }
-    }.stateIn(
-        scope = viewModelScope, started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
-    )
+    val chaptersWithStats: StateFlow<List<ChapterWithStats>> =
+        repertoireRepository.getChaptersForRepertoire(repertoireId).mapLatest { chapters ->
+            chapters.map { chapter ->
+                val total = repertoireRepository.getLineCountForChapter(chapter.id)
+                val learned = repertoireRepository.getLearnedLineCountForChapter(chapter.id)
+                ChapterWithStats(
+                    chapter = chapter, totalLines = total, learnedLines = learned
+                )
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Companion.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     init {
         viewModelScope.launch {
@@ -57,7 +53,8 @@ class CourseOverviewViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()

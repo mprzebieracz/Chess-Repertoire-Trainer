@@ -10,19 +10,15 @@ class PgnLineResolver(
 ) {
 
     data class ResolvedMove(
-        val san: String,
-        val fen: String,
-        val comment: String?
+        val san: String, val fen: String, val comment: String?
     )
 
     fun resolveLine(
-        parsedMoves: List<PgnMovetextParser.ParsedMove>,
-        fenTag: String?
+        parsedMoves: List<PgnMovetextParser.ParsedMove>, fenTag: String?
     ): List<ResolvedMove> {
         val board = Board()
         if (!fenTag.isNullOrBlank()) {
-            runCatching { board.loadFromFen(fenTag) }
-                .onFailure { error ->
+            runCatching { board.loadFromFen(fenTag) }.onFailure { error ->
                     Log.e("PgnImporter", "Nie udalo sie zaladowac FEN z tagu FEN: $fenTag", error)
                 }
         }
@@ -43,9 +39,7 @@ class PgnLineResolver(
             board.doMove(matchingMove)
             resolvedMoves.add(
                 ResolvedMove(
-                    san = sanFromBoard,
-                    fen = board.fen,
-                    comment = parsed.comment
+                    san = sanFromBoard, fen = board.fen, comment = parsed.comment
                 )
             )
         }

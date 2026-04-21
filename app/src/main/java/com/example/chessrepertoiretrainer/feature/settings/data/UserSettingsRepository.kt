@@ -42,25 +42,25 @@ class UserSettingsRepository(private val context: Context) {
     }
 
     val settingsFlow: Flow<UserSettings> = context.settingsDataStore.data.catch { exception ->
-            if (exception is IOException) {
-                emit(emptyPreferences())
-            }
-            else {
-                throw exception
-            }
-        }.map { prefs ->
-            UserSettings(
-                lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
-                chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
-                appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
-                    runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
-                } ?: AppThemeMode.SYSTEM,
-                boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
-                    runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
-                } ?: BoardTheme.CLASSIC,
-                useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
-                defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess")
+        if (exception is IOException) {
+            emit(emptyPreferences())
         }
+        else {
+            throw exception
+        }
+    }.map { prefs ->
+        UserSettings(
+            lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
+            chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
+            appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
+                runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
+            } ?: AppThemeMode.SYSTEM,
+            boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
+                runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
+            } ?: BoardTheme.CLASSIC,
+            useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
+            defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess")
+    }
 
     suspend fun updateLichessUsername(username: String) {
         context.settingsDataStore.edit { prefs ->

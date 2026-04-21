@@ -80,8 +80,7 @@ private fun CourseOverviewScaffold(
                 onEditCourse = onEditCourse,
                 onTrainCourse = onTrainCourse
             )
-        }
-    ) { padding ->
+        }) { padding ->
         content(padding)
     }
 }
@@ -95,44 +94,35 @@ private fun CourseOverviewTopBar(
     onEditCourse: (Int) -> Unit,
     onTrainCourse: (Int) -> Unit
 ) {
-    TopAppBar(
-        title = { Text(title) },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = AppIcons.Back,
-                    contentDescription = "Back"
-                )
-            }
-        },
-        actions = {
-            if (repertoireId != null) {
-                CourseOverviewActionButtons(
-                    repertoireId = repertoireId,
-                    onTrainCourse = onTrainCourse,
-                    onEditCourse = onEditCourse
-                )
-            }
+    TopAppBar(title = { Text(title) }, navigationIcon = {
+        IconButton(onClick = onBackClick) {
+            Icon(
+                imageVector = AppIcons.Back, contentDescription = "Back"
+            )
         }
-    )
+    }, actions = {
+        if (repertoireId != null) {
+            CourseOverviewActionButtons(
+                repertoireId = repertoireId,
+                onTrainCourse = onTrainCourse,
+                onEditCourse = onEditCourse
+            )
+        }
+    })
 }
 
 @Composable
 private fun CourseOverviewActionButtons(
-    repertoireId: Int,
-    onTrainCourse: (Int) -> Unit,
-    onEditCourse: (Int) -> Unit
+    repertoireId: Int, onTrainCourse: (Int) -> Unit, onEditCourse: (Int) -> Unit
 ) {
     IconButton(onClick = { onTrainCourse(repertoireId) }) {
         Icon(
-            imageVector = AppIcons.TrainCourse,
-            contentDescription = "Train course"
+            imageVector = AppIcons.TrainCourse, contentDescription = "Train course"
         )
     }
     IconButton(onClick = { onEditCourse(repertoireId) }) {
         Icon(
-            imageVector = AppIcons.EditCourse,
-            contentDescription = "Edit course"
+            imageVector = AppIcons.EditCourse, contentDescription = "Edit course"
         )
     }
 }
@@ -147,7 +137,8 @@ private fun CourseOverviewContent(
 ) {
     if (chaptersWithStats.isEmpty()) {
         CourseOverviewEmptyState(padding = padding)
-    } else {
+    }
+    else {
         CourseOverviewList(
             padding = padding,
             chaptersWithStats = chaptersWithStats,
@@ -168,8 +159,7 @@ private fun CourseOverviewEmptyState(padding: androidx.compose.foundation.layout
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "No chapters yet.",
-            style = MaterialTheme.typography.bodyMedium
+            text = "No chapters yet.", style = MaterialTheme.typography.bodyMedium
         )
         Text(
             text = "Use the edit button to add chapters and lines.",
@@ -217,8 +207,7 @@ private fun CourseChapterCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clickable { onOpenChapterLearn(chapter.id) }
-    ) {
+            .clickable { onOpenChapterLearn(chapter.id) }) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -226,8 +215,7 @@ private fun CourseChapterCard(
         ) {
             CourseChapterHeader(chapterName = chapter.name)
             CourseChapterProgress(
-                totalLines = totalLines,
-                learnedLines = learnedLines
+                totalLines = totalLines, learnedLines = learnedLines
             )
             CourseChapterActionsRow(
                 chapterId = chapter.id,
@@ -242,25 +230,23 @@ private fun CourseChapterCard(
 @Composable
 private fun CourseChapterHeader(chapterName: String) {
     Text(
-        text = chapterName,
-        style = MaterialTheme.typography.titleMedium
+        text = chapterName, style = MaterialTheme.typography.titleMedium
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CourseChapterProgress(
-    totalLines: Int,
-    learnedLines: Int
+    totalLines: Int, learnedLines: Int
 ) {
     val percent = if (totalLines == 0) 0 else (learnedLines * 100 / totalLines)
     Text(
         text = if (totalLines > 0) {
             "$learnedLines / $totalLines lines learned ($percent%)"
-        } else {
+        }
+        else {
             "No lines yet"
-        },
-        style = MaterialTheme.typography.bodySmall
+        }, style = MaterialTheme.typography.bodySmall
     )
     if (totalLines > 0) {
         LinearProgressIndicator(
@@ -299,9 +285,7 @@ private fun CourseChapterActionsRow(
 
 @Composable
 private fun RowScope.CourseActionButton(
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    label: String, modifier: Modifier = Modifier, onClick: () -> Unit
 ) {
     Button(onClick = onClick, modifier = modifier) {
         Text(label)
@@ -310,9 +294,7 @@ private fun RowScope.CourseActionButton(
 
 @Composable
 private fun RowScope.CourseActionOutlinedButton(
-    label: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    label: String, modifier: Modifier = Modifier, onClick: () -> Unit
 ) {
     OutlinedButton(onClick = onClick, modifier = modifier) {
         Text(label)

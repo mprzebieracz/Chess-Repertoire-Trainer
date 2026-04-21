@@ -22,17 +22,20 @@ data class CourseProgress(
 @OptIn(ExperimentalCoroutinesApi::class)
 class RepertoiresViewModel(private val repertoireRepository: RepertoireRepository) : ViewModel() {
 
-    val courses: StateFlow<List<CourseProgress>> = repertoireRepository.getAllRepertoires().mapLatest { repertoires ->
-        repertoires.map { rep ->
-            val total = repertoireRepository.getLineCountForRepertoire(rep.id)
-            val learned = repertoireRepository.getLearnedLineCountForRepertoire(rep.id)
-            CourseProgress(
-                repertoire = rep, totalLines = total, learnedLines = learned
-            )
-        }
-    }.stateIn(
-        scope = viewModelScope, started = SharingStarted.WhileSubscribed(5000), initialValue = emptyList()
-    )
+    val courses: StateFlow<List<CourseProgress>> =
+        repertoireRepository.getAllRepertoires().mapLatest { repertoires ->
+            repertoires.map { rep ->
+                val total = repertoireRepository.getLineCountForRepertoire(rep.id)
+                val learned = repertoireRepository.getLearnedLineCountForRepertoire(rep.id)
+                CourseProgress(
+                    repertoire = rep, totalLines = total, learnedLines = learned
+                )
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     fun addRepertoire(name: String, color: String) {
         viewModelScope.launch {
@@ -46,7 +49,8 @@ class RepertoiresViewModel(private val repertoireRepository: RepertoireRepositor
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return RepertoiresViewModel(repertoireRepository) as T

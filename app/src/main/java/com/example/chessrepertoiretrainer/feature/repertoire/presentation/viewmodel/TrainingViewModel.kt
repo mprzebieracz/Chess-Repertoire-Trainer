@@ -6,9 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
-import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,7 +67,10 @@ class TrainingViewModel(
                 if (line == null) {
                     _uiState.update {
                         it.copy(
-                            isLoading = false, isSessionEmpty = true, isSessionComplete = false, statusMessage = "Line not found"
+                            isLoading = false,
+                            isSessionEmpty = true,
+                            isSessionComplete = false,
+                            statusMessage = "Line not found"
                         )
                     }
                     return@launch
@@ -90,18 +93,17 @@ class TrainingViewModel(
                 if (loadedLines.isEmpty()) {
                     _uiState.update {
                         it.copy(
-                            isLoading = false, isSessionEmpty = true, isSessionComplete = false, totalLines = 0, currentLineName = null
+                            isLoading = false,
+                            isSessionEmpty = true,
+                            isSessionComplete = false,
+                            totalLines = 0,
+                            currentLineName = null
                         )
                     }
                     return@collect
                 }
 
                 if (currentLineIndex == -1) {
-                    // First time we load lines for this session.
-                    // For chapter-based training, we want to train lines in a random
-                    // permutation so that the user doesn't always see them in the
-                    // same order. For review-based training we keep the original
-                    // ordering from the DAO.
                     lines = if (chapterId != null) {
                         loadedLines.shuffled()
                     }
@@ -124,7 +126,10 @@ class TrainingViewModel(
             is MoveTrainingEngine.MoveResult.Correct -> {
                 _uiState.update {
                     it.copy(
-                        lastMoveWasCorrect = true, lastUserSan = result.userSan, lastExpectedSan = result.expectedSan, statusMessage = null
+                        lastMoveWasCorrect = true,
+                        lastUserSan = result.userSan,
+                        lastExpectedSan = result.expectedSan,
+                        statusMessage = null
                     )
                 }
 
@@ -250,7 +255,8 @@ class TrainingViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()

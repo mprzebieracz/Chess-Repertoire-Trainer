@@ -19,7 +19,7 @@ class OpeningTreeViewModel(
     private val username: String,
     private val platform: String,
     private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator,
-    private val colorFilter: ColorFilter = ColorFilter.BOTH,
+    private val colorFilter: ColorFilter = ColorFilter.WHITE,
     private val timeControlFilter: String? = null,
     private val maxGamesForTree: Int? = null
 ) : ViewModel() {
@@ -129,9 +129,8 @@ class OpeningTreeViewModel(
 
     private fun currentColorFilterValue(): String {
         return when (colorFilter) {
-            ColorFilter.WHITE_ONLY -> "white"
-            ColorFilter.BLACK_ONLY -> "black"
-            ColorFilter.BOTH -> "both"
+            ColorFilter.WHITE -> "white"
+            ColorFilter.BLACK -> "black"
         }
     }
 
@@ -173,12 +172,12 @@ class OpeningTreeViewModel(
     )
 
     private fun updateBoardOrientation() {
-        if (chessController.isFlipped != (colorFilter == ColorFilter.BLACK_ONLY)) {
+        if (chessController.isFlipped != (colorFilter == ColorFilter.BLACK)) {
             chessController.flipBoard()
         }
     }
 
-    enum class ColorFilter { BOTH, WHITE_ONLY, BLACK_ONLY }
+    enum class ColorFilter { WHITE, BLACK }
 
     class Factory(
         private val username: String,

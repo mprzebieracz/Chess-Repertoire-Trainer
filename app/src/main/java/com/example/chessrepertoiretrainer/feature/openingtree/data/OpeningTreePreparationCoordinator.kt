@@ -25,15 +25,12 @@ class OpeningTreePreparationCoordinator {
     suspend fun prepareFromFetchedGames(
         username: String,
         platform: String,
-        games: List<FetchedGame>, // These are ALREADY filtered by the Fetchers!
+        games: List<FetchedGame>,
         color: String,
         timeControlFilter: String,
         maxGamesForTree: Int?
     ): Int {
-        if (games.isEmpty()) {
-            OpeningTreeCache.clearForUser(username, platform)
-            return 0
-        }
+        if (games.isEmpty()) return 0
 
         val tree = withContext(Dispatchers.Default) {
             OpeningTreeBuilder.buildTree(games.map {
@@ -43,17 +40,9 @@ class OpeningTreePreparationCoordinator {
             })
         }
 
-        OpeningTreeCache.clearForUser(username, platform)
-
         if (tree != null) {
             OpeningTreeCache.put(
-                buildCacheKey(
-                    username = username,
-                    platform = platform,
-                    color = color,
-                    timeControlFilter = timeControlFilter,
-                    maxGamesForTree = maxGamesForTree
-                ), tree
+                buildCacheKey(username, platform, color, timeControlFilter, maxGamesForTree), tree
             )
             return games.size
         }

@@ -70,9 +70,9 @@ fun NavGraphBuilder.gamesGraph(
         val finalTimeControl = if (timeControlArg == "none") "" else timeControlArg
 
         val colorFilter = when (colorArg.lowercase()) {
-            "white" -> OpeningTreeViewModel.ColorFilter.WHITE_ONLY
-            "black" -> OpeningTreeViewModel.ColorFilter.BLACK_ONLY
-            else -> OpeningTreeViewModel.ColorFilter.BOTH
+            "white" -> OpeningTreeViewModel.ColorFilter.WHITE
+            "black" -> OpeningTreeViewModel.ColorFilter.BLACK
+            else -> OpeningTreeViewModel.ColorFilter.WHITE
         }
 
         val vm: OpeningTreeViewModel = viewModel(

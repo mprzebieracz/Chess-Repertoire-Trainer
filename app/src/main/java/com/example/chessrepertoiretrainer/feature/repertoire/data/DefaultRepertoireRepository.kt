@@ -16,7 +16,8 @@ class DefaultRepertoireRepository(
 
     override fun getAllRepertoires(): Flow<List<Repertoire>> = repertoireDao.getAllRepertoires()
 
-    override suspend fun getRepertoireById(id: Int): Repertoire? = repertoireDao.getRepertoireById(id)
+    override suspend fun getRepertoireById(id: Int): Repertoire? =
+        repertoireDao.getRepertoireById(id)
 
     override suspend fun insertRepertoire(repertoire: Repertoire): Long =
         repertoireDao.insertRepertoire(repertoire)
@@ -29,7 +30,8 @@ class DefaultRepertoireRepository(
 
     override suspend fun getChapterById(id: Int): Chapter? = repertoireDao.getChapterById(id)
 
-    override suspend fun insertChapter(chapter: Chapter): Long = repertoireDao.insertChapter(chapter)
+    override suspend fun insertChapter(chapter: Chapter): Long =
+        repertoireDao.insertChapter(chapter)
 
     override suspend fun deleteChapter(chapter: Chapter) = repertoireDao.deleteChapter(chapter)
 
@@ -59,7 +61,8 @@ class DefaultRepertoireRepository(
     override suspend fun getLearnedLineCountForRepertoire(repertoireId: Int): Int =
         repertoireDao.getLearnedLineCountForRepertoire(repertoireId)
 
-    override fun getMovesForLine(lineId: Int): Flow<List<LineMove>> = repertoireDao.getMovesForLine(lineId)
+    override fun getMovesForLine(lineId: Int): Flow<List<LineMove>> =
+        repertoireDao.getMovesForLine(lineId)
 
     override suspend fun insertLineMove(move: LineMove): Long = repertoireDao.insertLineMove(move)
 
