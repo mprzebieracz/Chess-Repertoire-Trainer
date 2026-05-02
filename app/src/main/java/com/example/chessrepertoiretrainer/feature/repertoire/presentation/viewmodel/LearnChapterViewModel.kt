@@ -105,8 +105,6 @@ class LearnChapterViewModel(
             return
         }
 
-        // Prefer starting from the first unlearned line. If all lines are already
-        // marked as learned, treat the chapter as complete.
         val firstUnlearnedIndex = loadedLines.indexOfFirst { !it.isLearned }
         if (firstUnlearnedIndex == -1) {
             _uiState.update {
@@ -126,12 +124,9 @@ class LearnChapterViewModel(
     }
 
     private suspend fun startLine(
-        index: Int,
-        chapterName: String? = null,
-        colorString: String? = null
+        index: Int, chapterName: String? = null, colorString: String? = null
     ) {
         if (index !in lines.indices) {
-            // No more lines – chapter is complete.
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -149,7 +144,6 @@ class LearnChapterViewModel(
         currentMoveIndex = -1
 
         chessController.resetBoard()
-        // resetBoard() keeps isFlipped as-is, so orientation remains consistent.
 
         _uiState.update {
             it.copy(
@@ -170,7 +164,6 @@ class LearnChapterViewModel(
         }
     }
 
-    /** Step forward by one move in the current line, if possible. */
     fun onNextMove() {
         val moves = currentLineMoves
         if (moves.isEmpty()) {
@@ -219,7 +212,6 @@ class LearnChapterViewModel(
         }
     }
 
-    /** Step back by one move in the current line, if possible. */
     fun onPreviousMove() {
         val moves = currentLineMoves
         if (moves.isEmpty()) {
@@ -227,11 +219,9 @@ class LearnChapterViewModel(
         }
 
         if (currentMoveIndex < 0) {
-            // Already at the beginning of the line.
             return
         }
 
-        // Undo the last move on the board.
         chessController.navigateBack()
         currentMoveIndex--
 
@@ -254,7 +244,6 @@ class LearnChapterViewModel(
         }
     }
 
-    /** Restart the current line from the initial position. */
     fun restartCurrentLine() {
         if (currentLineIndex !in lines.indices) return
 
@@ -272,12 +261,10 @@ class LearnChapterViewModel(
         }
     }
 
-    /** Skip the training step for the current line and go to the next one. */
     fun skipTrainingForCurrentLine() {
         goToNextLine()
     }
 
-    /** Called when the user finishes training this line in the movetrainer. */
     fun onLineTrainingFinished() {
         viewModelScope.launch {
             if (currentLineIndex in lines.indices) {
@@ -297,8 +284,6 @@ class LearnChapterViewModel(
                     )
                 }
                 repertoireRepository.updateLine(updated)
-                // Keep local cache in sync so that subsequent navigation skips
-                // learned lines correctly.
                 lines = lines.toMutableList().also { list ->
                     list[currentLineIndex] = updated
                 }

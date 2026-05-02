@@ -19,7 +19,7 @@ import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
         Line::class,
         LineMove::class,
         Puzzle::class,
-    ], version = 7, exportSchema = false
+    ], version = 8, exportSchema = false
 )
 abstract class ChessDatabase : RoomDatabase() {
 

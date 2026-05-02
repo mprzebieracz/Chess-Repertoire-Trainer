@@ -31,7 +31,7 @@ object AppIcons {
     val EditCourse: ImageVector = Icons.Filled.Edit
 
     val TrainChapter: ImageVector = Icons.Filled.PlayArrow
-    val ImportPgn: ImageVector = Icons.Filled.PlayArrow
+    val ImportPgn: ImageVector = Icons.Filled.Add
     val AddLine: ImageVector = Icons.Filled.Add
     val DeleteLine: ImageVector = Icons.Filled.Delete
 }
