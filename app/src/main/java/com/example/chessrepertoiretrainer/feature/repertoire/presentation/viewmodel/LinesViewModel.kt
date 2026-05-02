@@ -22,7 +22,9 @@ class LinesViewModel(
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
 
     val lines: StateFlow<List<Line>> = repertoireRepository.getLinesForChapter(chapterId).stateIn(
-        scope = viewModelScope, started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
+        scope = viewModelScope,
+        started = SharingStarted.Companion.WhileSubscribed(5000),
+        initialValue = emptyList()
     )
 
     fun addLine(name: String) {
@@ -30,11 +32,8 @@ class LinesViewModel(
             val chapter = repertoireRepository.getChapterById(chapterId)
             val lineCount = repertoireRepository.getLineCountForChapter(chapterId)
 
-            val finalName = if (name.isBlank()) {
+            val finalName = name.ifBlank {
                 "${chapter?.name ?: "Line"} #${lineCount + 1}"
-            }
-            else {
-                name
             }
 
             repertoireRepository.insertLine(
@@ -60,9 +59,12 @@ class LinesViewModel(
         viewModelScope.launch {
             try {
                 val inputStream = context.contentResolver.openInputStream(uri)
-                val pgnString = inputStream?.bufferedReader().use { it?.readText() } ?: return@launch
+                val pgnString =
+                    inputStream?.bufferedReader().use { it?.readText() } ?: return@launch
 
-                repertoireRepository.importPgnToChapter(pgnString = pgnString, chapterId = chapterId)
+                repertoireRepository.importPgnToChapter(
+                    pgnString = pgnString, chapterId = chapterId
+                )
             }
             catch (e: Exception) {
                 e.printStackTrace()
@@ -70,7 +72,8 @@ class LinesViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()

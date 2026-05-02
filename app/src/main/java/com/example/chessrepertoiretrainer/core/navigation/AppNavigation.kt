@@ -14,9 +14,7 @@ import com.example.chessrepertoiretrainer.core.navigation.graph.gamesGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.homeGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.puzzlesGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.repertoireGraph
-import com.example.chessrepertoiretrainer.core.navigation.graph.statsGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.trainingGraph
-import com.example.chessrepertoiretrainer.feature.openingtree.domain.GamesRepository
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
 
 @Composable
@@ -26,17 +24,18 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
 
     val repertoireRepository = appContainer.repertoireRepository
     val puzzleRepository = appContainer.puzzleRepository
-    val playerGamesRepository: GamesRepository = appContainer.gamesRepository
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = shouldShowBottomBar(navBackStackEntry?.destination)
-
+ 
     Scaffold(
         bottomBar = {
             if (showBottomBar) AppBottomBar(navController)
         }) { innerPadding ->
         NavHost(
-            navController = navController, startDestination = Screen.Home.route, modifier = Modifier.padding(innerPadding)
+            navController = navController,
+            startDestination = Screen.Home.route,
+            modifier = Modifier.padding(innerPadding)
         ) {
             homeGraph(navController, settingsViewModel)
             trainingGraph(navController, repertoireRepository)
@@ -45,16 +44,8 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                 settingsViewModel = settingsViewModel,
                 onlineGamesFetchCoordinator = appContainer.onlineGamesFetchCoordinator,
                 openingTreePreparationCoordinator = appContainer.openingTreePreparationCoordinator,
-                playerGamesRepository = playerGamesRepository
             )
             puzzlesGraph(navController, puzzleRepository)
-            statsGraph(
-                navController = navController,
-                settingsViewModel = settingsViewModel,
-                accountSyncCoordinator = appContainer.accountSyncCoordinator,
-                statsRefreshCoordinator = appContainer.statsRefreshCoordinator,
-                openingTreePreparationCoordinator = appContainer.openingTreePreparationCoordinator
-            )
             repertoireGraph(navController, repertoireRepository)
         }
     }

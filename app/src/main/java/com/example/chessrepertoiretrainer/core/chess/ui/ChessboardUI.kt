@@ -31,20 +31,27 @@ fun ChessboardUI(state: ChessBoardController) {
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
     var initialTouchOffset by remember { mutableStateOf(Offset.Zero) }
 
-    // Pre-calculate legal moves once per state change
     val legalMoves = remember(state.boardState, state.selectedSquare) {
         state.selectedSquare?.let { sq ->
             board.legalMoves().filter { it.from == sq }.map { it.to }
         } ?: emptyList()
     }
 
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .aspectRatio(1f)
-        .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }
-        .shadow(8.dp, RoundedCornerShape(4.dp))
-        .clip(RoundedCornerShape(4.dp))
-        .border(2.dp, Color(0xFF312E2B), RoundedCornerShape(4.dp))) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }
+            .shadow(
+                elevation = ChessUiConstants.BoardFrame.shadowElevation,
+                shape = ChessUiConstants.BoardFrame.shape
+            )
+            .clip(ChessUiConstants.BoardFrame.shape)
+            .border(
+                width = ChessUiConstants.BoardFrame.borderWidth,
+                color = ChessUiConstants.BoardFrame.borderColor,
+                shape = ChessUiConstants.BoardFrame.shape
+            )) {
         val squareSizePx = if (boardSizePx > 0) boardSizePx / 8 else 0f
 
         ChessboardGrid(
@@ -62,8 +69,7 @@ fun ChessboardUI(state: ChessBoardController) {
             onDragEnd = {
                 draggingSquare = null
                 dragOffset = Offset.Zero
-            }
-        )
+            })
 
         if (draggingSquare != null && squareSizePx > 0f) {
             DraggedPieceLayer(

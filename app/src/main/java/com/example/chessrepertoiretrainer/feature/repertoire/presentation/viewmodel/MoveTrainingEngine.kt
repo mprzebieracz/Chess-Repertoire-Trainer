@@ -66,10 +66,6 @@ class MoveTrainingEngine(
         }
     }
 
-    /**
-     * Auto-play all opponent replies from the current index until it is our
-     * turn again or the sequence is exhausted.
-     */
     suspend fun advanceOpponentReplies() {
         val cfg = config ?: return
         if (cfg.sanMoves.isEmpty()) return
@@ -91,19 +87,12 @@ class MoveTrainingEngine(
         }
     }
 
-    /**
-     * Play the next user move in the solution (from the current index) and
-     * automatically follow up with all opponent replies. Returns true if the
-     * entire sequence is finished after this step.
-     */
     suspend fun playSolutionStep(): Boolean {
         val cfg = config ?: return true
         if (cfg.sanMoves.isEmpty()) return true
 
         val board = chessController.getBoard()
 
-        // If it's currently the opponent's turn, catch up by auto-playing any
-        // remaining opponent replies first.
         if (board.sideToMove != cfg.mySide) {
             advanceOpponentReplies()
         }
@@ -121,8 +110,6 @@ class MoveTrainingEngine(
         val userMove = board.legalMoves().firstOrNull { move ->
             board.toSan(move) == targetSan
         } ?: run {
-            // If we cannot find the move, treat the sequence as finished to
-            // avoid getting stuck.
             return true
         }
 
@@ -132,16 +119,11 @@ class MoveTrainingEngine(
         isAutoPlaying = false
         currentIndex++
 
-        // After the user's move, auto-play opponent replies.
         advanceOpponentReplies()
 
         return isSequenceComplete()
     }
-
-    /**
-     * Compute a simple hint by identifying the from-square of the next
-     * expected move for our side, based on the current board state.
-     */
+    
     fun computeHintSquare(): Square? {
         val cfg = config ?: return null
         if (cfg.sanMoves.isEmpty()) return null

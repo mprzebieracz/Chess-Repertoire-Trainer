@@ -15,7 +15,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,31 +33,25 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 
 @Composable
 fun LineEditorScreen(
-    viewModel: LineEditorViewModel,
-    onBackClick: () -> Unit
+    viewModel: LineEditorViewModel, onBackClick: () -> Unit
 ) {
     val moves by viewModel.dbMoves.collectAsStateWithLifecycle()
 
     LineEditorScaffold(
-        viewModel = viewModel,
-        moves = moves,
-        onBackClick = onBackClick
+        viewModel = viewModel, moves = moves, onBackClick = onBackClick
     )
 }
 
 @Composable
 private fun LineEditorScaffold(
-    viewModel: LineEditorViewModel,
-    moves: List<LineMove>,
-    onBackClick: () -> Unit
+    viewModel: LineEditorViewModel, moves: List<LineMove>, onBackClick: () -> Unit
 ) {
     Scaffold(
         bottomBar = {
             LineEditorBottomBar(
                 viewModel = viewModel
             )
-        }
-    ) { padding ->
+        }) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             ChessScreenLayout(
                 title = "Edit Line",
@@ -70,11 +63,9 @@ private fun LineEditorScaffold(
                 },
                 bottomContent = {
                     LineEditorCommentSection(
-                        moves = moves,
-                        boardFen = viewModel.chessController.boardState
+                        moves = moves, boardFen = viewModel.chessController.boardState
                     )
-                }
-            )
+                })
         }
     }
 }
@@ -90,8 +81,7 @@ private fun LineEditorTopContent(onBackClick: () -> Unit) {
         LineEditorBackButton(onBackClick = onBackClick)
         Spacer(Modifier.width(8.dp))
         Text(
-            text = "Back to lines",
-            style = MaterialTheme.typography.bodyMedium
+            text = "Back to lines", style = MaterialTheme.typography.bodyMedium
         )
     }
 }
@@ -100,16 +90,14 @@ private fun LineEditorTopContent(onBackClick: () -> Unit) {
 private fun LineEditorBackButton(onBackClick: () -> Unit) {
     IconButton(onClick = onBackClick) {
         Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Back"
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back"
         )
     }
 }
 
 @Composable
 private fun LineEditorCommentSection(
-    moves: List<LineMove>,
-    boardFen: String
+    moves: List<LineMove>, boardFen: String
 ) {
     val currentComment = moves.firstOrNull { it.fen == boardFen }?.comment
 
@@ -132,8 +120,7 @@ private fun LineEditorCommentCard(comment: String) {
             modifier = Modifier.padding(bottom = 4.dp)
         )
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
+            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
@@ -161,9 +148,7 @@ private fun RowScope.LineEditorUndoButton(onUndo: () -> Unit) {
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
     ) {
         Icon(
-            Icons.Default.Delete,
-            contentDescription = "Undo",
-            modifier = Modifier.size(18.dp)
+            Icons.Default.Delete, contentDescription = "Undo", modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.width(4.dp))
         Text("Undo")

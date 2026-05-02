@@ -56,8 +56,7 @@ fun LinesScreen(
         onBackClick = onBackClick,
         onTrainClick = { onNavigateToTraining(viewModel.chapterId) },
         onImportClick = { pgnLauncher.launch(arrayOf("*/*")) },
-        onAddClick = { showDialog = true }
-    ) { padding ->
+        onAddClick = { showDialog = true }) { padding ->
         LinesList(
             lines = lines,
             padding = padding,
@@ -75,8 +74,7 @@ fun LinesScreen(
                 viewModel.addLine(name)
                 name = ""
                 showDialog = false
-            }
-        )
+            })
     }
 }
 
@@ -89,20 +87,17 @@ private fun LinesScaffold(
     onAddClick: () -> Unit,
     content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            LinesTopBar(
-                onBackClick = onBackClick,
-                onTrainClick = onTrainClick,
-                onImportClick = onImportClick
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
-                Icon(AppIcons.AddLine, contentDescription = "Add Line")
-            }
+    Scaffold(topBar = {
+        LinesTopBar(
+            onBackClick = onBackClick,
+            onTrainClick = onTrainClick,
+            onImportClick = onImportClick
+        )
+    }, floatingActionButton = {
+        FloatingActionButton(onClick = onAddClick) {
+            Icon(AppIcons.AddLine, contentDescription = "Add Line")
         }
-    ) { padding ->
+    }) { padding ->
         content(padding)
     }
 }
@@ -110,26 +105,20 @@ private fun LinesScaffold(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LinesTopBar(
-    onBackClick: () -> Unit,
-    onTrainClick: () -> Unit,
-    onImportClick: () -> Unit
+    onBackClick: () -> Unit, onTrainClick: () -> Unit, onImportClick: () -> Unit
 ) {
-    TopAppBar(
-        title = { Text("Lines") },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(AppIcons.Back, contentDescription = "Back")
-            }
-        },
-        actions = {
-            IconButton(onClick = onTrainClick) {
-                Icon(AppIcons.TrainChapter, contentDescription = "Train Chapter")
-            }
-            IconButton(onClick = onImportClick) {
-                Icon(AppIcons.ImportPgn, contentDescription = "Import PGN")
-            }
+    TopAppBar(title = { Text("Lines") }, navigationIcon = {
+        IconButton(onClick = onBackClick) {
+            Icon(AppIcons.Back, contentDescription = "Back")
         }
-    )
+    }, actions = {
+        IconButton(onClick = onTrainClick) {
+            Icon(AppIcons.TrainChapter, contentDescription = "Train Chapter")
+        }
+        IconButton(onClick = onImportClick) {
+            Icon(AppIcons.ImportPgn, contentDescription = "Import PGN")
+        }
+    })
 }
 
 @Composable
@@ -156,53 +145,37 @@ private fun LinesList(
 
 @Composable
 private fun LineListItem(
-    line: Line,
-    onNavigateToLineEditor: (Int) -> Unit,
-    onDeleteLine: (Line) -> Unit
+    line: Line, onNavigateToLineEditor: (Int) -> Unit, onDeleteLine: (Line) -> Unit
 ) {
-    ListItem(
-        headlineContent = { Text(line.name) },
-        supportingContent = {
-            Text("New Line")
-        },
-        trailingContent = {
-            IconButton(onClick = { onDeleteLine(line) }) {
-                Icon(AppIcons.DeleteLine, contentDescription = "Delete")
-            }
-        },
-        modifier = Modifier.clickable { onNavigateToLineEditor(line.id) }
-    )
+    ListItem(headlineContent = { Text(line.name) }, supportingContent = {
+        Text("New Line")
+    }, trailingContent = {
+        IconButton(onClick = { onDeleteLine(line) }) {
+            Icon(AppIcons.DeleteLine, contentDescription = "Delete")
+        }
+    }, modifier = Modifier.clickable { onNavigateToLineEditor(line.id) })
     HorizontalDivider()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddLineDialog(
-    name: String,
-    onNameChange: (String) -> Unit,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    name: String, onNameChange: (String) -> Unit, onDismiss: () -> Unit, onConfirm: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Create New Line") },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text("Line Name (optional)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            Button(onClick = onConfirm) {
-                Text("Create")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+    AlertDialog(onDismissRequest = onDismiss, title = { Text("Create New Line") }, text = {
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text("Line Name (optional)") },
+            modifier = Modifier.fillMaxWidth()
+        )
+    }, confirmButton = {
+        Button(onClick = onConfirm) {
+            Text("Create")
         }
-    )
+    }, dismissButton = {
+        TextButton(onClick = onDismiss) {
+            Text("Cancel")
+        }
+    })
 }

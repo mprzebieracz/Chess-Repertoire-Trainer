@@ -27,7 +27,8 @@ private fun Piece.prefixLetter(): String = when (this) {
 fun Board.toSan(move: Move): String {
     val piece = getPiece(move.from)
     val targetPiece = getPiece(move.to)
-    val isEnPassantCapture = piece.isPawn() && targetPiece == Piece.NONE && move.from.file != move.to.file
+    val isEnPassantCapture =
+        piece.isPawn() && targetPiece == Piece.NONE && move.from.file != move.to.file
     val isCapture = targetPiece != Piece.NONE || isEnPassantCapture
     val isPromotion = move.promotion != Piece.NONE
 
@@ -59,7 +60,8 @@ fun Board.toSan(move: Move): String {
         else {
             val fromFileChar = move.from.toString()[0].lowercaseChar()
             val fromRankChar = move.from.toString()[1]
-            val otherSameFile = samePieceMoves.any { it.from.toString()[0].lowercaseChar() == fromFileChar }
+            val otherSameFile =
+                samePieceMoves.any { it.from.toString()[0].lowercaseChar() == fromFileChar }
             val otherSameRank = samePieceMoves.any { it.from.toString()[1] == fromRankChar }
 
             when {
@@ -99,10 +101,6 @@ fun Board.toSan(move: Move): String {
     }
 }
 
-/**
- * Znajduje wśród legalnych ruchów na tej planszy taki, którego SAN odpowiada
- * podanemu ciągowi. Używa lokalnej normalizacji SAN (ignoruje +, #, !, ? na końcu).
- */
 fun Board.moveFromSan(san: String): Move? {
     fun normalizeSanForMatch(value: String): String = value.trim().trimEnd('+', '#', '!', '?')
 

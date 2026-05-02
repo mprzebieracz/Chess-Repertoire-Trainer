@@ -48,14 +48,12 @@ fun TrainScreen(
         },
         bottomContent = {
             TrainBottomContent(uiState = uiState)
-        }
-    )
+        })
 }
 
 @Composable
 private fun TrainTopContent(
-    uiState: TrainingUiState,
-    onBackClick: (() -> Unit)?
+    uiState: TrainingUiState, onBackClick: (() -> Unit)?
 ) {
     Column(
         modifier = Modifier
@@ -73,8 +71,7 @@ private fun TrainTopContent(
 @Composable
 private fun TrainBackRow(onBackClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBackClick) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -155,10 +152,10 @@ private fun TrainStatusMessage(uiState: TrainingUiState) {
             Text(
                 text = if (uiState.isWaitingForUserMove) {
                     "Your turn: follow the repertoire moves."
-                } else {
+                }
+                else {
                     "Waiting for training session..."
-                },
-                style = MaterialTheme.typography.bodyMedium
+                }, style = MaterialTheme.typography.bodyMedium
             )
         }
     }

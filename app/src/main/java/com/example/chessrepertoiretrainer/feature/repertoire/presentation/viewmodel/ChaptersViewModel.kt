@@ -19,9 +19,12 @@ class ChaptersViewModel(
 
     val repertoireId: Int = checkNotNull(savedStateHandle["repertoireId"])
 
-    val chapters: StateFlow<List<Chapter>> = repertoireRepository.getChaptersForRepertoire(repertoireId).stateIn(
-        scope = viewModelScope, started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
-    )
+    val chapters: StateFlow<List<Chapter>> =
+        repertoireRepository.getChaptersForRepertoire(repertoireId).stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Companion.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     fun addChapter(name: String) {
         viewModelScope.launch {
@@ -41,7 +44,8 @@ class ChaptersViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()

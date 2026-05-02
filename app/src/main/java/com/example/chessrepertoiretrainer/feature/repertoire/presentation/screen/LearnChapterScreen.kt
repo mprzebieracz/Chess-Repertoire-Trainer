@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -79,8 +79,7 @@ private fun LearnChapterScaffold(
                     onSkipTrainingForCurrentLine = onSkipTrainingForCurrentLine
                 )
             }
-        }
-    ) { innerPadding ->
+        }) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -96,6 +95,7 @@ private fun LearnChapterScaffold(
                     onStartChapterTraining = onStartChapterTraining,
                     onBackClick = onBackClick
                 )
+
                 else -> LearnChapterPlayState(
                     uiState = uiState,
                     chessCtrl = chessCtrl,
@@ -108,8 +108,7 @@ private fun LearnChapterScaffold(
 
 @Composable
 private fun LearnChapterTopSection(
-    uiState: LearnChapterViewModel.LearnChapterUiState,
-    onBackClick: () -> Unit
+    uiState: LearnChapterViewModel.LearnChapterUiState, onBackClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -124,8 +123,7 @@ private fun LearnChapterTopSection(
 @Composable
 private fun LearnChapterBackRow(onBackClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBackClick) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -139,21 +137,34 @@ private fun LearnChapterBackRow(onBackClick: () -> Unit) {
 private fun LearnChapterHeader(uiState: LearnChapterViewModel.LearnChapterUiState) {
     if (uiState.hasNoLines) {
         Text("No lines in this chapter yet.", style = MaterialTheme.typography.bodyMedium)
-    } else if (!uiState.isLoading && uiState.totalLines > 0) {
+    }
+    else if (!uiState.isLoading && uiState.totalLines > 0) {
         Text(
             text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
         )
-        uiState.currentLineName?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
-        uiState.myColor?.let { Text(text = "You play $it", style = MaterialTheme.typography.bodySmall) }
+        uiState.currentLineName?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        uiState.myColor?.let {
+            Text(
+                text = "You play $it",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
     }
 }
 
 @Composable
 private fun LearnChapterLoadingState() {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text("Loading chapter...", style = MaterialTheme.typography.bodyMedium)
@@ -163,7 +174,9 @@ private fun LearnChapterLoadingState() {
 @Composable
 private fun LearnChapterEmptyState(uiState: LearnChapterViewModel.LearnChapterUiState) {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -180,17 +193,24 @@ private fun LearnChapterCompleteState(
     onBackClick: () -> Unit
 ) {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)) {
             Text(
                 text = uiState.statusMessage ?: "You have gone through all lines in this chapter.",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Button(onClick = { onStartChapterTraining(uiState.chapterId) }) { Text("Final chapter training") }
                 OutlinedButton(onClick = onBackClick) { Text("Finish") }
             }
@@ -207,18 +227,18 @@ private fun LearnChapterPlayState(
     Column(modifier = Modifier.fillMaxWidth()) {
         ChessboardUI(state = chessCtrl)
         LearnChapterBottomSection(
-            uiState = uiState,
-            onStartLineTraining = onStartLineTraining
+            uiState = uiState, onStartLineTraining = onStartLineTraining
         )
     }
 }
 
 @Composable
 private fun LearnChapterBottomSection(
-    uiState: LearnChapterViewModel.LearnChapterUiState,
-    onStartLineTraining: (lineId: Int) -> Unit
+    uiState: LearnChapterViewModel.LearnChapterUiState, onStartLineTraining: (lineId: Int) -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 8.dp)) {
         LearnChapterCommentCard(uiState = uiState)
         if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE && uiState.currentLineId != null) {
             Spacer(Modifier.height(8.dp))
@@ -244,8 +264,7 @@ private fun LearnChapterBottomBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .horizontalScroll(scrollState),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .horizontalScroll(scrollState), horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
         if (uiState.phase != LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
@@ -254,7 +273,10 @@ private fun LearnChapterBottomBar(
 
         if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
             val lineId = uiState.currentLineId
-            Button(onClick = { if (lineId != null) onStartLineTraining(lineId) }, enabled = lineId != null) {
+            Button(
+                onClick = { if (lineId != null) onStartLineTraining(lineId) },
+                enabled = lineId != null
+            ) {
                 Text("Train line")
             }
             TextButton(onClick = onSkipTrainingForCurrentLine) { Text("Skip training") }
@@ -269,9 +291,16 @@ private fun LearnChapterCommentCard(uiState: LearnChapterViewModel.LearnChapterU
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         val scrollState = rememberScrollState()
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState).padding(12.dp)) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState)
+            .padding(12.dp)) {
             uiState.statusMessage?.let {
-                Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
                 Spacer(Modifier.height(4.dp))
             }
 
@@ -282,7 +311,8 @@ private fun LearnChapterCommentCard(uiState: LearnChapterViewModel.LearnChapterU
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            } else {
+            }
+            else {
                 Text(text = comment, style = MaterialTheme.typography.bodyMedium)
             }
         }
@@ -312,8 +342,7 @@ private fun LearnChapterLineActionsRow(
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         val lineId = uiState.currentLineId
         Button(
-            onClick = { if (lineId != null) onStartLineTraining(lineId) },
-            enabled = lineId != null
+            onClick = { if (lineId != null) onStartLineTraining(lineId) }, enabled = lineId != null
         ) { Text("Train this line") }
         TextButton(onClick = onSkipTrainingForCurrentLine) { Text("Skip test") }
     }

@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.core.database.entity.Chapter
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
-import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingSelectionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,8 +61,7 @@ private fun TrainSelectionScaffold(
     Scaffold(
         topBar = {
             TrainSelectionTopBar(onBackClick = onBackClick)
-        }
-    ) { padding ->
+        }) { padding ->
         content(padding)
     }
 }
@@ -72,20 +70,19 @@ private fun TrainSelectionScaffold(
 @Composable
 private fun TrainSelectionTopBar(onBackClick: (() -> Unit)?) {
     TopAppBar(
-        title = { Text("Training") },
-        navigationIcon = if (onBackClick != null) {
-            {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
+        title = { Text("Training") }, navigationIcon = if (onBackClick != null) {
+        {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
             }
-        } else {
-            {}
         }
-    )
+    }
+    else {
+        {}
+    })
 }
 
 @Composable
@@ -114,9 +111,7 @@ private fun TrainSelectionContent(
         SectionHeader(text = "Choose chapter to train")
 
         TrainSelectionChapterList(
-            chapters = chapters,
-            onStartTraining = onStartTraining,
-            modifier = Modifier.weight(1f)
+            chapters = chapters, onStartTraining = onStartTraining, modifier = Modifier.weight(1f)
         )
     }
 }
@@ -140,24 +135,20 @@ private fun TrainSelectionRepertoireList(
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         items(repertoires) { repertoire ->
             TrainSelectionRepertoireItem(
                 repertoire = repertoire,
                 selected = repertoire.id == selectedRepertoireId,
-                onClick = { onSelectRepertoire(repertoire.id) }
-            )
+                onClick = { onSelectRepertoire(repertoire.id) })
         }
     }
 }
 
 @Composable
 private fun TrainSelectionRepertoireItem(
-    repertoire: Repertoire,
-    selected: Boolean,
-    onClick: () -> Unit
+    repertoire: Repertoire, selected: Boolean, onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -170,8 +161,7 @@ private fun TrainSelectionRepertoireItem(
         Column {
             Text(text = repertoire.name, style = MaterialTheme.typography.bodyLarge)
             Text(
-                text = "Side: ${repertoire.color}",
-                style = MaterialTheme.typography.bodySmall
+                text = "Side: ${repertoire.color}", style = MaterialTheme.typography.bodySmall
             )
         }
 
@@ -193,27 +183,21 @@ private fun SelectedLabel() {
 
 @Composable
 private fun TrainSelectionChapterList(
-    chapters: List<Chapter>,
-    onStartTraining: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    chapters: List<Chapter>, onStartTraining: (Int) -> Unit, modifier: Modifier = Modifier
 ) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         items(chapters) { chapter ->
             TrainSelectionChapterItem(
-                chapter = chapter,
-                onClick = { onStartTraining(chapter.id) }
-            )
+                chapter = chapter, onClick = { onStartTraining(chapter.id) })
         }
     }
 }
 
 @Composable
 private fun TrainSelectionChapterItem(
-    chapter: Chapter,
-    onClick: () -> Unit
+    chapter: Chapter, onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier

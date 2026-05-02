@@ -28,7 +28,7 @@ internal fun DraggedPieceLayer(
 
     val startXPx = visual.file * squareSizePx
     val startYPx = visual.rank * squareSizePx
-    val dragScale = 1.2f
+    val dragScale = ChessUiConstants.DragPreview.scale
     val sizeDp = with(density) { (squareSizePx * dragScale).toDp() }
 
     Box(
@@ -39,8 +39,7 @@ internal fun DraggedPieceLayer(
                     (startXPx + initialTouchOffset.x + dragOffset.x - (squareSizePx * dragScale / 2)).roundToInt(),
                     (startYPx + initialTouchOffset.y + dragOffset.y - (squareSizePx * dragScale / 2)).roundToInt()
                 )
-            },
-        contentAlignment = Alignment.Center
+            }, contentAlignment = Alignment.Center
     ) {
         PieceDisplay(piece, modifier = Modifier.fillMaxSize())
     }

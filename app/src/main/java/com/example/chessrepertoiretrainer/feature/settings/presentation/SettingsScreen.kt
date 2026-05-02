@@ -88,8 +88,7 @@ private fun SettingsScaffold(content: @Composable () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Settings") })
-        }
-    ) { padding ->
+        }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -133,13 +132,11 @@ private fun SettingsContent(
     )
 
     DefaultPlatformSection(
-        selectedPlatform = settings.defaultOnlinePlatform,
-        onPlatformChange = onPlatformChange
+        selectedPlatform = settings.defaultOnlinePlatform, onPlatformChange = onPlatformChange
     )
 
     DynamicColorsSection(
-        useDynamicColors = settings.useDynamicColors,
-        onDynamicColorsChange = onDynamicColorsChange
+        useDynamicColors = settings.useDynamicColors, onDynamicColorsChange = onDynamicColorsChange
     )
 
     AdvancedSection()
@@ -164,8 +161,7 @@ private fun AccountsSection(
     )
 
     SaveUsernamesRow(
-        screenState = screenState,
-        onSaveUsernames = onSaveUsernames
+        screenState = screenState, onSaveUsernames = onSaveUsernames
     )
 }
 
@@ -195,8 +191,7 @@ private fun AccountsInputFields(
 
 @Composable
 private fun SaveUsernamesRow(
-    screenState: SettingsScreenState,
-    onSaveUsernames: () -> Unit
+    screenState: SettingsScreenState, onSaveUsernames: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -219,13 +214,15 @@ private fun SaveStatusMessage(screenState: SettingsScreenState) {
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodySmall
         )
-    } else if (screenState.saveSuccessMessage != null) {
+    }
+    else if (screenState.saveSuccessMessage != null) {
         Text(
             text = "Saved",
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodySmall
         )
-    } else if (screenState.saveErrorMessage != null) {
+    }
+    else if (screenState.saveErrorMessage != null) {
         Text(
             text = screenState.saveErrorMessage,
             color = MaterialTheme.colorScheme.error,
@@ -248,32 +245,26 @@ private fun AppearanceSection(
 
 @Composable
 private fun DefaultPlatformSection(
-    selectedPlatform: String,
-    onPlatformChange: (String) -> Unit
+    selectedPlatform: String, onPlatformChange: (String) -> Unit
 ) {
     SectionHeader(text = "Default online platform", modifier = Modifier.padding(top = 8.dp))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(
-            selected = selectedPlatform == "lichess",
-            onClick = { onPlatformChange("lichess") }
-        )
+            selected = selectedPlatform == "lichess", onClick = { onPlatformChange("lichess") })
         Text(text = "Lichess")
 
         Spacer(modifier = Modifier.padding(start = 16.dp))
 
         RadioButton(
-            selected = selectedPlatform == "chess.com",
-            onClick = { onPlatformChange("chess.com") }
-        )
+            selected = selectedPlatform == "chess.com", onClick = { onPlatformChange("chess.com") })
         Text(text = "Chess.com")
     }
 }
 
 @Composable
 private fun DynamicColorsSection(
-    useDynamicColors: Boolean,
-    onDynamicColorsChange: (Boolean) -> Unit
+    useDynamicColors: Boolean, onDynamicColorsChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -339,11 +330,9 @@ private fun ThemeModeSelector(current: AppThemeMode, onChange: (AppThemeMode) ->
             )
         }
         Switch(
-            checked = isDarkChecked,
-            onCheckedChange = { checked ->
+            checked = isDarkChecked, onCheckedChange = { checked ->
                 onChange(if (checked) AppThemeMode.DARK else AppThemeMode.LIGHT)
-            },
-            colors = SwitchDefaults.colors(
+            }, colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.primary
             )
         )

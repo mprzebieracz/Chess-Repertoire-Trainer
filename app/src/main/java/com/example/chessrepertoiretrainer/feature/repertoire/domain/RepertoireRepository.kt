@@ -6,11 +6,7 @@ import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Feature-level data access abstraction for repertoire flows.
- *
- * ViewModels depend on this contract instead of Room DAO directly.
- */
+
 interface RepertoireRepository {
     fun getAllRepertoires(): Flow<List<Repertoire>>
     suspend fun getRepertoireById(id: Int): Repertoire?
