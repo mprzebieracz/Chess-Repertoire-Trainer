@@ -17,22 +17,28 @@ object LichessGameFetcher : GameFetcher {
         maxGames: Int?,
         colorFilter: String,
         timeControlFilter: String,
+        since: Long?,
         onProgress: ((fetched: Int) -> Unit)?
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim()
         if (normalizedUser.isBlank()) return@withContext emptyList()
 
-        val urlString = buildRequestUrl(normalizedUser, maxGames, colorFilter, timeControlFilter)
+        val urlString = buildRequestUrl(normalizedUser, maxGames, colorFilter, timeControlFilter, since)
         return@withContext streamGames(urlString, normalizedUser, onProgress)
     }
 
     private fun buildRequestUrl(
-        username: String, maxGames: Int?, colorFilter: String, timeControlFilter: String
+        username: String,
+        maxGames: Int?,
+        colorFilter: String,
+        timeControlFilter: String,
+        since: Long?
     ): String {
         val params = mutableListOf(
             "pgnInJson=true", "clocks=false", "evals=false", "accuracy=false", "opening=true"
         )
         if (maxGames != null && maxGames > 0) params += "max=$maxGames"
+        if (since != null) params += "since=$since"
 
         if (colorFilter == "white" || colorFilter == "black") {
             params += "color=$colorFilter"
@@ -108,6 +114,8 @@ object LichessGameFetcher : GameFetcher {
             val gameId = obj.optString("id").takeIf { it.isNotBlank() }
                 ?: "${username}_${playedAt}_${resultTag}"
 
+            val opening = obj.optJSONObject("opening")?.optString("name")?.takeIf { it.isNotBlank() }
+
             FetchedGame(
                 platformGameId = gameId,
                 opponentName = if (isUserWhite) blackUser else whiteUser,
@@ -115,6 +123,7 @@ object LichessGameFetcher : GameFetcher {
                 result = resultTag,
                 timeControl = headers["TimeControl"] ?: tcFromClock,
                 timeCategory = mapSpeedToCategory(obj.optString("speed", "")),
+                opening = opening,
                 rated = obj.optBoolean("rated", false),
                 playedAt = playedAt,
                 pgn = pgn

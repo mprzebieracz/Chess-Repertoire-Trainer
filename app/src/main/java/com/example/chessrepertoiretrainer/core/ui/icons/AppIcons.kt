@@ -3,10 +3,10 @@ package com.example.chessrepertoiretrainer.core.ui.icons
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
@@ -18,7 +18,7 @@ object AppIcons {
 
     val Repertoire: ImageVector = Icons.Filled.Menu
     val Train: ImageVector = Icons.Filled.PlayArrow
-    val Puzzles: ImageVector = Icons.Filled.Lock
+    val MyGames: ImageVector = Icons.Filled.DateRange
     val OpeningTree: ImageVector = Icons.Filled.Search
     val Settings: ImageVector = Icons.Filled.Settings
 

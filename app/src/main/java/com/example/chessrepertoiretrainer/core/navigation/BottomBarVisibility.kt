@@ -12,6 +12,7 @@ fun shouldShowBottomBar(destination: NavDestination?): Boolean {
         route == Screen.Analysis.route -> false
         route == Screen.PuzzleTraining.route -> false
         route.startsWith(Screen.OpeningTree.route.substringBefore("/")) -> false
+        route.startsWith(Screen.GameDetail.route.substringBefore("/")) -> false
         else -> true
     }
 }

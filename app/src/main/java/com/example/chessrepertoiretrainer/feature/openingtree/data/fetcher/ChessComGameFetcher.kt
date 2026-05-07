@@ -5,6 +5,8 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
+import java.time.ZoneOffset
 
 object ChessComGameFetcher : GameFetcher {
 
@@ -16,6 +18,7 @@ object ChessComGameFetcher : GameFetcher {
         maxGames: Int?,
         colorFilter: String,
         timeControlFilter: String,
+        since: Long?,
         onProgress: ((fetched: Int) -> Unit)?
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim().lowercase()
@@ -29,14 +32,18 @@ object ChessComGameFetcher : GameFetcher {
             .map { it.trim().lowercase() }
             .filter { it.isNotBlank() }
             .toSet()
+
+        val sinceYearMonth = since?.let { epochMsToYearMonth(it) }
         val result = mutableListOf<FetchedGame>()
 
         for (archiveUrl in archiveUrls.asReversed()) {
             if (result.size >= effectiveMaxGames) break
+            if (sinceYearMonth != null && archiveUrlYearMonth(archiveUrl) < sinceYearMonth) break
 
             val gamesInArchive = fetchGamesFromArchive(archiveUrl, normalizedUser)
             for (game in gamesInArchive) {
                 if (result.size >= effectiveMaxGames) break
+                if (since != null && game.playedAt <= since) continue
 
                 if (colorFilter == "white" && !game.isUserWhite) continue
                 if (colorFilter == "black" && game.isUserWhite) continue
@@ -52,6 +59,18 @@ object ChessComGameFetcher : GameFetcher {
         }
 
         return@withContext result
+    }
+
+    private fun epochMsToYearMonth(epochMs: Long): Int {
+        val date = Instant.ofEpochMilli(epochMs).atOffset(ZoneOffset.UTC)
+        return date.year * 100 + date.monthValue
+    }
+
+    private fun archiveUrlYearMonth(url: String): Int {
+        val parts = url.trimEnd('/').split("/")
+        val month = parts.getOrNull(parts.size - 1)?.toIntOrNull() ?: return 0
+        val year = parts.getOrNull(parts.size - 2)?.toIntOrNull() ?: return 0
+        return year * 100 + month
     }
 
     private fun fetchArchiveUrls(username: String): List<String> {
@@ -86,6 +105,7 @@ object ChessComGameFetcher : GameFetcher {
         val timeControlFromJson = gameJson.optString("time_control", "").takeIf { it.isNotBlank() }
         val uuid = gameJson.optString("uuid", "").takeIf { it.isNotBlank() }
         val url = gameJson.optString("url", "").takeIf { it.isNotBlank() }
+        val opening = (headers["Opening"] ?: headers["ECO"])?.takeIf { it.isNotBlank() }
 
         return FetchedGame(
             platformGameId = uuid ?: url ?: "${username}_${playedAt}_${resultTag}",
@@ -94,6 +114,7 @@ object ChessComGameFetcher : GameFetcher {
             result = resultTag,
             timeControl = headers["TimeControl"] ?: timeControlFromJson,
             timeCategory = mapTimeClassToCategory(gameJson.optString("time_class", "")),
+            opening = opening,
             rated = gameJson.optBoolean("rated", false),
             playedAt = playedAt,
             pgn = pgn

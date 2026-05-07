@@ -7,6 +7,7 @@ data class FetchedGame(
     val result: String,
     val timeControl: String?,
     val timeCategory: String?,
+    val opening: String?,
     val rated: Boolean,
     val playedAt: Long,
     val pgn: String
@@ -20,6 +21,7 @@ interface GameFetcher {
         maxGames: Int? = null,
         colorFilter: String = "both",
         timeControlFilter: String = "",
+        since: Long? = null,
         onProgress: ((fetched: Int) -> Unit)? = null
     ): List<FetchedGame>
 }

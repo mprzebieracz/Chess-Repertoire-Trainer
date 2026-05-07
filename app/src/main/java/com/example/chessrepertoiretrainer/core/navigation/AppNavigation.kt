@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.chessrepertoiretrainer.app.ChessApplication
 import com.example.chessrepertoiretrainer.core.navigation.graph.gamesGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.homeGraph
+import com.example.chessrepertoiretrainer.core.navigation.graph.myGamesGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.repertoireGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.trainingGraph
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
@@ -42,6 +43,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                 settingsViewModel = settingsViewModel,
                 appContainer = appContainer
             )
+            myGamesGraph(navController, appContainer)
             repertoireGraph(navController, repertoireRepository)
         }
     }

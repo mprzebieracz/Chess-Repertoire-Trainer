@@ -11,6 +11,7 @@ sealed class Screen(
     object RepertoireMain : Screen("repertoire_main", "Repertoire", AppIcons.Repertoire)
 
     object Train : Screen("train", "Train", AppIcons.Train)
+    object MyGames : Screen("my_games", "Games", AppIcons.MyGames)
 
     object OpeningTreeSearch : Screen("games", "Openingtree", AppIcons.OpeningTree)
     object Settings : Screen("settings", "Settings", AppIcons.Settings)
@@ -51,6 +52,9 @@ sealed class Screen(
 
     object PuzzleTraining : Screen("puzzle_training")
     object Analysis : Screen("analysis")
+    object GameDetail : Screen("game_detail/{gameId}") {
+        fun createRoute(gameId: String) = "game_detail/${android.net.Uri.encode(gameId)}"
+    }
 
     object OpeningTree : Screen("opening_tree")
 }

@@ -2,10 +2,8 @@ package com.example.chessrepertoiretrainer.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -97,16 +95,8 @@ private fun DailyPuzzleCard(
                 }
 
                 is DailyPuzzleState.Available -> {
-                    Text(
-                        text = "Rating: ${state.rating}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    if (state.themes.isNotBlank()) {
-                        Text(text = state.themes, style = MaterialTheme.typography.bodySmall)
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
                     Button(onClick = onPlay) {
-                        Text("Play")
+                        Text("Daily Puzzle")
                     }
                 }
 
