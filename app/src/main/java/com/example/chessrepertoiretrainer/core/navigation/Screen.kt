@@ -11,7 +11,6 @@ sealed class Screen(
     object RepertoireMain : Screen("repertoire_main", "Repertoire", AppIcons.Repertoire)
 
     object Train : Screen("train", "Train", AppIcons.Train)
-    object Puzzles : Screen("puzzles", "Puzzles", AppIcons.Puzzles)
 
     object OpeningTreeSearch : Screen("games", "Openingtree", AppIcons.OpeningTree)
     object Settings : Screen("settings", "Settings", AppIcons.Settings)

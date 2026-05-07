@@ -7,14 +7,13 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
-import com.example.chessrepertoiretrainer.feature.puzzles.domain.config.PuzzleTrainingConfig
+import com.example.chessrepertoiretrainer.feature.puzzles.data.convertUciSequenceToSan
 import com.example.chessrepertoiretrainer.feature.puzzles.domain.model.MoveCheckResult
-import com.example.chessrepertoiretrainer.feature.puzzles.domain.model.PuzzleSessionState
 import com.example.chessrepertoiretrainer.feature.puzzles.domain.usecase.CheckPuzzleMoveUseCase
-import com.example.chessrepertoiretrainer.feature.puzzles.domain.usecase.LoadNextPuzzleUseCase
 import com.example.chessrepertoiretrainer.feature.puzzles.domain.usecase.MarkPuzzleSolvedUseCase
 import com.example.chessrepertoiretrainer.feature.puzzles.domain.usecase.UpdatePuzzleAttemptsUseCase
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.MoveTrainingEngine
+import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,9 +23,7 @@ import kotlinx.coroutines.launch
 
 data class PuzzleTrainingUiState(
     val isLoading: Boolean = true,
-    val hasUnsolvedPuzzles: Boolean = true,
     val isSessionComplete: Boolean = false,
-    val currentPuzzleId: String? = null,
     val currentRating: Int? = null,
     val currentThemes: String? = null,
     val userSideLabel: String? = null,
@@ -37,80 +34,66 @@ data class PuzzleTrainingUiState(
 )
 
 class PuzzleTrainingViewModel(
-    private val loadNextPuzzleUseCase: LoadNextPuzzleUseCase,
-    private val updatePuzzleAttemptsUseCase: UpdatePuzzleAttemptsUseCase,
-    private val markPuzzleSolvedUseCase: MarkPuzzleSolvedUseCase,
-    private val checkPuzzleMoveUseCase: CheckPuzzleMoveUseCase
+    private val repository: PuzzleRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PuzzleTrainingUiState())
     val uiState: StateFlow<PuzzleTrainingUiState> = _uiState.asStateFlow()
 
     val chessController = DefaultChessBoardController()
-    private val moveTrainer = MoveTrainingEngine(chessController) { normalizeSan(it) }
+    private val moveTrainer =
+        MoveTrainingEngine(chessController) { it.trim().trimEnd('+', '#', '!', '?') }
+
+    private val markPuzzleSolvedUseCase = MarkPuzzleSolvedUseCase(repository)
+    private val updatePuzzleAttemptsUseCase = UpdatePuzzleAttemptsUseCase(repository)
+    private val checkPuzzleMoveUseCase = CheckPuzzleMoveUseCase()
 
     private var currentPuzzle: Puzzle? = null
-    private var mySide: Side = Side.WHITE
     private var currentAttempts: Int = 0
 
-    private fun normalizeSan(value: String): String = value.trim().trimEnd('+', '#', '!', '?')
-
     init {
-        moveTrainer.setMoveResultListener { result ->
-            handleMoveResult(result)
-        }
-
-        viewModelScope.launch {
-            loadNextPuzzle()
-        }
+        moveTrainer.setMoveResultListener { result -> handleMoveResult(result) }
+        viewModelScope.launch { loadTodaysPuzzle() }
     }
 
-    private suspend fun loadNextPuzzle() {
-        _uiState.update {
-            it.copy(
-                isLoading = true,
-                statusMessage = "Loading puzzle...",
-                lastMoveWasCorrect = null,
-                isWaitingForUserMove = false
-            )
+    private suspend fun loadTodaysPuzzle() {
+        _uiState.update { it.copy(isLoading = true, statusMessage = "Loading puzzle...") }
+
+        val puzzle = try {
+            repository.getTodaysPuzzle()
+        }
+        catch (e: Exception) {
+            setErrorState(e.message ?: "Error loading puzzle")
+            return
         }
 
-        try {
-            val session = loadNextPuzzleUseCase()
-            if (session == null) {
-                setNoPuzzlesState("No unsolved puzzles available. You may have already solved today's daily puzzle.")
-                return
-            }
-
-            applySession(session)
-        } catch (e: Exception) {
-            setNoPuzzlesState(e.message ?: "Error loading puzzles")
+        if (puzzle == null) {
+            setErrorState("No puzzle available. Check your connection and try again.")
+            return
         }
-    }
 
-    private fun applySession(session: PuzzleSessionState) {
-        val puzzle = session.puzzle
+        val sanMoves = convertUciSequenceToSan(
+            puzzle.fen, puzzle.moves.split(" ").filter { it.isNotBlank() })
+
+        if (sanMoves.isEmpty()) {
+            setErrorState("Puzzle data is invalid.")
+            return
+        }
+
+        val mySide = Board().apply { loadFromFen(puzzle.fen) }.sideToMove
 
         chessController.loadPositionFromFen(puzzle.fen)
-        mySide = session.mySide
         chessController.allowedMoveSide = mySide
-
-        val shouldBeFlipped = mySide == Side.BLACK
-        if (shouldBeFlipped != chessController.isFlipped) {
-            chessController.flipBoard()
-        }
+        if ((mySide == Side.BLACK) != chessController.isFlipped) chessController.flipBoard()
 
         currentPuzzle = puzzle
         currentAttempts = puzzle.attempts
-
-        moveTrainer.reset(MoveTrainingEngine.Config(mySide = mySide, sanMoves = session.sanMoves))
+        moveTrainer.reset(MoveTrainingEngine.Config(mySide = mySide, sanMoves = sanMoves))
 
         _uiState.update {
             it.copy(
                 isLoading = false,
-                hasUnsolvedPuzzles = true,
                 isSessionComplete = false,
-                currentPuzzleId = puzzle.id,
                 currentRating = puzzle.rating,
                 currentThemes = puzzle.themes,
                 userSideLabel = if (mySide == Side.WHITE) "White" else "Black",
@@ -122,50 +105,19 @@ class PuzzleTrainingViewModel(
         }
     }
 
-    private fun setNoPuzzlesState(message: String) {
-        currentPuzzle = null
-        currentAttempts = 0
-        chessController.resetBoard()
-        chessController.allowedMoveSide = null
-
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                hasUnsolvedPuzzles = false,
-                isSessionComplete = true,
-                currentPuzzleId = null,
-                currentRating = null,
-                currentThemes = null,
-                userSideLabel = null,
-                attemptsForCurrent = 0,
-                lastMoveWasCorrect = null,
-                isWaitingForUserMove = false,
-                statusMessage = message
-            )
-        }
-    }
-
-    fun nextPuzzle() {
-        if (currentPuzzle == null) return
-
-        viewModelScope.launch {
-            _uiState.update {
-                it.copy(isWaitingForUserMove = false, statusMessage = "Loading next puzzle...")
-            }
-            loadNextPuzzle()
-        }
-    }
-
     fun showSolution() {
         if (currentPuzzle == null) return
-
         viewModelScope.launch {
             val finished = moveTrainer.playSolutionStep()
             if (finished) {
-                markPuzzleSolved()
-            } else {
+                markSolved()
+            }
+            else {
                 _uiState.update {
-                    it.copy(statusMessage = "Solution move played.", isWaitingForUserMove = true)
+                    it.copy(
+                        statusMessage = "Solution move played.",
+                        isWaitingForUserMove = true
+                    )
                 }
             }
         }
@@ -173,12 +125,12 @@ class PuzzleTrainingViewModel(
 
     fun showHint() {
         if (currentPuzzle == null) return
-
         val square = moveTrainer.computeHintSquare()
         if (square != null) {
             chessController.markedSquare = square
             _uiState.update { it.copy(statusMessage = "Hint: highlighted the piece to move.") }
-        } else {
+        }
+        else {
             _uiState.update { it.copy(statusMessage = "No hint available right now.") }
         }
     }
@@ -189,24 +141,27 @@ class PuzzleTrainingViewModel(
         when (checkPuzzleMoveUseCase(result)) {
             MoveCheckResult.Correct -> {
                 _uiState.update { it.copy(lastMoveWasCorrect = true, statusMessage = "Correct!") }
-
                 viewModelScope.launch {
                     moveTrainer.advanceOpponentReplies()
                     if (moveTrainer.isSequenceComplete()) {
-                        markPuzzleSolved()
-                    } else {
-                        _uiState.update { it.copy(isWaitingForUserMove = true, statusMessage = "Your turn") }
+                        markSolved()
+                    }
+                    else {
+                        _uiState.update {
+                            it.copy(
+                                isWaitingForUserMove = true,
+                                statusMessage = "Your turn"
+                            )
+                        }
                     }
                 }
             }
 
             MoveCheckResult.Incorrect -> {
                 currentAttempts++
-
                 viewModelScope.launch {
                     updatePuzzleAttemptsUseCase(id = puzzle.id, attempts = currentAttempts)
                 }
-
                 _uiState.update {
                     it.copy(
                         lastMoveWasCorrect = false,
@@ -215,45 +170,39 @@ class PuzzleTrainingViewModel(
                         statusMessage = "Incorrect, try again"
                     )
                 }
-
                 chessController.navigateBack()
             }
         }
     }
 
-    private fun markPuzzleSolved() {
+    private fun markSolved() {
         val puzzle = currentPuzzle ?: return
-
         viewModelScope.launch {
             markPuzzleSolvedUseCase(id = puzzle.id, attempts = currentAttempts)
             _uiState.update {
                 it.copy(
+                    isSessionComplete = true,
                     isWaitingForUserMove = false,
-                    statusMessage = "Puzzle complete. Press Next puzzle to replay."
+                    statusMessage = "Daily puzzle complete!"
                 )
             }
         }
     }
 
-    class Factory(
-        private val repository: PuzzleRepository
-    ) : ViewModelProvider.Factory {
+    private fun setErrorState(message: String) {
+        currentPuzzle = null
+        chessController.resetBoard()
+        _uiState.update {
+            it.copy(
+                isLoading = false, isSessionComplete = true, statusMessage = message
+            )
+        }
+    }
+
+    class Factory(private val repository: PuzzleRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            val config = PuzzleTrainingConfig()
-            val loadNextPuzzleUseCase = LoadNextPuzzleUseCase(repository, config)
-            val updatePuzzleAttemptsUseCase = UpdatePuzzleAttemptsUseCase(repository)
-            val markPuzzleSolvedUseCase = MarkPuzzleSolvedUseCase(repository)
-            val checkPuzzleMoveUseCase = CheckPuzzleMoveUseCase()
-
-            return PuzzleTrainingViewModel(
-                loadNextPuzzleUseCase = loadNextPuzzleUseCase,
-                updatePuzzleAttemptsUseCase = updatePuzzleAttemptsUseCase,
-                markPuzzleSolvedUseCase = markPuzzleSolvedUseCase,
-                checkPuzzleMoveUseCase = checkPuzzleMoveUseCase
-            ) as T
+            return PuzzleTrainingViewModel(repository) as T
         }
     }
 }
-
-

@@ -12,7 +12,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.chessrepertoiretrainer.app.ChessApplication
 import com.example.chessrepertoiretrainer.core.navigation.graph.gamesGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.homeGraph
-import com.example.chessrepertoiretrainer.core.navigation.graph.puzzlesGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.repertoireGraph
 import com.example.chessrepertoiretrainer.core.navigation.graph.trainingGraph
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
@@ -23,7 +22,6 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
     val appContainer = (LocalContext.current.applicationContext as ChessApplication).appContainer
 
     val repertoireRepository = appContainer.repertoireRepository
-    val puzzleRepository = appContainer.puzzleRepository
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = shouldShowBottomBar(navBackStackEntry?.destination)
@@ -37,14 +35,13 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            homeGraph(navController, settingsViewModel)
+            homeGraph(navController, settingsViewModel, appContainer.puzzleRepository)
             trainingGraph(navController, repertoireRepository)
             gamesGraph(
                 navController = navController,
                 settingsViewModel = settingsViewModel,
                 appContainer = appContainer
             )
-            puzzlesGraph(navController, puzzleRepository)
             repertoireGraph(navController, repertoireRepository)
         }
     }

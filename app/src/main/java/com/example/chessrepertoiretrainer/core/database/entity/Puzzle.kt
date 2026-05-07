@@ -11,5 +11,6 @@ data class Puzzle(
     val rating: Int,
     val themes: String,
     val isSolved: Boolean,
-    val attempts: Int
+    val attempts: Int,
+    val sourceDate: String
 )
