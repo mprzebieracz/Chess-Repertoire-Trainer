@@ -4,8 +4,6 @@ import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
 import com.github.bhlangonijr.chesslib.Side
 
 data class PuzzleSessionState(
-	val puzzle: Puzzle,
-	val sanMoves: List<String>,
-	val mySide: Side
+    val puzzle: Puzzle, val sanMoves: List<String>, val mySide: Side
 )
 

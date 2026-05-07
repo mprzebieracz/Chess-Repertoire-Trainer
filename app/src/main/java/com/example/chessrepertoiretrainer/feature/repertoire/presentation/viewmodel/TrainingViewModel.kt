@@ -6,9 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +34,8 @@ data class TrainingUiState(
 )
 
 class TrainingViewModel(
-    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
+    private val repertoireRepository: RepertoireRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TrainingUiState())
@@ -55,69 +56,82 @@ class TrainingViewModel(
     }
 
     init {
-        moveTrainer.setMoveResultListener { result ->
-            handleMoveResult(result)
-        }
+        moveTrainer.setMoveResultListener(::handleMoveResult)
 
         viewModelScope.launch {
-            // Single-line training mode (used from learn flow)
-            if (lineId != null) {
-                val line = repertoireRepository.getLineById(lineId)
+            loadTrainingSession()
+        }
+    }
 
-                if (line == null) {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isSessionEmpty = true,
-                            isSessionComplete = false,
-                            statusMessage = "Line not found"
-                        )
-                    }
-                    return@launch
-                }
+    private suspend fun loadTrainingSession() {
+        if (lineId != null) {
+            loadSingleLineSession(lineId)
+            return
+        }
 
-                lines = listOf(line)
-                startLine(0)
-                return@launch
-            }
+        observeSessionLines()
+    }
 
-            // Chapter-wide or review-based training
-            val flow = if (chapterId != null) {
-                repertoireRepository.getLinesForChapter(chapterId)
-            }
-            else {
-                val allLinesTime = Long.MAX_VALUE
-                repertoireRepository.getLinesToReview(allLinesTime)
-            }
-            flow.collect { loadedLines ->
-                if (loadedLines.isEmpty()) {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            isSessionEmpty = true,
-                            isSessionComplete = false,
-                            totalLines = 0,
-                            currentLineName = null
-                        )
-                    }
-                    return@collect
-                }
+    private suspend fun loadSingleLineSession(lineId: Int) {
+        val line = repertoireRepository.getLineById(lineId)
 
-                if (currentLineIndex == -1) {
-                    lines = if (chapterId != null) {
-                        loadedLines.shuffled()
-                    }
-                    else {
-                        loadedLines
-                    }
-                    startLine(0)
-                }
-                else {
-                    _uiState.update { state ->
-                        state.copy(totalLines = lines.size)
-                    }
-                }
-            }
+        if (line == null) {
+            showEmptySession("Line not found")
+            return
+        }
+
+        lines = listOf(line)
+        startLine(0)
+    }
+
+    private suspend fun observeSessionLines() {
+        val flow = if (chapterId != null) {
+            repertoireRepository.getLinesForChapter(chapterId)
+        } else {
+            val allLinesTime = Long.MAX_VALUE
+            repertoireRepository.getLinesToReview(allLinesTime)
+        }
+
+        flow.collect(::handleLoadedLines)
+    }
+
+    private suspend fun handleLoadedLines(loadedLines: List<Line>) {
+        if (loadedLines.isEmpty()) {
+            showEmptySession()
+            return
+        }
+
+        if (isFirstSessionLoad()) {
+            lines = prepareSessionLines(loadedLines)
+            startLine(0)
+        } else {
+            updateLoadedSessionSize()
+        }
+    }
+
+    private fun isFirstSessionLoad(): Boolean = currentLineIndex == -1
+
+    private fun prepareSessionLines(loadedLines: List<Line>): List<Line> {
+        // Chapter-based training should feel less repetitive; review mode keeps DAO order.
+        return if (chapterId != null) loadedLines.shuffled() else loadedLines
+    }
+
+    private fun updateLoadedSessionSize() {
+        _uiState.update { state ->
+            state.copy(totalLines = lines.size)
+        }
+    }
+
+    private fun showEmptySession(statusMessage: String = "") {
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                isSessionEmpty = true,
+                isSessionComplete = false,
+                totalLines = 0,
+                currentLineName = null,
+                statusMessage = statusMessage.ifBlank { null }
+            )
         }
     }
 
@@ -134,15 +148,7 @@ class TrainingViewModel(
                 }
 
                 viewModelScope.launch {
-                    moveTrainer.advanceOpponentReplies()
-                    if (moveTrainer.isSequenceComplete()) {
-                        finishCurrentLine(success = true)
-                    }
-                    else {
-                        _uiState.update {
-                            it.copy(isWaitingForUserMove = true)
-                        }
-                    }
+                    advanceOpponentRepliesOrContinue()
                 }
             }
 
@@ -161,46 +167,77 @@ class TrainingViewModel(
         }
     }
 
+    private suspend fun advanceOpponentRepliesOrContinue() {
+        moveTrainer.advanceOpponentReplies()
+        if (moveTrainer.isSequenceComplete()) {
+            finishCurrentLine()
+        } else {
+            _uiState.update {
+                it.copy(isWaitingForUserMove = true)
+            }
+        }
+    }
+
     private suspend fun startLine(index: Int) {
         if (index !in lines.indices) {
-            _uiState.update {
-                it.copy(
-                    isLoading = false, isSessionComplete = true, isWaitingForUserMove = false
-                )
-            }
+            showSessionComplete()
             return
         }
 
         currentLineIndex = index
         val line = lines[index]
 
+        val lineContext = loadLineContext(line)
+        currentLineMoves = lineContext.moves
+        mySide = lineContext.side
+
+        configureMoveTrainer()
+        configureBoardForCurrentSide()
+        updateLineUi(line = line, colorString = lineContext.colorName, index = index)
+
+        if (currentLineMoves.isEmpty()) {
+            finishCurrentLine()
+            return
+        }
+
+        autoPlayOpeningReplies()
+    }
+
+    private suspend fun loadLineContext(line: Line): LineContext {
         val chapter = repertoireRepository.getChapterById(line.chapterId)
         val repertoire = chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
         val colorString = repertoire?.color ?: "White"
+        val side = resolveSide(colorString)
+        val moves = repertoireRepository.getMovesForLine(line.id).first()
 
-        mySide = if (colorString.equals("White", ignoreCase = true)) {
-            Side.WHITE
-        }
-        else {
-            Side.BLACK
-        }
+        return LineContext(colorName = colorString, side = side, moves = moves)
+    }
 
-        currentLineMoves = repertoireRepository.getMovesForLine(line.id).first()
+    private fun resolveSide(colorString: String): Side {
+        return if (colorString.equals("White", ignoreCase = true)) Side.WHITE else Side.BLACK
+    }
+
+    private fun configureMoveTrainer() {
         moveTrainer.reset(
             MoveTrainingEngine.Config(
-                mySide = mySide, sanMoves = currentLineMoves.map { it.moveSan })
+                mySide = mySide,
+                sanMoves = currentLineMoves.map { it.moveSan }
+            )
         )
+    }
 
+    private fun configureBoardForCurrentSide() {
         chessController.resetBoard()
         chessController.allowedMoveSide = mySide
 
         if (mySide == Side.BLACK && !chessController.isFlipped) {
             chessController.flipBoard()
-        }
-        else if (mySide == Side.WHITE && chessController.isFlipped) {
+        } else if (mySide == Side.WHITE && chessController.isFlipped) {
             chessController.flipBoard()
         }
+    }
 
+    private fun updateLineUi(line: Line, colorString: String, index: Int) {
         _uiState.update {
             it.copy(
                 isLoading = false,
@@ -217,46 +254,53 @@ class TrainingViewModel(
                 statusMessage = null
             )
         }
+    }
 
-        if (currentLineMoves.isEmpty()) {
-            finishCurrentLine(success = true)
-            return
-        }
-
-        // Auto-play any initial opponent moves before the first user move.
+    private suspend fun autoPlayOpeningReplies() {
         moveTrainer.advanceOpponentReplies()
 
         if (moveTrainer.isSequenceComplete()) {
-            finishCurrentLine(success = true)
-        }
-        else {
+            finishCurrentLine()
+        } else {
             _uiState.update {
                 it.copy(isWaitingForUserMove = true)
             }
         }
     }
 
-    private fun finishCurrentLine(success: Boolean) {
-        viewModelScope.launch {
-            val nextIndex = currentLineIndex + 1
-
-            if (nextIndex >= lines.size) {
-                _uiState.update {
-                    it.copy(
-                        isSessionComplete = true,
-                        isWaitingForUserMove = false,
-                        statusMessage = if (success) "Training complete" else "Training finished with mistakes"
-                    )
-                }
-            }
-            else {
-                startLine(nextIndex)
-            }
+    private fun showSessionComplete() {
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                isSessionComplete = true,
+                isWaitingForUserMove = false
+            )
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) :
-        ViewModelProvider.Factory {
+    private suspend fun finishCurrentLine() {
+        val nextIndex = currentLineIndex + 1
+
+        if (nextIndex >= lines.size) {
+            _uiState.update {
+                it.copy(
+                    isSessionComplete = true,
+                    isWaitingForUserMove = false,
+                    statusMessage = "Training complete"
+                )
+            }
+        } else {
+            startLine(nextIndex)
+        }
+    }
+
+    private data class LineContext(
+        val colorName: String,
+        val side: Side,
+        val moves: List<LineMove>
+    )
+
+    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()

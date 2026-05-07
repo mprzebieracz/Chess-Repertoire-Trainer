@@ -50,17 +50,18 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     var lichessInput by remember { mutableStateOf("") }
     var chessComInput by remember { mutableStateOf("") }
 
-    LaunchedEffect(settings.lichessUsername, settings.chessComUsername) {
-        lichessInput = settings.lichessUsername
-        chessComInput = settings.chessComUsername
-    }
+    SyncAccountInputsEffect(
+        lichessUsername = settings.lichessUsername,
+        chessComUsername = settings.chessComUsername,
+        onLichessInputChange = { lichessInput = it },
+        onChessComInputChange = { chessComInput = it }
+    )
 
-    LaunchedEffect(screenState.saveSuccessMessage, screenState.saveErrorMessage) {
-        if (screenState.saveSuccessMessage != null || screenState.saveErrorMessage != null) {
-            delay(2000)
-            viewModel.clearTransientMessages()
-        }
-    }
+    ClearSaveMessagesEffect(
+        saveSuccessMessage = screenState.saveSuccessMessage,
+        saveErrorMessage = screenState.saveErrorMessage,
+        onClearMessages = viewModel::clearTransientMessages
+    )
 
     SettingsScaffold {
         SettingsContent(
@@ -82,13 +83,41 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     }
 }
 
+@Composable
+private fun SyncAccountInputsEffect(
+    lichessUsername: String,
+    chessComUsername: String,
+    onLichessInputChange: (String) -> Unit,
+    onChessComInputChange: (String) -> Unit
+) {
+    LaunchedEffect(lichessUsername, chessComUsername) {
+        onLichessInputChange(lichessUsername)
+        onChessComInputChange(chessComUsername)
+    }
+}
+
+@Composable
+private fun ClearSaveMessagesEffect(
+    saveSuccessMessage: String?,
+    saveErrorMessage: String?,
+    onClearMessages: () -> Unit
+) {
+    LaunchedEffect(saveSuccessMessage, saveErrorMessage) {
+        if (saveSuccessMessage != null || saveErrorMessage != null) {
+            delay(2000)
+            onClearMessages()
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsScaffold(content: @Composable () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Settings") })
-        }) { padding ->
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -132,11 +161,13 @@ private fun SettingsContent(
     )
 
     DefaultPlatformSection(
-        selectedPlatform = settings.defaultOnlinePlatform, onPlatformChange = onPlatformChange
+        selectedPlatform = settings.defaultOnlinePlatform,
+        onPlatformChange = onPlatformChange
     )
 
     DynamicColorsSection(
-        useDynamicColors = settings.useDynamicColors, onDynamicColorsChange = onDynamicColorsChange
+        useDynamicColors = settings.useDynamicColors,
+        onDynamicColorsChange = onDynamicColorsChange
     )
 
     AdvancedSection()
@@ -161,7 +192,8 @@ private fun AccountsSection(
     )
 
     SaveUsernamesRow(
-        screenState = screenState, onSaveUsernames = onSaveUsernames
+        screenState = screenState,
+        onSaveUsernames = onSaveUsernames
     )
 }
 
@@ -191,7 +223,8 @@ private fun AccountsInputFields(
 
 @Composable
 private fun SaveUsernamesRow(
-    screenState: SettingsScreenState, onSaveUsernames: () -> Unit
+    screenState: SettingsScreenState,
+    onSaveUsernames: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -214,15 +247,13 @@ private fun SaveStatusMessage(screenState: SettingsScreenState) {
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodySmall
         )
-    }
-    else if (screenState.saveSuccessMessage != null) {
+    } else if (screenState.saveSuccessMessage != null) {
         Text(
             text = "Saved",
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodySmall
         )
-    }
-    else if (screenState.saveErrorMessage != null) {
+    } else if (screenState.saveErrorMessage != null) {
         Text(
             text = screenState.saveErrorMessage,
             color = MaterialTheme.colorScheme.error,
@@ -245,26 +276,32 @@ private fun AppearanceSection(
 
 @Composable
 private fun DefaultPlatformSection(
-    selectedPlatform: String, onPlatformChange: (String) -> Unit
+    selectedPlatform: String,
+    onPlatformChange: (String) -> Unit
 ) {
     SectionHeader(text = "Default online platform", modifier = Modifier.padding(top = 8.dp))
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(
-            selected = selectedPlatform == "lichess", onClick = { onPlatformChange("lichess") })
+            selected = selectedPlatform == "lichess",
+            onClick = { onPlatformChange("lichess") }
+        )
         Text(text = "Lichess")
 
         Spacer(modifier = Modifier.padding(start = 16.dp))
 
         RadioButton(
-            selected = selectedPlatform == "chess.com", onClick = { onPlatformChange("chess.com") })
+            selected = selectedPlatform == "chess.com",
+            onClick = { onPlatformChange("chess.com") }
+        )
         Text(text = "Chess.com")
     }
 }
 
 @Composable
 private fun DynamicColorsSection(
-    useDynamicColors: Boolean, onDynamicColorsChange: (Boolean) -> Unit
+    useDynamicColors: Boolean,
+    onDynamicColorsChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -330,9 +367,11 @@ private fun ThemeModeSelector(current: AppThemeMode, onChange: (AppThemeMode) ->
             )
         }
         Switch(
-            checked = isDarkChecked, onCheckedChange = { checked ->
+            checked = isDarkChecked,
+            onCheckedChange = { checked ->
                 onChange(if (checked) AppThemeMode.DARK else AppThemeMode.LIGHT)
-            }, colors = SwitchDefaults.colors(
+            },
+            colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.primary
             )
         )

@@ -6,6 +6,7 @@ class MarkPuzzleSolvedUseCase(
     private val repository: PuzzleRepository
 ) {
     suspend operator fun invoke(id: String, attempts: Int) {
+        // Current behavior keeps solved puzzle replayable in session.
         repository.updatePuzzleStats(id = id, isSolved = false, attempts = attempts)
     }
 }

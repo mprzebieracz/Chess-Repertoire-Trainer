@@ -24,8 +24,8 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     val settings: StateFlow<UserSettings> = repository.settingsFlow.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        scope = viewModelScope, 
+        started = SharingStarted.WhileSubscribed(5_000), 
         initialValue = UserSettings()
     )
 
@@ -33,50 +33,25 @@ class SettingsViewModel(
     val screenState: StateFlow<SettingsScreenState> = _screenState.asStateFlow()
 
     fun updateLichessUsername(username: String) {
-        viewModelScope.launch {
-            _screenState.value = _screenState.value.copy(
-                isSaving = true,
-                saveErrorMessage = null,
-                saveSuccessMessage = null
-            )
-            updateSettingUseCase.lichessUsername(username).onSuccess {
-                    _screenState.value =
-                        _screenState.value.copy(isSaving = false, saveSuccessMessage = "Saved")
-                    Log.d("SettingsViewModel", "Lichess username updated: $username")
-                }.onFailure { error ->
-                    _screenState.value = _screenState.value.copy(
-                        isSaving = false,
-                        saveErrorMessage = error.message ?: "Save failed"
-                    )
-                    Log.e("SettingsViewModel", "Failed to update Lichess username", error)
-                }
-        }
+        saveUsername(
+            username = username,
+            onSave = updateSettingUseCase::lichessUsername,
+            successLogMessage = "Lichess username updated: $username",
+            failureLogMessage = "Failed to update Lichess username"
+        )
     }
 
     fun updateChessComUsername(username: String) {
-        viewModelScope.launch {
-            _screenState.value = _screenState.value.copy(
-                isSaving = true,
-                saveErrorMessage = null,
-                saveSuccessMessage = null
-            )
-            updateSettingUseCase.chessComUsername(username).onSuccess {
-                    _screenState.value =
-                        _screenState.value.copy(isSaving = false, saveSuccessMessage = "Saved")
-                    Log.d("SettingsViewModel", "Chess.com username updated: $username")
-                }.onFailure { error ->
-                    _screenState.value = _screenState.value.copy(
-                        isSaving = false,
-                        saveErrorMessage = error.message ?: "Save failed"
-                    )
-                    Log.e("SettingsViewModel", "Failed to update Chess.com username", error)
-                }
-        }
+        saveUsername(
+            username = username,
+            onSave = updateSettingUseCase::chessComUsername,
+            successLogMessage = "Chess.com username updated: $username",
+            failureLogMessage = "Failed to update Chess.com username"
+        )
     }
 
     fun clearTransientMessages() {
-        _screenState.value =
-            _screenState.value.copy(saveSuccessMessage = null, saveErrorMessage = null)
+        _screenState.value = _screenState.value.copy(saveSuccessMessage = null, saveErrorMessage = null)
     }
 
     fun updateAppThemeMode(mode: AppThemeMode) {
@@ -101,6 +76,40 @@ class SettingsViewModel(
         viewModelScope.launch {
             repository.updateDefaultOnlinePlatform(platform)
         }
+    }
+
+    private fun saveUsername(
+        username: String,
+        onSave: suspend (String) -> Result<Unit>,
+        successLogMessage: String,
+        failureLogMessage: String
+    ) {
+        viewModelScope.launch {
+            setSavingState()
+            onSave(username)
+                .onSuccess {
+                    _screenState.value = _screenState.value.copy(
+                        isSaving = false,
+                        saveSuccessMessage = "Saved"
+                    )
+                    Log.d("SettingsViewModel", successLogMessage)
+                }
+                .onFailure { error ->
+                    _screenState.value = _screenState.value.copy(
+                        isSaving = false,
+                        saveErrorMessage = error.message ?: "Save failed"
+                    )
+                    Log.e("SettingsViewModel", failureLogMessage, error)
+                }
+        }
+    }
+
+    private fun setSavingState() {
+        _screenState.value = _screenState.value.copy(
+            isSaving = true,
+            saveErrorMessage = null,
+            saveSuccessMessage = null
+        )
     }
 
     class Factory(
