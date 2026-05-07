@@ -15,6 +15,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+enum class ColorFilter { WHITE, BLACK }
+
+data class OpeningTreeMoveUi(
+    val moveSan: String,
+    val toFen: String,
+    val games: Int,
+    val winPercent: Int,
+    val drawPercent: Int,
+    val lossPercent: Int
+)
+
+data class OpeningTreeUiState(
+    val isLoading: Boolean = true,
+    val statusMessage: String? = null,
+    val currentFen: String? = null,
+    val pathMoves: List<String> = emptyList(),
+    val moves: List<OpeningTreeMoveUi> = emptyList(),
+    val canGoBack: Boolean = false
+)
+
 class OpeningTreeViewModel(
     private val username: String,
     private val platform: String,
@@ -49,14 +69,23 @@ class OpeningTreeViewModel(
         }
     }
 
-    private fun currentCacheKey(): OpeningTreeCacheKey {
-        return openingTreePreparationCoordinator.buildCacheKey(
-            username = username,
-            platform = platform,
-            color = currentColorFilterValue(),
-            timeControlFilter = timeControlFilter?.trim().orEmpty(),
-            maxGamesForTree = maxGamesForTree
-        )
+    fun onMoveSelected(moveSan: String) {
+        val board = chessController.getBoard()
+        val move = board.legalMoves().firstOrNull { board.toSan(it) == moveSan }
+        if (move != null) chessController.onMove(move)
+        else _uiState.value =
+            _uiState.value.copy(statusMessage = "Selected move $moveSan is invalid on the board.")
+    }
+
+    fun onGoBack() {
+        val tree = openingTree ?: return
+        chessController.navigateBack()
+        applyFen(chessController.boardState, tree, updateBoard = false)
+    }
+
+    fun onGoRoot() {
+        val tree = openingTree ?: return
+        applyFen(tree.rootFen, tree, updateBoard = true)
     }
 
     private fun applyFen(fen: String, tree: OpeningTree, updateBoard: Boolean) {
@@ -75,9 +104,10 @@ class OpeningTreeViewModel(
         }
 
         val path = buildPathForNode(node, tree)
-        val movesUi =
-            node.children.values.asSequence().sortedByDescending { it.games }.map(::toMoveUi)
-                .toList()
+        val movesUi = node.children.values.asSequence()
+            .sortedByDescending { it.games }
+            .map(::toMoveUi)
+            .toList()
 
         _uiState.value = _uiState.value.copy(
             isLoading = false,
@@ -127,57 +157,21 @@ class OpeningTreeViewModel(
         chessController.resetBoard()
     }
 
-    private fun currentColorFilterValue(): String {
-        return when (colorFilter) {
-            ColorFilter.WHITE -> "white"
-            ColorFilter.BLACK -> "black"
-        }
-    }
-
-    fun onMoveSelected(moveSan: String) {
-        val board = chessController.getBoard()
-        val move = board.legalMoves().firstOrNull { board.toSan(it) == moveSan }
-        if (move != null) chessController.onMove(move)
-        else _uiState.value =
-            _uiState.value.copy(statusMessage = "Selected move $moveSan is invalid on the board.")
-    }
-
-    fun onGoBack() {
-        val tree = openingTree ?: return
-        chessController.navigateBack()
-        applyFen(chessController.boardState, tree, updateBoard = false)
-    }
-
-    fun onGoRoot() {
-        val tree = openingTree ?: return
-        applyFen(tree.rootFen, tree, updateBoard = true)
-    }
-
-    data class OpeningTreeMoveUi(
-        val moveSan: String,
-        val toFen: String,
-        val games: Int,
-        val winPercent: Int,
-        val drawPercent: Int,
-        val lossPercent: Int
-    )
-
-    data class OpeningTreeUiState(
-        val isLoading: Boolean = true,
-        val statusMessage: String? = null,
-        val currentFen: String? = null,
-        val pathMoves: List<String> = emptyList(),
-        val moves: List<OpeningTreeMoveUi> = emptyList(),
-        val canGoBack: Boolean = false
-    )
-
     private fun updateBoardOrientation() {
         if (chessController.isFlipped != (colorFilter == ColorFilter.BLACK)) {
             chessController.flipBoard()
         }
     }
 
-    enum class ColorFilter { WHITE, BLACK }
+    private fun currentCacheKey(): OpeningTreeCacheKey {
+        return openingTreePreparationCoordinator.buildCacheKey(
+            username = username,
+            platform = platform,
+            color = if (colorFilter == ColorFilter.WHITE) "white" else "black",
+            timeControlFilter = timeControlFilter?.trim().orEmpty(),
+            maxGamesForTree = maxGamesForTree
+        )
+    }
 
     class Factory(
         private val username: String,

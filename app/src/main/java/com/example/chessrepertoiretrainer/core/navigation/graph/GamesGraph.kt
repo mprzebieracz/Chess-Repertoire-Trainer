@@ -13,6 +13,7 @@ import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.Onlin
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeScreen
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeSearchScreen
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeSearchViewModel
+import com.example.chessrepertoiretrainer.feature.openingtree.presentation.ColorFilter
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeViewModel
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
 
@@ -70,9 +71,9 @@ fun NavGraphBuilder.gamesGraph(
         val finalTimeControl = if (timeControlArg == "none") "" else timeControlArg
 
         val colorFilter = when (colorArg.lowercase()) {
-            "white" -> OpeningTreeViewModel.ColorFilter.WHITE
-            "black" -> OpeningTreeViewModel.ColorFilter.BLACK
-            else -> OpeningTreeViewModel.ColorFilter.WHITE
+            "white" -> ColorFilter.WHITE
+            "black" -> ColorFilter.BLACK
+            else -> ColorFilter.WHITE
         }
 
         val vm: OpeningTreeViewModel = viewModel(

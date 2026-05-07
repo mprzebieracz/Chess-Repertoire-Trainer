@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.puzzles.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -91,11 +90,6 @@ class PuzzleTrainingViewModel(
 
     private fun applySession(session: PuzzleSessionState) {
         val puzzle = session.puzzle
-
-        Log.d(
-            "PuzzleTrainingViewModel",
-            "Loaded puzzle id=${puzzle.id} rating=${puzzle.rating} fen='${puzzle.fen}' sanSolution=${session.sanMoves.joinToString(" ")}"
-        )
 
         chessController.loadPositionFromFen(puzzle.fen)
         mySide = session.mySide

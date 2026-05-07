@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.puzzles.presentation
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -36,9 +35,6 @@ class PuzzlesViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
             val finalCount = ensureMinUnsolved()
-            Log.d(
-                "PuzzlesViewModel", "Unsolved puzzles after ensuring minimum: $finalCount"
-            )
             _uiState.value = PuzzlesUiState(
                 isLoading = false, unsolvedCount = finalCount, errorMessage = null
             )

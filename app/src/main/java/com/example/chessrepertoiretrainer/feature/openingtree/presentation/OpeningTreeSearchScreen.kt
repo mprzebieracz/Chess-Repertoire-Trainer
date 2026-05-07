@@ -34,7 +34,7 @@ fun OpeningTreeSearchScreen(
     defaultLichessUsername: String,
     defaultChessComUsername: String,
     defaultPlatform: String,
-    onOpenTree: (username: String, platform: String, color: String, timeControl: String, maxGames: Int?) -> Unit // <- THIS LINE
+    onOpenTree: (username: String, platform: String, color: String, timeControl: String, maxGames: Int?) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val initialState = remember(defaultPlatform, defaultLichessUsername, defaultChessComUsername) {
@@ -306,7 +306,7 @@ private fun DownloadSection(
 }
 
 @Composable
-private fun SearchFeedbackSection(uiState: OpeningTreeSearchViewModel.SearchUiState) {
+private fun SearchFeedbackSection(uiState: SearchUiState) {
     uiState.errorMessage?.let { error ->
         Text(
             text = error,

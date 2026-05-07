@@ -52,7 +52,8 @@ fun OpeningTreeScreen(
                     .fillMaxSize(),
                 statusMessage = uiState.statusMessage
             )
-        } else {
+        }
+        else {
             Box(modifier = Modifier.padding(padding)) {
                 ChessScreenLayout(
                     title = "Opening Tree",
@@ -111,7 +112,7 @@ private fun OpeningTreeHeader(onBackClick: () -> Unit) {
 
 @Composable
 private fun OpeningTreeMovesPanel(
-    uiState: OpeningTreeViewModel.OpeningTreeUiState,
+    uiState: OpeningTreeUiState,
     onMoveSelected: (String) -> Unit
 ) {
     Column(
@@ -132,7 +133,10 @@ private fun OpeningTreeMovesPanel(
             Text(text = "Next moves", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.size(8.dp))
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 240.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(uiState.moves) { move ->
                     OpeningTreeMoveCard(move = move) {
@@ -140,9 +144,10 @@ private fun OpeningTreeMovesPanel(
                     }
                 }
             }
-        } else {
+        }
+        else {
             Text(
-                text = uiState.statusMessage ?: "No further moves from this position",
+                text = "No further moves from this position",
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -152,7 +157,7 @@ private fun OpeningTreeMovesPanel(
 @Composable
 private fun OpeningTreeBottomBar(
     viewModel: OpeningTreeViewModel,
-    uiState: OpeningTreeViewModel.OpeningTreeUiState
+    uiState: OpeningTreeUiState
 ) {
     Row(
         modifier = Modifier
@@ -178,7 +183,7 @@ private fun OpeningTreeBottomBar(
 
 @Composable
 private fun OpeningTreeMoveCard(
-    move: OpeningTreeViewModel.OpeningTreeMoveUi,
+    move: OpeningTreeMoveUi,
     onClick: () -> Unit
 ) {
     Card(

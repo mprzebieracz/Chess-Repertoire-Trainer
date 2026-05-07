@@ -18,54 +18,23 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    onOpenAnalysis: () -> Unit
-) {
-    HomeScaffold {
-        HomeContent(
-            onOpenAnalysis = onOpenAnalysis
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun HomeScaffold(content: @Composable () -> Unit) {
+fun HomeScreen(onOpenAnalysis: () -> Unit) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Home") }) }) { padding ->
+        topBar = { TopAppBar(title = { Text("Home") }) }
+    ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding), contentAlignment = Alignment.Center
+                .padding(padding),
+            contentAlignment = Alignment.Center
         ) {
-            content()
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Welcome to Chess Repertoire Trainer")
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onOpenAnalysis) {
+                    Text("Open analysis board")
+                }
+            }
         }
-    }
-}
-
-@Composable
-private fun HomeContent(
-    onOpenAnalysis: () -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        HomeTitle()
-        HomeActionButtons(
-            onOpenAnalysis = onOpenAnalysis
-        )
-    }
-}
-
-@Composable
-private fun HomeTitle() {
-    Text("Welcome to Chess Repertoire Trainer")
-    Spacer(modifier = Modifier.height(16.dp))
-}
-
-@Composable
-private fun HomeActionButtons(
-    onOpenAnalysis: () -> Unit
-) {
-    Button(onClick = onOpenAnalysis) {
-        Text("Open analysis board")
     }
 }

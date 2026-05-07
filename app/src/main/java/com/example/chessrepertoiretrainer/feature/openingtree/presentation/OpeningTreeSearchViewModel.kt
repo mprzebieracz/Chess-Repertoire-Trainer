@@ -11,6 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+data class SearchUiState(
+    val errorMessage: String? = null,
+    val isSyncing: Boolean = false,
+    val lastSyncSummary: String? = null,
+    val statusMessage: String? = null
+)
+
 class OpeningTreeSearchViewModel(
     private val onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,
     private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
@@ -87,13 +94,6 @@ class OpeningTreeSearchViewModel(
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
-
-    data class SearchUiState(
-        val errorMessage: String? = null,
-        val isSyncing: Boolean = false,
-        val lastSyncSummary: String? = null,
-        val statusMessage: String? = null
-    )
 
     class Factory(
         private val onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,

@@ -31,19 +31,6 @@ fun PuzzleTrainingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    PuzzleTrainingLayout(
-        viewModel = viewModel,
-        uiState = uiState,
-        onBackClick = onBackClick
-    )
-}
-
-@Composable
-private fun PuzzleTrainingLayout(
-    viewModel: PuzzleTrainingViewModel,
-    uiState: PuzzleTrainingUiState,
-    onBackClick: () -> Unit
-) {
     ChessScreenLayout(
         title = "Puzzle Training",
         chessCtrl = viewModel.chessController,
@@ -157,7 +144,7 @@ private fun PuzzleTrainingBottomContent(
     ) {
         PuzzleTrainingStatusMessage(uiState = uiState)
 
-        if (shouldShowActionButtons(uiState)) {
+        if (!uiState.isLoading && !uiState.isSessionComplete && uiState.hasUnsolvedPuzzles) {
             PuzzleTrainingActionButtons(
                 onShowSolution = onShowSolution,
                 onShowHint = onShowHint,
@@ -214,17 +201,12 @@ private fun PuzzleTrainingStatusMessage(uiState: PuzzleTrainingUiState) {
     }
 }
 
-private fun shouldShowActionButtons(uiState: PuzzleTrainingUiState): Boolean {
-    return !uiState.isLoading && !uiState.isSessionComplete && uiState.hasUnsolvedPuzzles
-}
-
 @Composable
 private fun PuzzleTrainingActionButtons(
     onShowSolution: () -> Unit,
     onShowHint: () -> Unit,
     onNextPuzzle: () -> Unit
 ) {
-    Spacer(Modifier.width(0.dp))
     Row(
         modifier = Modifier
             .fillMaxWidth()
