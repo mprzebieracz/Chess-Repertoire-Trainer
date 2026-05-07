@@ -44,7 +44,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
                 appContainer = appContainer
             )
             myGamesGraph(navController, appContainer)
-            repertoireGraph(navController, repertoireRepository)
+            repertoireGraph(navController, repertoireRepository, appContainer.repertoireComplianceAnalyzer)
         }
     }
 }

@@ -27,6 +27,8 @@ class DefaultChessBoardController(
 
     override var boardState by mutableStateOf(board.fen)
         private set
+    override var currentMoveIndex by mutableStateOf(-1)
+        private set
     override var selectedSquare by mutableStateOf<Square?>(null)
         private set
     override var lastMove by mutableStateOf<Move?>(null)
@@ -108,6 +110,7 @@ class DefaultChessBoardController(
         if (currentPositionIndex >= 0) {
             board.undoMove()
             currentPositionIndex--
+            currentMoveIndex = currentPositionIndex
             updateAfterNavigation()
         }
     }
@@ -132,6 +135,7 @@ class DefaultChessBoardController(
     override fun navigateForward() {
         if (currentPositionIndex < fullMoveHistory.size - 1) {
             currentPositionIndex++
+            currentMoveIndex = currentPositionIndex
             val nextMove = fullMoveHistory[currentPositionIndex]
             board.doMove(nextMove)
             updateAfterNavigation()
@@ -157,6 +161,7 @@ class DefaultChessBoardController(
         fullMoveHistory.add(move)
         fullSanHistory.add(san)
         currentPositionIndex++
+        currentMoveIndex = currentPositionIndex
 
         updatePgn()
         boardState = board.fen
@@ -236,6 +241,7 @@ class DefaultChessBoardController(
         fullMoveHistory.clear()
         fullSanHistory.clear()
         currentPositionIndex = -1
+        currentMoveIndex = -1
         pgnState = ""
         boardState = board.fen
         selectedSquare = null

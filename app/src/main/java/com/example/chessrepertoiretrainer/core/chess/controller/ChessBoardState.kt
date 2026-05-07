@@ -11,6 +11,7 @@ data class PendingPromotion(val from: Square, val to: Square)
 interface ChessBoardController {
     val pgnState: String
     val boardState: String
+    val currentMoveIndex: Int
     val selectedSquare: Square?
     val lastMove: Move?
 

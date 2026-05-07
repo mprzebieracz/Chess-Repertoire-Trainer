@@ -10,6 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.chessrepertoiretrainer.core.navigation.Screen
+import com.example.chessrepertoiretrainer.feature.mygames.domain.usecase.RepertoireComplianceAnalyzer
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen.ChaptersScreen
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen.CourseOverviewScreen
@@ -29,11 +30,13 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
 fun NavGraphBuilder.repertoireGraph(
-    navController: NavHostController, repertoireRepository: RepertoireRepository
+    navController: NavHostController,
+    repertoireRepository: RepertoireRepository,
+    complianceAnalyzer: RepertoireComplianceAnalyzer
 ) {
     composable(Screen.RepertoireMain.route) {
         val vm: RepertoiresViewModel =
-            viewModel(factory = RepertoiresViewModel.Factory(repertoireRepository))
+            viewModel(factory = RepertoiresViewModel.Factory(repertoireRepository, complianceAnalyzer))
         RepertoiresScreen(
             viewModel = vm,
             onNavigateToChapters = { navController.navigate(Screen.CourseOverview.createRoute(it)) })
@@ -78,7 +81,10 @@ fun NavGraphBuilder.repertoireGraph(
 
     composable(
         Screen.ChapterReview.route,
-        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
+        arguments = listOf(
+            navArgument("chapterId") { type = NavType.IntType },
+            navArgument("startLineId") { type = NavType.IntType; defaultValue = -1 }
+        )
     ) {
         val vm: ReviewChapterViewModel =
             viewModel(factory = ReviewChapterViewModel.Factory(repertoireRepository))

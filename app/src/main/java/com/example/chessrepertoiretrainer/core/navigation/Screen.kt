@@ -34,8 +34,11 @@ sealed class Screen(
         fun createRoute(chapterId: Int) = "chapter_learn/$chapterId"
     }
 
-    object ChapterReview : Screen("chapter_review/{chapterId}") {
-        fun createRoute(chapterId: Int) = "chapter_review/$chapterId"
+    object ChapterReview : Screen("chapter_review/{chapterId}?startLineId={startLineId}") {
+        fun createRoute(chapterId: Int, startLineId: Int? = null): String {
+            val base = "chapter_review/$chapterId"
+            return if (startLineId != null) "$base?startLineId=$startLineId" else base
+        }
     }
 
     object LineEditor : Screen("line_editor/{lineId}") {

@@ -11,11 +11,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -48,10 +52,13 @@ fun RepertoiresScreen(
     onNavigateToChapters: (Int) -> Unit
 ) {
     val courses by viewModel.courses.collectAsState()
+    val isRebuildingIndex by viewModel.isRebuildingIndex.collectAsState()
     val showAddDialog = remember { mutableStateOf(false) }
 
     RepertoiresScaffold(
-        onAddClick = { showAddDialog.value = true }
+        onAddClick = { showAddDialog.value = true },
+        isRebuildingIndex = isRebuildingIndex,
+        onRebuildIndex = viewModel::rebuildComplianceIndex
     ) { paddingValues ->
         RepertoiresContent(
             courses = courses,
@@ -76,11 +83,24 @@ fun RepertoiresScreen(
 @Composable
 private fun RepertoiresScaffold(
     onAddClick: () -> Unit,
+    isRebuildingIndex: Boolean,
+    onRebuildIndex: () -> Unit,
     content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Your Courses") })
+            TopAppBar(
+                title = { Text("Your Courses") },
+                actions = {
+                    if (isRebuildingIndex) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 4.dp), strokeWidth = 2.dp)
+                    } else {
+                        IconButton(onClick = onRebuildIndex) {
+                            Icon(Icons.Filled.Refresh, contentDescription = "Rebuild compliance index")
+                        }
+                    }
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddClick) {

@@ -79,8 +79,16 @@ fun NavGraphBuilder.myGamesGraph(
     ) {
         val game = appContainer.latestGame
         if (game != null) {
-            val vm: GameDetailViewModel = viewModel(factory = GameDetailViewModel.Factory(game))
-            GameDetailScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
+            val vm: GameDetailViewModel = viewModel(
+                factory = GameDetailViewModel.Factory(game, appContainer.repertoireComplianceAnalyzer)
+            )
+            GameDetailScreen(
+                viewModel = vm,
+                onBackClick = { navController.popBackStack() },
+                onViewInCourse = { chapterId, lineId ->
+                    navController.navigate(Screen.ChapterReview.createRoute(chapterId, lineId))
+                }
+            )
         }
     }
 }

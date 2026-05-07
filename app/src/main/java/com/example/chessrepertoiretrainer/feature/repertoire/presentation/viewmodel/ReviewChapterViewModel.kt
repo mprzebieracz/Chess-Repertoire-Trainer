@@ -41,6 +41,7 @@ class ReviewChapterViewModel(
     )
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
+    private val startLineId: Int? = savedStateHandle.get<Int>("startLineId")?.takeIf { it != -1 }
 
     private val _uiState = MutableStateFlow(UiState(chapterId = chapterId))
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
@@ -98,7 +99,10 @@ class ReviewChapterViewModel(
             return
         }
 
-        startLine(0, chapterName = chapterName, colorString = colorString)
+        val initialIndex = startLineId
+            ?.let { id -> loadedLines.indexOfFirst { it.id == id }.takeIf { it >= 0 } }
+            ?: 0
+        startLine(initialIndex, chapterName = chapterName, colorString = colorString)
     }
 
     private suspend fun startLine(
