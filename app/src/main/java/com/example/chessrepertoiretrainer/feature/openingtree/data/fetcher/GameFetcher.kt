@@ -8,6 +8,8 @@ data class FetchedGame(
     val timeControl: String?,
     val timeCategory: String?,
     val opening: String?,
+    val playerRating: Int?,
+    val opponentRating: Int?,
     val rated: Boolean,
     val playedAt: Long,
     val pgn: String

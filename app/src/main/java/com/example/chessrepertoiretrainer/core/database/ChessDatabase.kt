@@ -24,7 +24,7 @@ import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
         LineMove::class,
         Puzzle::class,
         SavedGame::class,
-    ], version = 10, exportSchema = false
+    ], version = 11, exportSchema = false
 )
 abstract class ChessDatabase : RoomDatabase() {
 
@@ -67,6 +67,13 @@ abstract class ChessDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE saved_games ADD COLUMN playerRating INTEGER")
+                db.execSQL("ALTER TABLE saved_games ADD COLUMN opponentRating INTEGER")
+            }
+        }
+
         @Volatile
         private var INSTANCE: ChessDatabase? = null
 
@@ -74,7 +81,7 @@ abstract class ChessDatabase : RoomDatabase() {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext, ChessDatabase::class.java, "chess_database"
-                ).addMigrations(MIGRATION_8_9, MIGRATION_9_10).build()
+                ).addMigrations(MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11).build()
                 INSTANCE = instance
                 return instance
             }

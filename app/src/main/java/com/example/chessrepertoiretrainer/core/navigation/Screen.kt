@@ -55,6 +55,11 @@ sealed class Screen(
     object GameDetail : Screen("game_detail/{gameId}") {
         fun createRoute(gameId: String) = "game_detail/${android.net.Uri.encode(gameId)}"
     }
+    object AccountStats : Screen("account_stats/{platform}/{username}") {
+        fun createRoute(platform: String, username: String) =
+            "account_stats/${android.net.Uri.encode(platform)}/${android.net.Uri.encode(username)}"
+    }
+    object GamesList : Screen("games_list")
 
     object OpeningTree : Screen("opening_tree")
 }

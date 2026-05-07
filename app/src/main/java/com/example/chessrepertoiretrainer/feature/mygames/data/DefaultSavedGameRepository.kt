@@ -1,6 +1,7 @@
 package com.example.chessrepertoiretrainer.feature.mygames.data
 
 import com.example.chessrepertoiretrainer.core.database.dao.GameStatsRaw
+import com.example.chessrepertoiretrainer.core.database.dao.RatingPeakRaw
 import com.example.chessrepertoiretrainer.core.database.dao.SavedGameDao
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.FetchedGame
@@ -25,6 +26,8 @@ fun FetchedGame.toSavedGame(platform: String, username: String): SavedGame {
         timeControl = timeControl,
         timeCategory = timeCategory,
         opening = opening,
+        playerRating = playerRating,
+        opponentRating = opponentRating,
         rated = rated,
         playedAt = playedAt,
         pgn = pgn
@@ -41,14 +44,26 @@ class DefaultSavedGameRepository(private val dao: SavedGameDao) : SavedGameRepos
     override suspend fun countGames(platform: String, username: String): Int =
         dao.countGames(platform, username)
 
-    override fun getGamesFiltered(
-        username: String, platform: String?, category: String?, result: String?, isWhite: Boolean?
+    override fun getAllGamesFiltered(
+        platform: String?, result: String?, isWhite: Boolean?
     ): Flow<List<SavedGame>> =
-        dao.getGamesFiltered(username, platform, category, result, isWhite)
+        dao.getAllGamesFiltered(platform, result, isWhite)
 
     override suspend fun getStats(
-        username: String, platform: String?, category: String?, since: Long
-    ): GameStatsRaw = dao.getStatsRaw(username, platform, category, since)
+        username: String, platform: String, category: String?, isWhite: Boolean?, since: Long
+    ): GameStatsRaw = dao.getStatsRaw(username, platform, category, isWhite, since)
+
+    override suspend fun getCurrentRating(username: String, platform: String, category: String): Int? =
+        dao.getCurrentRating(username, platform, category)
+
+    override suspend fun getRatingAtStartOfPeriod(username: String, platform: String, category: String, since: Long): Int? =
+        dao.getRatingAtStartOfPeriod(username, platform, category, since)
+
+    override suspend fun getPeakRating(username: String, platform: String, category: String): RatingPeakRaw? =
+        dao.getPeakRating(username, platform, category)
+
+    override suspend fun getAvgOpponentRating(username: String, platform: String, category: String?, since: Long): Double? =
+        dao.getAvgOpponentRating(username, platform, category, since)
 
     override suspend fun getGameById(id: String): SavedGame? = dao.getGameById(id)
 }

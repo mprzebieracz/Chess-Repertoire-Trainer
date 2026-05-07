@@ -115,6 +115,8 @@ object LichessGameFetcher : GameFetcher {
                 ?: "${username}_${playedAt}_${resultTag}"
 
             val opening = obj.optJSONObject("opening")?.optString("name")?.takeIf { it.isNotBlank() }
+            val whiteRating = players?.optJSONObject("white")?.optInt("rating", -1)?.takeIf { it > 0 }
+            val blackRating = players?.optJSONObject("black")?.optInt("rating", -1)?.takeIf { it > 0 }
 
             FetchedGame(
                 platformGameId = gameId,
@@ -124,6 +126,8 @@ object LichessGameFetcher : GameFetcher {
                 timeControl = headers["TimeControl"] ?: tcFromClock,
                 timeCategory = mapSpeedToCategory(obj.optString("speed", "")),
                 opening = opening,
+                playerRating = if (isUserWhite) whiteRating else blackRating,
+                opponentRating = if (isUserWhite) blackRating else whiteRating,
                 rated = obj.optBoolean("rated", false),
                 playedAt = playedAt,
                 pgn = pgn

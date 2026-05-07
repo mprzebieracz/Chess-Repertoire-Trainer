@@ -2,6 +2,8 @@ package com.example.chessrepertoiretrainer.feature.mygames.domain.model
 
 import com.example.chessrepertoiretrainer.core.database.dao.GameStatsRaw
 
+val STAT_CATEGORIES = listOf("bullet", "blitz", "rapid", "classical")
+
 data class GameStats(
     val played: Int,
     val wins: Int,
@@ -15,4 +17,15 @@ data class GameStats(
 
 fun GameStatsRaw.toGameStats() = GameStats(played, wins, losses, draws)
 
-val CATEGORIES = listOf("all", "bullet", "blitz", "rapid", "classical")
+data class CategoryStats(
+    val category: String,
+    val currentRating: Int?,
+    val ratingDiff: Int?,
+    val peakRating: Int?,
+    val peakRatingDate: Long?,
+    val avgOpponentRating: Int?,
+    val allStats: GameStats,
+    val whiteStats: GameStats,
+    val blackStats: GameStats,
+    val isExpanded: Boolean = false
+)

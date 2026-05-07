@@ -106,6 +106,8 @@ object ChessComGameFetcher : GameFetcher {
         val uuid = gameJson.optString("uuid", "").takeIf { it.isNotBlank() }
         val url = gameJson.optString("url", "").takeIf { it.isNotBlank() }
         val opening = (headers["Opening"] ?: headers["ECO"])?.takeIf { it.isNotBlank() }
+        val whiteRating = gameJson.optJSONObject("white")?.optInt("rating", -1)?.takeIf { it > 0 }
+        val blackRating = gameJson.optJSONObject("black")?.optInt("rating", -1)?.takeIf { it > 0 }
 
         return FetchedGame(
             platformGameId = uuid ?: url ?: "${username}_${playedAt}_${resultTag}",
@@ -115,6 +117,8 @@ object ChessComGameFetcher : GameFetcher {
             timeControl = headers["TimeControl"] ?: timeControlFromJson,
             timeCategory = mapTimeClassToCategory(gameJson.optString("time_class", "")),
             opening = opening,
+            playerRating = if (isUserWhite) whiteRating else blackRating,
+            opponentRating = if (isUserWhite) blackRating else whiteRating,
             rated = gameJson.optBoolean("rated", false),
             playedAt = playedAt,
             pgn = pgn
