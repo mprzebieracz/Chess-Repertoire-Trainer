@@ -13,18 +13,17 @@ object LichessGameFetcher : GameFetcher {
     override val platformKey: String = "lichess"
 
     override suspend fun fetchGamesForUser(
-        username: String, maxGames: Int?, colorFilter: String, timeControlFilter: String
+        username: String,
+        maxGames: Int?,
+        colorFilter: String,
+        timeControlFilter: String,
+        onProgress: ((fetched: Int) -> Unit)?
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim()
         if (normalizedUser.isBlank()) return@withContext emptyList()
 
         val urlString = buildRequestUrl(normalizedUser, maxGames, colorFilter, timeControlFilter)
-        Log.d("LichessGameFetcher", "Requesting games from $urlString")
-
-        val result = streamGames(urlString, normalizedUser)
-
-        Log.d("LichessGameFetcher", "Fetched ${result.size} games for $normalizedUser")
-        return@withContext result
+        return@withContext streamGames(urlString, normalizedUser, onProgress)
     }
 
     private fun buildRequestUrl(
@@ -50,26 +49,32 @@ object LichessGameFetcher : GameFetcher {
         return "$BASE_URL/$username?${params.joinToString("&")}"
     }
 
-    private fun streamGames(urlString: String, username: String): List<FetchedGame> {
-        return runCatching {
-            val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                connectTimeout = 15_000
-                readTimeout = 30_000
-                setRequestProperty("Accept", "application/x-ndjson")
-            }
+    private fun streamGames(
+        urlString: String,
+        username: String,
+        onProgress: ((Int) -> Unit)?
+    ): List<FetchedGame> {
+        val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 15_000
+            readTimeout = 30_000
+            setRequestProperty("Accept", "application/x-ndjson")
+        }
 
-            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                Log.w("LichessGameFetcher", "HTTP error ${connection.responseCode} for $username")
-                return emptyList()
-            }
+        if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+            Log.w("LichessGameFetcher", "HTTP error ${connection.responseCode} for $username")
+            return emptyList()
+        }
 
-            connection.inputStream.bufferedReader().useLines { lines ->
-                lines.mapNotNull { parseLichessGame(it, username) }.toList()
-            }
-        }.onFailure {
-            Log.e("LichessGameFetcher", "Error streaming games: ${it.message}")
-        }.getOrDefault(emptyList())
+        var fetched = 0
+        return connection.inputStream.bufferedReader().useLines { lines ->
+            lines.mapNotNull { line ->
+                parseLichessGame(line, username)?.also {
+                    fetched++
+                    onProgress?.invoke(fetched)
+                }
+            }.toList()
+        }
     }
 
     private fun parseLichessGame(jsonLine: String, username: String): FetchedGame? {

@@ -53,14 +53,5 @@ sealed class Screen(
     object PuzzleTraining : Screen("puzzle_training")
     object Analysis : Screen("analysis")
 
-    object OpeningTree :
-        Screen("opening_tree/{username}/{platform}/{color}/{timeControl}/{maxGames}") {
-        fun createRoute(
-            username: String, platform: String, color: String, timeControl: String, maxGames: Int?
-        ): String {
-            val tc = timeControl.ifEmpty { "none" }
-            val mg = maxGames ?: -1
-            return "opening_tree/$username/$platform/$color/$tc/$mg"
-        }
-    }
+    object OpeningTree : Screen("opening_tree")
 }

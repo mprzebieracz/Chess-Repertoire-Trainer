@@ -1,7 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher
 
-import android.util.Log
-
 data class FetchedGame(
     val platformGameId: String,
     val opponentName: String,
@@ -21,7 +19,8 @@ interface GameFetcher {
         username: String,
         maxGames: Int? = null,
         colorFilter: String = "both",
-        timeControlFilter: String = ""
+        timeControlFilter: String = "",
+        onProgress: ((fetched: Int) -> Unit)? = null
     ): List<FetchedGame>
 }
 
@@ -47,10 +46,6 @@ internal fun parsePgnHeaders(pgn: String): Map<String, String> {
         else if (!line.startsWith("[")) {
             break
         }
-    }
-
-    if (headers.isEmpty()) {
-        Log.d("GameFetcher", "No headers detected in PGN (length=${pgn.length})")
     }
 
     return headers

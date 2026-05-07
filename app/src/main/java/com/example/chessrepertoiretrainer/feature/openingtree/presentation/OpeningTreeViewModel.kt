@@ -6,16 +6,11 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTree
-import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeCache
-import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeCacheKey
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeMoveAggregate
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeNode
-import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
-enum class ColorFilter { WHITE, BLACK }
 
 data class OpeningTreeMoveUi(
     val moveSan: String,
@@ -36,33 +31,27 @@ data class OpeningTreeUiState(
 )
 
 class OpeningTreeViewModel(
-    private val username: String,
-    private val platform: String,
-    private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator,
-    private val colorFilter: ColorFilter = ColorFilter.WHITE,
-    private val timeControlFilter: String? = null,
-    private val maxGamesForTree: Int? = null
+    private val tree: OpeningTree?
 ) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
-    private var openingTree: OpeningTree? = null
 
     private val _uiState = MutableStateFlow(OpeningTreeUiState())
     val uiState: StateFlow<OpeningTreeUiState> = _uiState.asStateFlow()
 
     init {
         chessController.onMoveListener = { _, _, fen ->
-            val tree = openingTree
-            if (tree != null && _uiState.value.currentFen != fen) {
-                applyFen(fen, tree, updateBoard = false)
+            val t = tree
+            if (t != null && _uiState.value.currentFen != fen) {
+                applyFen(fen, t, updateBoard = false)
             }
         }
 
-        val cached = OpeningTreeCache.get(currentCacheKey())
-        if (cached != null) {
-            openingTree = cached
-            updateBoardOrientation()
-            applyFen(cached.rootFen, cached, updateBoard = true)
+        if (tree != null) {
+            if (tree.playerIsBlack && !chessController.isFlipped) {
+                chessController.flipBoard()
+            }
+            applyFen(tree.rootFen, tree, updateBoard = true)
         }
         else {
             showEmptyState("Opening tree not found. Please go back and search again.")
@@ -78,14 +67,14 @@ class OpeningTreeViewModel(
     }
 
     fun onGoBack() {
-        val tree = openingTree ?: return
+        val t = tree ?: return
         chessController.navigateBack()
-        applyFen(chessController.boardState, tree, updateBoard = false)
+        applyFen(chessController.boardState, t, updateBoard = false)
     }
 
     fun onGoRoot() {
-        val tree = openingTree ?: return
-        applyFen(tree.rootFen, tree, updateBoard = true)
+        val t = tree ?: return
+        applyFen(t.rootFen, t, updateBoard = true)
     }
 
     private fun applyFen(fen: String, tree: OpeningTree, updateBoard: Boolean) {
@@ -145,7 +134,6 @@ class OpeningTreeViewModel(
     }
 
     private fun showEmptyState(message: String) {
-        openingTree = null
         _uiState.value = OpeningTreeUiState(
             isLoading = false,
             statusMessage = message,
@@ -157,40 +145,10 @@ class OpeningTreeViewModel(
         chessController.resetBoard()
     }
 
-    private fun updateBoardOrientation() {
-        if (chessController.isFlipped != (colorFilter == ColorFilter.BLACK)) {
-            chessController.flipBoard()
-        }
-    }
-
-    private fun currentCacheKey(): OpeningTreeCacheKey {
-        return openingTreePreparationCoordinator.buildCacheKey(
-            username = username,
-            platform = platform,
-            color = if (colorFilter == ColorFilter.WHITE) "white" else "black",
-            timeControlFilter = timeControlFilter?.trim().orEmpty(),
-            maxGamesForTree = maxGamesForTree
-        )
-    }
-
-    class Factory(
-        private val username: String,
-        private val platform: String,
-        private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator,
-        private val colorFilter: ColorFilter,
-        private val timeControlFilter: String?,
-        private val maxGamesForTree: Int?
-    ) : ViewModelProvider.Factory {
+    class Factory(private val tree: OpeningTree?) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            return OpeningTreeViewModel(
-                username = username,
-                platform = platform,
-                openingTreePreparationCoordinator = openingTreePreparationCoordinator,
-                colorFilter = colorFilter,
-                timeControlFilter = timeControlFilter,
-                maxGamesForTree = maxGamesForTree
-            ) as T
+            return OpeningTreeViewModel(tree) as T
         }
     }
 }

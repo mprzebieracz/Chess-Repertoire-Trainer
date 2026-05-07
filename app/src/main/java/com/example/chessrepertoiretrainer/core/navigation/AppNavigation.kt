@@ -42,8 +42,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
             gamesGraph(
                 navController = navController,
                 settingsViewModel = settingsViewModel,
-                onlineGamesFetchCoordinator = appContainer.onlineGamesFetchCoordinator,
-                openingTreePreparationCoordinator = appContainer.openingTreePreparationCoordinator,
+                appContainer = appContainer
             )
             puzzlesGraph(navController, puzzleRepository)
             repertoireGraph(navController, repertoireRepository)

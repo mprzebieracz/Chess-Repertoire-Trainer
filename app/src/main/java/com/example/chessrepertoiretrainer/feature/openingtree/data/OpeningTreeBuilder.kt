@@ -28,13 +28,15 @@ data class OpeningTreeNode(
 )
 
 data class OpeningTree(
-    val rootFen: String, internal val nodesByFen: Map<String, OpeningTreeNode>
+    val rootFen: String,
+    val playerIsBlack: Boolean,
+    internal val nodesByFen: Map<String, OpeningTreeNode>
 ) {
     fun getNode(fen: String): OpeningTreeNode? = nodesByFen[fen]
 }
 
 object OpeningTreeBuilder {
-    fun buildTree(games: List<GameForOpeningTree>): OpeningTree? {
+    fun buildTree(games: List<GameForOpeningTree>, playerIsBlack: Boolean): OpeningTree? {
         if (games.isEmpty()) return null
 
         val board = Board()
@@ -61,7 +63,7 @@ object OpeningTreeBuilder {
             }
         }
 
-        return OpeningTree(rootFen = rootFen, nodesByFen = nodes)
+        return OpeningTree(rootFen = rootFen, playerIsBlack = playerIsBlack, nodesByFen = nodes)
     }
 
     private fun applyGameMoves(
@@ -112,4 +114,3 @@ object OpeningTreeBuilder {
         }
     }
 }
-

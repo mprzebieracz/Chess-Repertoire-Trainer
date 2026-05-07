@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTree
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +36,7 @@ fun OpeningTreeSearchScreen(
     defaultLichessUsername: String,
     defaultChessComUsername: String,
     defaultPlatform: String,
-    onOpenTree: (username: String, platform: String, color: String, timeControl: String, maxGames: Int?) -> Unit
+    onOpenTree: (OpeningTree) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val initialState = remember(defaultPlatform, defaultLichessUsername, defaultChessComUsername) {
@@ -49,7 +51,8 @@ fun OpeningTreeSearchScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Opening tree search") }) }) { padding ->
+        topBar = { TopAppBar(title = { Text("Opening tree search") }) }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -58,43 +61,32 @@ fun OpeningTreeSearchScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SearchIntro()
-            UsernameSection(
-                formState = formState, onFormStateChange = { formState = it })
+            UsernameSection(formState = formState, onFormStateChange = { formState = it })
             PlatformSection(
                 formState = formState,
                 defaultLichessUsername = defaultLichessUsername,
                 defaultChessComUsername = defaultChessComUsername,
-                onFormStateChange = { formState = it })
-            ColorSection(
-                formState = formState, onFormStateChange = { formState = it })
-            TimeControlsSection(
-                formState = formState, onFormStateChange = { formState = it })
-            MaxGamesSection(
-                formState = formState, onFormStateChange = { formState = it })
+                onFormStateChange = { formState = it }
+            )
+            ColorSection(formState = formState, onFormStateChange = { formState = it })
+            TimeControlsSection(formState = formState, onFormStateChange = { formState = it })
+            MaxGamesSection(formState = formState, onFormStateChange = { formState = it })
             DownloadSection(
                 isEnabled = formState.username.isNotBlank() && !uiState.isSyncing,
-                isSyncing = uiState.isSyncing,
                 onDownloadGames = {
                     val maxGames = formState.maxGamesOrNull()
                     val timeControlFilter = formState.timeControlFilter()
-
                     viewModel.searchAndPrepareOpeningTree(
                         username = formState.username.trim(),
                         platform = formState.platform,
-                        maxGamesForTree = maxGames,
+                        maxGames = maxGames,
                         color = formState.colorFilter,
-                        timeControlFilter = timeControlFilter
-                    ) { readyUsername, readyPlatform ->
-                        onOpenTree(
-                            readyUsername,
-                            readyPlatform,
-                            formState.colorFilter,
-                            timeControlFilter,
-                            maxGames
-                        )
-                    }
-                })
-            SearchFeedbackSection(uiState = uiState)
+                        timeControlFilter = timeControlFilter,
+                        onTreeReady = { tree -> onOpenTree(tree) }
+                    )
+                }
+            )
+            SyncProgressSection(uiState = uiState)
         }
     }
 }
@@ -116,7 +108,6 @@ data class OpeningTreeSearchFormState(
             "chess.com" -> defaultChessComUsername.takeIf { it.isNotBlank() } ?: username
             else -> defaultLichessUsername.takeIf { it.isNotBlank() } ?: username
         }
-
         return copy(platform = newPlatform, username = nextUsername)
     }
 
@@ -127,7 +118,6 @@ data class OpeningTreeSearchFormState(
             if (rapidEnabled) add("rapid")
             if (classicalEnabled) add("classical")
         }
-
         return if (selectedCategories.size == 4) "" else selectedCategories.joinToString(",")
     }
 
@@ -144,10 +134,7 @@ data class OpeningTreeSearchFormState(
             else {
                 defaultLichessUsername
             }
-
-            return OpeningTreeSearchFormState(
-                platform = platform, username = username
-            )
+            return OpeningTreeSearchFormState(platform = platform, username = username)
         }
     }
 }
@@ -183,7 +170,9 @@ private fun PlatformSection(
         Text(text = "Platform", style = MaterialTheme.typography.labelMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
             PlatformOption(
-                label = "Lichess", selected = formState.platform == "lichess", onClick = {
+                label = "Lichess",
+                selected = formState.platform == "lichess",
+                onClick = {
                     onFormStateChange(
                         formState.withPlatform(
                             newPlatform = "lichess",
@@ -191,10 +180,13 @@ private fun PlatformSection(
                             defaultChessComUsername = defaultChessComUsername
                         )
                     )
-                })
+                }
+            )
             Spacer(modifier = Modifier.width(16.dp))
             PlatformOption(
-                label = "Chess.com", selected = formState.platform == "chess.com", onClick = {
+                label = "Chess.com",
+                selected = formState.platform == "chess.com",
+                onClick = {
                     onFormStateChange(
                         formState.withPlatform(
                             newPlatform = "chess.com",
@@ -202,15 +194,14 @@ private fun PlatformSection(
                             defaultChessComUsername = defaultChessComUsername
                         )
                     )
-                })
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun PlatformOption(
-    label: String, selected: Boolean, onClick: () -> Unit
-) {
+private fun PlatformOption(label: String, selected: Boolean, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected = selected, onClick = onClick)
         Text(text = label)
@@ -226,12 +217,14 @@ private fun ColorSection(
         Row(verticalAlignment = Alignment.CenterVertically) {
             RadioButton(
                 selected = formState.colorFilter == "white",
-                onClick = { onFormStateChange(formState.copy(colorFilter = "white")) })
+                onClick = { onFormStateChange(formState.copy(colorFilter = "white")) }
+            )
             Text(text = "White")
             Spacer(modifier = Modifier.width(16.dp))
             RadioButton(
                 selected = formState.colorFilter == "black",
-                onClick = { onFormStateChange(formState.copy(colorFilter = "black")) })
+                onClick = { onFormStateChange(formState.copy(colorFilter = "black")) }
+            )
             Text(text = "Black")
         }
     }
@@ -249,14 +242,16 @@ private fun TimeControlsSection(
             onFirstChange = { onFormStateChange(formState.copy(bulletEnabled = it)) },
             secondLabel = "Blitz",
             secondChecked = formState.blitzEnabled,
-            onSecondChange = { onFormStateChange(formState.copy(blitzEnabled = it)) })
+            onSecondChange = { onFormStateChange(formState.copy(blitzEnabled = it)) }
+        )
         TimeControlRow(
             firstLabel = "Rapid",
             firstChecked = formState.rapidEnabled,
             onFirstChange = { onFormStateChange(formState.copy(rapidEnabled = it)) },
             secondLabel = "Classical/Daily",
             secondChecked = formState.classicalEnabled,
-            onSecondChange = { onFormStateChange(formState.copy(classicalEnabled = it)) })
+            onSecondChange = { onFormStateChange(formState.copy(classicalEnabled = it)) }
+        )
     }
 }
 
@@ -295,18 +290,24 @@ private fun MaxGamesSection(
 }
 
 @Composable
-private fun DownloadSection(
-    onDownloadGames: () -> Unit, isEnabled: Boolean, isSyncing: Boolean
-) {
-    Button(
-        onClick = onDownloadGames, enabled = isEnabled && !isSyncing
-    ) {
+private fun DownloadSection(isEnabled: Boolean, onDownloadGames: () -> Unit) {
+    Button(onClick = onDownloadGames, enabled = isEnabled) {
         Text("Download games and open tree")
     }
 }
 
 @Composable
-private fun SearchFeedbackSection(uiState: SearchUiState) {
+private fun SyncProgressSection(uiState: SearchUiState) {
+    if (uiState.isSyncing) {
+        val statusText = when (uiState.syncPhase) {
+            SyncPhase.FetchingGames -> "Fetching games… (${uiState.fetchedGameCount} fetched)"
+            SyncPhase.BuildingTree -> "Building tree from ${uiState.fetchedGameCount} games…"
+            SyncPhase.Idle -> ""
+        }
+        Text(text = statusText, style = MaterialTheme.typography.bodySmall)
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+    }
+
     uiState.errorMessage?.let { error ->
         Text(
             text = error,
@@ -316,17 +317,6 @@ private fun SearchFeedbackSection(uiState: SearchUiState) {
     }
 
     uiState.lastSyncSummary?.let { summary ->
-        Text(
-            text = summary, style = MaterialTheme.typography.bodySmall
-        )
-    }
-
-    uiState.statusMessage?.let { status ->
-        Text(
-            text = status,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Text(text = summary, style = MaterialTheme.typography.bodySmall)
     }
 }
-

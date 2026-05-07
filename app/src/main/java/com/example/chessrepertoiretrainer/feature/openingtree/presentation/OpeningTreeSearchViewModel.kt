@@ -4,23 +4,30 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreePreparationCoordinator
-import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.OnlineGamesFetchCoordinator
+import com.example.chessrepertoiretrainer.feature.openingtree.data.GameForOpeningTree
+import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTree
+import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeBuilder
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.FetchedGame
+import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.GameFetcherRegistry
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+enum class SyncPhase { Idle, FetchingGames, BuildingTree }
 
 data class SearchUiState(
     val errorMessage: String? = null,
     val isSyncing: Boolean = false,
-    val lastSyncSummary: String? = null,
-    val statusMessage: String? = null
+    val syncPhase: SyncPhase = SyncPhase.Idle,
+    val fetchedGameCount: Int = 0,
+    val lastSyncSummary: String? = null
 )
 
 class OpeningTreeSearchViewModel(
-    private val onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,
-    private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
+    private val fetcherRegistry: GameFetcherRegistry
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -29,65 +36,77 @@ class OpeningTreeSearchViewModel(
     fun searchAndPrepareOpeningTree(
         username: String,
         platform: String,
-        maxGamesForTree: Int?,
+        maxGames: Int?,
         color: String,
         timeControlFilter: String,
-        onTreeReady: (username: String, platform: String) -> Unit
+        onTreeReady: (OpeningTree) -> Unit
     ) {
         if (username.isBlank() || _uiState.value.isSyncing) return
 
+        val fetcher = fetcherRegistry.getFetcher(platform)
+        if (fetcher == null) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Unsupported platform: $platform")
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
+            _uiState.value = SearchUiState(
                 isSyncing = true,
-                errorMessage = null,
-                lastSyncSummary = null,
-                statusMessage = "Fetching games..."
+                syncPhase = SyncPhase.FetchingGames
             )
 
-            val fetchResult = onlineGamesFetchCoordinator.fetchGames(
-                username = username,
-                platform = platform,
-                maxGames = maxGamesForTree,
-                colorFilter = color,
-                timeControlFilter = timeControlFilter
-            )
-
-            if (fetchResult.errorMessage != null) {
-                _uiState.value = _uiState.value.copy(
-                    isSyncing = false, errorMessage = fetchResult.errorMessage, statusMessage = null
+            val games: List<FetchedGame> = try {
+                fetcher.fetchGamesForUser(
+                    username = username.trim(),
+                    maxGames = maxGames,
+                    colorFilter = color,
+                    timeControlFilter = timeControlFilter,
+                    onProgress = { fetched ->
+                        _uiState.value = _uiState.value.copy(fetchedGameCount = fetched)
+                    }
+                )
+            }
+            catch (e: Exception) {
+                _uiState.value = SearchUiState(
+                    errorMessage = e.message ?: "Unexpected error while fetching games"
                 )
                 return@launch
             }
 
-            val fetchedGames = fetchResult.games
-
-            if (fetchedGames.isEmpty()) {
-                _uiState.value = _uiState.value.copy(
-                    isSyncing = false,
-                    lastSyncSummary = "No games found matching filters.",
-                    statusMessage = null
+            if (games.isEmpty()) {
+                _uiState.value = SearchUiState(
+                    lastSyncSummary = "No games found matching filters."
                 )
                 return@launch
             }
 
-            _uiState.value = _uiState.value.copy(statusMessage = "Preparing opening tree...")
+            _uiState.value = _uiState.value.copy(syncPhase = SyncPhase.BuildingTree)
 
-            val gamesUsedForTree = openingTreePreparationCoordinator.prepareFromFetchedGames(
-                username = username,
-                platform = platform,
-                games = fetchedGames,
-                color = color,
-                timeControlFilter = timeControlFilter,
-                maxGamesForTree = maxGamesForTree
+            val tree = withContext(Dispatchers.Default) {
+                OpeningTreeBuilder.buildTree(
+                    games = games.map {
+                        GameForOpeningTree(
+                            pgn = it.pgn,
+                            isUserWhite = it.isUserWhite,
+                            resultTag = it.result
+                        )
+                    },
+                    playerIsBlack = color == "black"
+                )
+            }
+
+            if (tree == null) {
+                _uiState.value = SearchUiState(
+                    errorMessage = "Failed to build opening tree from fetched games."
+                )
+                return@launch
+            }
+
+            _uiState.value = SearchUiState(
+                lastSyncSummary = "Prepared opening tree from ${games.size} games"
             )
 
-            _uiState.value = _uiState.value.copy(
-                isSyncing = false,
-                lastSyncSummary = "Prepared opening tree from $gamesUsedForTree games",
-                statusMessage = "Opening tree ready."
-            )
-
-            onTreeReady(username, platform)
+            onTreeReady(tree)
         }
     }
 
@@ -96,15 +115,11 @@ class OpeningTreeSearchViewModel(
     }
 
     class Factory(
-        private val onlineGamesFetchCoordinator: OnlineGamesFetchCoordinator,
-        private val openingTreePreparationCoordinator: OpeningTreePreparationCoordinator
+        private val fetcherRegistry: GameFetcherRegistry
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            return OpeningTreeSearchViewModel(
-                onlineGamesFetchCoordinator = onlineGamesFetchCoordinator,
-                openingTreePreparationCoordinator = openingTreePreparationCoordinator
-            ) as T
+            return OpeningTreeSearchViewModel(fetcherRegistry) as T
         }
     }
 }

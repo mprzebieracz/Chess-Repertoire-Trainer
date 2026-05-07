@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher
 
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -13,7 +12,11 @@ object ChessComGameFetcher : GameFetcher {
     override val platformKey: String = "chess.com"
 
     override suspend fun fetchGamesForUser(
-        username: String, maxGames: Int?, colorFilter: String, timeControlFilter: String
+        username: String,
+        maxGames: Int?,
+        colorFilter: String,
+        timeControlFilter: String,
+        onProgress: ((fetched: Int) -> Unit)?
     ): List<FetchedGame> = withContext(Dispatchers.IO) {
         val normalizedUser = username.trim().lowercase()
         if (normalizedUser.isBlank()) return@withContext emptyList()
@@ -22,11 +25,12 @@ object ChessComGameFetcher : GameFetcher {
         if (archiveUrls.isEmpty()) return@withContext emptyList()
 
         val effectiveMaxGames = maxGames?.coerceAtLeast(1) ?: Int.MAX_VALUE
-        val timeControls =
-            timeControlFilter.split(",").map { it.trim().lowercase() }.filter { it.isNotBlank() }
-                .toSet()
+        val timeControls = timeControlFilter.split(",")
+            .map { it.trim().lowercase() }
+            .filter { it.isNotBlank() }
+            .toSet()
         val result = mutableListOf<FetchedGame>()
-        
+
         for (archiveUrl in archiveUrls.asReversed()) {
             if (result.size >= effectiveMaxGames) break
 
@@ -34,38 +38,33 @@ object ChessComGameFetcher : GameFetcher {
             for (game in gamesInArchive) {
                 if (result.size >= effectiveMaxGames) break
 
-                // 1. Color Filter
                 if (colorFilter == "white" && !game.isUserWhite) continue
                 if (colorFilter == "black" && game.isUserWhite) continue
 
-                // 2. Time Control Filter
                 if (timeControls.isNotEmpty()) {
                     val category = game.timeCategory ?: continue
                     if (category !in timeControls) continue
                 }
 
                 result.add(game)
+                onProgress?.invoke(result.size)
             }
         }
 
-        Log.d("ChessComGameFetcher", "Fetched ${result.size} games for $normalizedUser")
         return@withContext result
     }
 
     private fun fetchArchiveUrls(username: String): List<String> {
         val body = httpGet("$BASE_URL/$username/games/archives") ?: return emptyList()
         val array = JSONObject(body).optJSONArray("archives") ?: return emptyList()
-
         return List(array.length()) { array.optString(it) }.filter { it.isNotBlank() }
     }
 
     private fun fetchGamesFromArchive(archiveUrl: String, username: String): List<FetchedGame> {
         val body = httpGet(archiveUrl) ?: return emptyList()
         val gamesArray = JSONObject(body).optJSONArray("games") ?: return emptyList()
-
-        return List(gamesArray.length()) { gamesArray.optJSONObject(it) }.mapNotNull {
-            parseChessComGame(it, username)
-        }
+        return List(gamesArray.length()) { gamesArray.optJSONObject(it) }
+            .mapNotNull { parseChessComGame(it, username) }
     }
 
     private fun parseChessComGame(gameJson: JSONObject?, username: String): FetchedGame? {
@@ -112,18 +111,16 @@ object ChessComGameFetcher : GameFetcher {
     }
 
     private fun httpGet(urlString: String): String? {
-        return runCatching {
-            val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                connectTimeout = 15_000
-                readTimeout = 30_000
-            }
-            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                connection.inputStream.bufferedReader().use { it.readText() }
-            }
-            else {
-                null
-            }
-        }.getOrNull()
+        val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = 15_000
+            readTimeout = 30_000
+        }
+        return if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+            connection.inputStream.bufferedReader().use { it.readText() }
+        }
+        else {
+            null
+        }
     }
 }
