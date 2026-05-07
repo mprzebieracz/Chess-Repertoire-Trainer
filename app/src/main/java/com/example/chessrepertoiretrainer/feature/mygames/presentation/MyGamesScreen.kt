@@ -97,6 +97,7 @@ fun MyGamesScreen(
                 Text("Browse games")
             }
 
+
             uiState.syncProgress?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary)
