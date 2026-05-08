@@ -25,7 +25,8 @@ fun NavGraphBuilder.myGamesGraph(
         val vm: MyGamesViewModel = viewModel(
             factory = MyGamesViewModel.Factory(
                 syncManager = appContainer.gameSyncManager,
-                settingsRepository = appContainer.userSettingsRepository
+                settingsRepository = appContainer.userSettingsRepository,
+                savedGameRepository = appContainer.savedGameRepository
             )
         )
         MyGamesScreen(

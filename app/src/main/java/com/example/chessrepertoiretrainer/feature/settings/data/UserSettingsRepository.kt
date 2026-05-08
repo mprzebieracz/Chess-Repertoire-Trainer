@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +28,9 @@ data class UserSettings(
     val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
     val boardTheme: BoardTheme = BoardTheme.CLASSIC,
     val useDynamicColors: Boolean = true,
-    val defaultOnlinePlatform: String = "lichess"
+    val defaultOnlinePlatform: String = "lichess",
+    val lichessLastSyncAt: Long = 0L,
+    val chessComLastSyncAt: Long = 0L
 )
 
 class UserSettingsRepository(private val context: Context) {
@@ -39,6 +42,8 @@ class UserSettingsRepository(private val context: Context) {
         val BOARD_THEME = stringPreferencesKey("board_theme")
         val USE_DYNAMIC_COLORS = booleanPreferencesKey("use_dynamic_colors")
         val DEFAULT_ONLINE_PLATFORM = stringPreferencesKey("default_online_platform")
+        val LICHESS_LAST_SYNC_AT = longPreferencesKey("lichess_last_sync_at")
+        val CHESSCOM_LAST_SYNC_AT = longPreferencesKey("chesscom_last_sync_at")
     }
 
     val settingsFlow: Flow<UserSettings> = context.settingsDataStore.data.catch { exception ->
@@ -59,7 +64,10 @@ class UserSettingsRepository(private val context: Context) {
                 runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
             } ?: BoardTheme.CLASSIC,
             useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
-            defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess")
+            defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess",
+            lichessLastSyncAt = prefs[Keys.LICHESS_LAST_SYNC_AT] ?: 0L,
+            chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L
+        )
     }
 
     suspend fun updateLichessUsername(username: String) {
@@ -95,6 +103,18 @@ class UserSettingsRepository(private val context: Context) {
     suspend fun updateDefaultOnlinePlatform(platform: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[Keys.DEFAULT_ONLINE_PLATFORM] = platform
+        }
+    }
+
+    suspend fun updateLichessLastSyncAt(timestamp: Long) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[Keys.LICHESS_LAST_SYNC_AT] = timestamp
+        }
+    }
+
+    suspend fun updateChessComLastSyncAt(timestamp: Long) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[Keys.CHESSCOM_LAST_SYNC_AT] = timestamp
         }
     }
 }

@@ -25,8 +25,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +80,8 @@ fun MyGamesScreen(
                 AccountButton(
                     platform = "Lichess",
                     username = uiState.lichessUsername,
+                    gameCount = uiState.lichessGameCount,
+                    lastSyncAt = uiState.lichessLastSyncAt,
                     onClick = { onOpenLichess(uiState.lichessUsername) }
                 )
             }
@@ -84,6 +90,8 @@ fun MyGamesScreen(
                 AccountButton(
                     platform = "Chess.com",
                     username = uiState.chessComUsername,
+                    gameCount = uiState.chessComGameCount,
+                    lastSyncAt = uiState.chessComLastSyncAt,
                     onClick = { onOpenChessCom(uiState.chessComUsername) }
                 )
             }
@@ -114,23 +122,55 @@ fun MyGamesScreen(
 private fun AccountButton(
     platform: String,
     username: String,
+    gameCount: Int,
+    lastSyncAt: Long,
     onClick: () -> Unit
 ) {
     Button(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(text = platform, style = MaterialTheme.typography.labelMedium)
-            Text(
-                text = username,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
-            )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = platform, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = username,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (gameCount > 0) "$gameCount games" else "No games synced",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
+                )
+                Text(
+                    text = formatLastSync(lastSyncAt),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
+                )
+            }
         }
+    }
+}
+
+private fun formatLastSync(timestamp: Long): String {
+    if (timestamp == 0L) return "Never synced"
+    val diff = System.currentTimeMillis() - timestamp
+    return when {
+        diff < 60_000L -> "Synced just now"
+        diff < 3_600_000L -> "Synced ${diff / 60_000}m ago"
+        diff < 86_400_000L -> "Synced ${diff / 3_600_000}h ago"
+        diff < 172_800_000L -> "Synced yesterday"
+        else -> "Synced ${SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(timestamp))}"
     }
 }
