@@ -40,6 +40,7 @@ class DefaultChessBoardController(
 
     override var pgnState by mutableStateOf("")
         private set
+    override val sanHistory: List<String> get() = fullSanHistory
 
     override var pendingPromotion by mutableStateOf<PendingPromotion?>(null)
         private set
@@ -140,6 +141,20 @@ class DefaultChessBoardController(
             board.doMove(nextMove)
             updateAfterNavigation()
         }
+    }
+
+    override fun navigateToMoveIndex(index: Int) {
+        val clamped = index.coerceIn(0, fullMoveHistory.size - 1)
+        while (currentPositionIndex > clamped) {
+            board.undoMove()
+            currentPositionIndex--
+        }
+        while (currentPositionIndex < clamped) {
+            currentPositionIndex++
+            board.doMove(fullMoveHistory[currentPositionIndex])
+        }
+        currentMoveIndex = currentPositionIndex
+        updateAfterNavigation()
     }
 
     private fun updateAfterNavigation() {

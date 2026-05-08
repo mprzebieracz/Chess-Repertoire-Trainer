@@ -34,8 +34,10 @@ interface ChessBoardController {
     fun onSquareClick(square: Square)
     fun onMove(move: Move)
     fun promotePendingMove(promotionPiece: Piece)
+    val sanHistory: List<String>
     fun navigateBack()
     fun navigateForward()
+    fun navigateToMoveIndex(index: Int)
     fun loadPositionFromFen(fen: String)
     fun resetBoard()
     fun flipBoard()

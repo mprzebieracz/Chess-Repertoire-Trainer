@@ -1,18 +1,25 @@
 package com.example.chessrepertoiretrainer.core.chess.ui
 
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -31,9 +38,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 
 @Composable
@@ -67,7 +76,11 @@ fun ChessScreenLayout(
         topContent()
 
         if (showPgnBar) {
-            PgnViewer(pgnText = chessCtrl.pgnState)
+            PgnViewer(
+                sanHistory = chessCtrl.sanHistory,
+                currentMoveIndex = chessCtrl.currentMoveIndex,
+                onMoveClick = { chessCtrl.navigateToMoveIndex(it) }
+            )
         }
 
         Box(
@@ -116,10 +129,14 @@ fun ScreenHeader(title: String) {
 }
 
 @Composable
-fun PgnViewer(pgnText: String) {
-    val scrollState = rememberScrollState()
-    LaunchedEffect(pgnText) {
-        scrollState.animateScrollTo(scrollState.maxValue)
+fun PgnViewer(
+    sanHistory: List<String>,
+    currentMoveIndex: Int,
+    onMoveClick: (Int) -> Unit
+) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(currentMoveIndex) {
+        if (currentMoveIndex >= 0) listState.animateScrollToItem(currentMoveIndex)
     }
     Card(
         modifier = Modifier
@@ -128,27 +145,52 @@ fun PgnViewer(pgnText: String) {
                 horizontal = ChessUiConstants.ScreenChrome.Pgn.horizontalPadding,
                 vertical = ChessUiConstants.ScreenChrome.Pgn.verticalPadding
             )
-            .height(ChessUiConstants.ScreenChrome.Pgn.height), colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ), shape = RoundedCornerShape(ChessUiConstants.ScreenChrome.Pgn.cornerRadius)
+            .height(ChessUiConstants.ScreenChrome.Pgn.height),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = RoundedCornerShape(ChessUiConstants.ScreenChrome.Pgn.cornerRadius)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .horizontalScroll(scrollState)
-                .padding(
-                    horizontal = ChessUiConstants.ScreenChrome.Pgn.textHorizontalPadding,
-                    vertical = ChessUiConstants.ScreenChrome.Pgn.textVerticalPadding
+        if (sanHistory.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+                Text(
+                    text = "Waiting for moves...",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = ChessUiConstants.ScreenChrome.Pgn.textFontSize,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = ChessUiConstants.ScreenChrome.Pgn.textHorizontalPadding)
                 )
-        ) {
-            Text(
-                text = pgnText.ifEmpty { "Waiting for moves..." },
-                fontFamily = FontFamily.Monospace,
-                fontSize = ChessUiConstants.ScreenChrome.Pgn.textFontSize,
-                maxLines = 1,
-                softWrap = false,
-                color = if (pgnText.isEmpty()) Color.Gray else MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            }
+        } else {
+            LazyRow(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                itemsIndexed(sanHistory) { index, san ->
+                    val isCurrent = index == currentMoveIndex
+                    val label = if (index % 2 == 0) "${index / 2 + 1}. $san" else san
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                if (isCurrent) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surface
+                            )
+                            .clickable { onMoveClick(index) }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            fontFamily = FontFamily.Monospace,
+                            fontSize = ChessUiConstants.ScreenChrome.Pgn.textFontSize,
+                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isCurrent) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }

@@ -60,7 +60,7 @@ internal object ChessUiConstants {
         object Pgn {
             val horizontalPadding = 16.dp
             val verticalPadding = 4.dp
-            val height = 40.dp
+            val height = 52.dp
             val cornerRadius = 8.dp
             val textHorizontalPadding = 12.dp
             val textVerticalPadding = 8.dp
