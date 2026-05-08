@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -259,27 +258,47 @@ private fun LearnChapterBottomBar(
     onNextMove: () -> Unit,
     onSkipTrainingForCurrentLine: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
+    val isComplete = uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE
+    val lineId = uiState.currentLineId
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .horizontalScroll(scrollState), horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
-        if (uiState.phase != LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
-            Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
-        }
+        OutlinedButton(
+            onClick = onPreviousMove,
+            enabled = !uiState.isAtLineStart,
+            modifier = Modifier.weight(1f)
+        ) { Text("Back") }
 
-        if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
-            val lineId = uiState.currentLineId
-            Button(
-                onClick = { if (lineId != null) onStartLineTraining(lineId) },
-                enabled = lineId != null
-            ) {
-                Text("Train line")
+        Button(
+            onClick = onNextMove,
+            enabled = !uiState.isAtLineEnd && !isComplete,
+            modifier = Modifier.weight(1f)
+        ) { Text("Next") }
+
+        // Third slot: empty until line complete, then shows train/skip
+        Box(modifier = Modifier.weight(1f)) {
+            if (isComplete) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = { if (lineId != null) onStartLineTraining(lineId) },
+                        enabled = lineId != null,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Train", maxLines = 1) }
+                    TextButton(
+                        onClick = onSkipTrainingForCurrentLine,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { Text("Skip", maxLines = 1) }
+                }
             }
-            TextButton(onClick = onSkipTrainingForCurrentLine) { Text("Skip training") }
         }
     }
 }

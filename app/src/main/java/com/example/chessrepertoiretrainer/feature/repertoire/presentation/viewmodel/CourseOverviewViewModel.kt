@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -47,10 +48,29 @@ class CourseOverviewViewModel(
             initialValue = emptyList()
         )
 
+    private val _showChapterSelection = MutableStateFlow(false)
+    val showChapterSelection: StateFlow<Boolean> = _showChapterSelection.asStateFlow()
+
+    private val _selectedChapterIds = MutableStateFlow<Set<Int>>(emptySet())
+    val selectedChapterIds: StateFlow<Set<Int>> = _selectedChapterIds.asStateFlow()
+
     init {
         viewModelScope.launch {
             _repertoire.value = repertoireRepository.getRepertoireById(repertoireId)
         }
+    }
+
+    fun openChapterSelection() {
+        _selectedChapterIds.value = emptySet()
+        _showChapterSelection.value = true
+    }
+
+    fun dismissChapterSelection() {
+        _showChapterSelection.value = false
+    }
+
+    fun toggleChapterSelection(chapterId: Int) {
+        _selectedChapterIds.update { if (chapterId in it) it - chapterId else it + chapterId }
     }
 
     class Factory(private val repertoireRepository: RepertoireRepository) :

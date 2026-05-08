@@ -24,5 +24,6 @@ data class Line(
     val isLearned: Boolean = false,
     val learnedAt: Long? = null,
     val timesTrained: Int = 0,
-    val lastTrainedAt: Long? = null
+    val lastTrainedAt: Long? = null,
+    val sortOrder: Int = 0
 )

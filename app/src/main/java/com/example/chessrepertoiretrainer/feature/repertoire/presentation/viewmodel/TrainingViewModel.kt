@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.app.AppContainer
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
@@ -35,7 +36,8 @@ data class TrainingUiState(
 
 class TrainingViewModel(
     private val repertoireRepository: RepertoireRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val multiChapterIds: List<Int>? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TrainingUiState())
@@ -69,7 +71,22 @@ class TrainingViewModel(
             return
         }
 
+        if (multiChapterIds != null) {
+            loadMultiChapterSession(multiChapterIds)
+            return
+        }
+
         observeSessionLines()
+    }
+
+    private suspend fun loadMultiChapterSession(chapterIds: List<Int>) {
+        val allLines = repertoireRepository.getLinesForChapters(chapterIds)
+        if (allLines.isEmpty()) {
+            showEmptySession()
+            return
+        }
+        lines = allLines.shuffled()
+        startLine(0)
     }
 
     private suspend fun loadSingleLineSession(lineId: Int) {
@@ -113,7 +130,7 @@ class TrainingViewModel(
 
     private fun prepareSessionLines(loadedLines: List<Line>): List<Line> {
         // Chapter-based training should feel less repetitive; review mode keeps DAO order.
-        return if (chapterId != null) loadedLines.shuffled() else loadedLines
+        return if (chapterId != null || multiChapterIds != null) loadedLines.shuffled() else loadedLines
     }
 
     private fun updateLoadedSessionSize() {
@@ -300,11 +317,14 @@ class TrainingViewModel(
         val moves: List<LineMove>
     )
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repertoireRepository: RepertoireRepository,
+        private val appContainer: AppContainer? = null
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()
-            return TrainingViewModel(repertoireRepository, handle) as T
+            return TrainingViewModel(repertoireRepository, handle, appContainer?.selectedChapterIds) as T
         }
     }
 }

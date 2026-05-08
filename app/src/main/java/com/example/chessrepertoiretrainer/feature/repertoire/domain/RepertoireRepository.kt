@@ -11,6 +11,7 @@ interface RepertoireRepository {
     fun getAllRepertoires(): Flow<List<Repertoire>>
     suspend fun getRepertoireById(id: Int): Repertoire?
     suspend fun insertRepertoire(repertoire: Repertoire): Long
+    suspend fun updateRepertoire(repertoire: Repertoire)
     suspend fun deleteRepertoire(repertoire: Repertoire)
 
     fun getChaptersForRepertoire(repertoireId: Int): Flow<List<Chapter>>
@@ -32,7 +33,11 @@ interface RepertoireRepository {
 
     fun getMovesForLine(lineId: Int): Flow<List<LineMove>>
     suspend fun insertLineMove(move: LineMove): Long
+    suspend fun updateLineMove(move: LineMove)
     suspend fun deleteLineMove(move: LineMove)
+
+    suspend fun updateChapter(chapter: Chapter)
+    suspend fun getLinesForChapters(chapterIds: List<Int>): List<Line>
 
     suspend fun importPgnToChapter(pgnString: String, chapterId: Int)
 }

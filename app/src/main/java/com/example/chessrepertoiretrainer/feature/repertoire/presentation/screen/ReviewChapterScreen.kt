@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -24,25 +26,20 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessboardUI
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.ReviewChapterViewModel
 
-/**
- * Simple chapter review screen: lets you step through moves of each line and
- * switch between lines (previous/next) without affecting learning progress.
- */
 @Composable
 fun ReviewChapterScreen(
     viewModel: ReviewChapterViewModel, onBackClick: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ReviewChapterScaffold(
         uiState = uiState,
         chessCtrl = viewModel.chessController,
@@ -69,35 +66,31 @@ private fun ReviewChapterScaffold(
     Scaffold(
         bottomBar = {
             if (!uiState.isLoading && !uiState.hasNoLines) {
-                ReviewChapterBottomBar(
+                ReviewMoveBottomBar(
                     uiState = uiState,
                     onPreviousMove = onPreviousMove,
                     onNextMove = onNextMove,
-                    onRestartCurrentLine = onRestartCurrentLine,
-                    onGoToPreviousLine = onGoToPreviousLine,
-                    onGoToNextLine = onGoToNextLine
+                    onRestartCurrentLine = onRestartCurrentLine
                 )
             }
-        }) { innerPadding ->
+        }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            ReviewChapterTopSection(uiState = uiState, onBackClick = onBackClick)
+            ReviewChapterTopSection(
+                uiState = uiState,
+                onBackClick = onBackClick,
+                onGoToPreviousLine = onGoToPreviousLine,
+                onGoToNextLine = onGoToNextLine
+            )
 
             when {
                 uiState.isLoading -> ReviewChapterLoadingState()
                 uiState.hasNoLines -> ReviewChapterEmptyState(uiState = uiState)
-                else -> ReviewChapterBody(
-                    uiState = uiState,
-                    chessCtrl = chessCtrl,
-                    onPreviousMove = onPreviousMove,
-                    onNextMove = onNextMove,
-                    onRestartCurrentLine = onRestartCurrentLine,
-                    onGoToPreviousLine = onGoToPreviousLine,
-                    onGoToNextLine = onGoToNextLine
-                )
+                else -> ReviewChapterBody(uiState = uiState, chessCtrl = chessCtrl)
             }
         }
     }
@@ -105,26 +98,50 @@ private fun ReviewChapterScaffold(
 
 @Composable
 private fun ReviewChapterTopSection(
-    uiState: ReviewChapterViewModel.UiState, onBackClick: () -> Unit
+    uiState: ReviewChapterViewModel.UiState,
+    onBackClick: () -> Unit,
+    onGoToPreviousLine: () -> Unit,
+    onGoToNextLine: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        ReviewChapterBackRow(onBackClick = onBackClick)
-        ReviewChapterHeader(uiState = uiState)
-    }
-}
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Back button
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+            Spacer(Modifier.width(4.dp))
+            Text(text = "Back", style = MaterialTheme.typography.bodyMedium)
 
-@Composable
-private fun ReviewChapterBackRow(onBackClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = onBackClick) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            Spacer(Modifier.weight(1f))
+
+            // Line navigation — top right
+            IconButton(onClick = onGoToPreviousLine) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous line"
+                )
+            }
+            Text(
+                text = if (uiState.totalLines > 0) "${uiState.currentLineNumber}/${uiState.totalLines}"
+                       else "",
+                style = MaterialTheme.typography.bodySmall
+            )
+            IconButton(onClick = onGoToNextLine) {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next line"
+                )
+            }
         }
-        Spacer(Modifier.width(8.dp))
-        Text(text = "Back", style = MaterialTheme.typography.bodyMedium)
+
+        ReviewChapterHeader(uiState = uiState)
     }
 }
 
@@ -132,24 +149,12 @@ private fun ReviewChapterBackRow(onBackClick: () -> Unit) {
 private fun ReviewChapterHeader(uiState: ReviewChapterViewModel.UiState) {
     if (uiState.hasNoLines) {
         Text("No lines in this chapter yet.", style = MaterialTheme.typography.bodyMedium)
-    }
-    else if (!uiState.isLoading && uiState.totalLines > 0) {
-        Text(
-            text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+    } else if (!uiState.isLoading) {
         uiState.currentLineName?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = it, style = MaterialTheme.typography.bodyMedium)
         }
         uiState.myColor?.let {
-            Text(
-                text = "You play $it",
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text(text = "You play $it", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -184,12 +189,7 @@ private fun ReviewChapterEmptyState(uiState: ReviewChapterViewModel.UiState) {
 @Composable
 private fun ReviewChapterBody(
     uiState: ReviewChapterViewModel.UiState,
-    chessCtrl: ChessBoardController,
-    onPreviousMove: () -> Unit,
-    onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit,
-    onGoToPreviousLine: () -> Unit,
-    onGoToNextLine: () -> Unit
+    chessCtrl: ChessBoardController
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Box(modifier = Modifier
@@ -197,43 +197,32 @@ private fun ReviewChapterBody(
             .padding(horizontal = 16.dp, vertical = 8.dp)) {
             ChessboardUI(state = chessCtrl)
         }
-
-        ReviewChapterBottomSection(uiState = uiState)
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)) {
+            ReviewChapterCommentCard(uiState = uiState)
+        }
     }
 }
 
 @Composable
-private fun ReviewChapterBottomSection(
-    uiState: ReviewChapterViewModel.UiState
-) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 8.dp)) {
-        ReviewChapterCommentCard(uiState = uiState)
-    }
-}
-
-@Composable
-private fun ReviewChapterBottomBar(
+private fun ReviewMoveBottomBar(
     uiState: ReviewChapterViewModel.UiState,
     onPreviousMove: () -> Unit,
     onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit,
-    onGoToPreviousLine: () -> Unit,
-    onGoToNextLine: () -> Unit
+    onRestartCurrentLine: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .horizontalScroll(scrollState), horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .horizontalScroll(scrollState),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
         Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
         OutlinedButton(onClick = onRestartCurrentLine) { Text("Restart") }
-        OutlinedButton(onClick = onGoToPreviousLine) { Text("Prev line") }
-        OutlinedButton(onClick = onGoToNextLine) { Text("Next line") }
     }
 }
 
@@ -262,34 +251,9 @@ private fun ReviewChapterCommentCard(uiState: ReviewChapterViewModel.UiState) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-            else {
+            } else {
                 Text(text = comment, style = MaterialTheme.typography.bodyMedium)
             }
         }
-    }
-}
-
-@Composable
-private fun ReviewChapterMoveNavigationRow(
-    uiState: ReviewChapterViewModel.UiState,
-    onPreviousMove: () -> Unit,
-    onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit
-) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
-        Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
-        OutlinedButton(onClick = onRestartCurrentLine) { Text("Restart") }
-    }
-}
-
-@Composable
-private fun ReviewChapterLineNavigationRow(
-    onGoToPreviousLine: () -> Unit, onGoToNextLine: () -> Unit
-) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onGoToPreviousLine) { Text("Previous line") }
-        OutlinedButton(onClick = onGoToNextLine) { Text("Next line") }
     }
 }

@@ -23,13 +23,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class GameDetailViewModel(
-    val game: SavedGame,
-    private val analyzer: RepertoireComplianceAnalyzer
+    val game: SavedGame, private val analyzer: RepertoireComplianceAnalyzer
 ) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
 
-    private val gameSanMoves: List<String>
+    private val gameSanMoves: List<String> = PGNExtractor.extractSanMovesFromPgn(game.pgn)
 
     private val _complianceEnabled = MutableStateFlow(false)
     val complianceEnabled: StateFlow<Boolean> = _complianceEnabled.asStateFlow()
@@ -42,14 +41,11 @@ class GameDetailViewModel(
     private var cachedIndex: ComplianceIndex? = null
 
     val currentAnnotation: StateFlow<MoveAnnotation?> = combine(
-        _annotations,
-        snapshotFlow { chessController.currentMoveIndex }
-    ) { annotations, idx ->
+        _annotations, snapshotFlow { chessController.currentMoveIndex }) { annotations, idx ->
         annotations.getOrNull(idx)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
-        gameSanMoves = PGNExtractor.extractSanMovesFromPgn(game.pgn)
         loadGame()
     }
 
@@ -72,7 +68,8 @@ class GameDetailViewModel(
         _complianceEnabled.value = enabling
         if (enabling) {
             viewModelScope.launch { loadAnnotations() }
-        } else {
+        }
+        else {
             _annotations.value = emptyList()
         }
     }
@@ -86,7 +83,8 @@ class GameDetailViewModel(
                 _annotations.value = withContext(Dispatchers.Default) {
                     analyzer.annotate(gameSanMoves, game.isPlayerWhite, index)
                 }
-            } finally {
+            }
+            finally {
                 _isLoadingCompliance.value = false
             }
         }
@@ -95,18 +93,19 @@ class GameDetailViewModel(
     private suspend fun loadAnnotations() {
         _isLoadingCompliance.value = true
         try {
-            val index = cachedIndex ?: analyzer.buildIndex(game.isPlayerWhite).also { cachedIndex = it }
+            val index =
+                cachedIndex ?: analyzer.buildIndex(game.isPlayerWhite).also { cachedIndex = it }
             _annotations.value = withContext(Dispatchers.Default) {
                 analyzer.annotate(gameSanMoves, game.isPlayerWhite, index)
             }
-        } finally {
+        }
+        finally {
             _isLoadingCompliance.value = false
         }
     }
 
     class Factory(
-        private val game: SavedGame,
-        private val analyzer: RepertoireComplianceAnalyzer
+        private val game: SavedGame, private val analyzer: RepertoireComplianceAnalyzer
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

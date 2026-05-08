@@ -54,7 +54,7 @@ interface RepertoireDao {
     suspend fun deleteChapter(chapter: Chapter)
 
     // Line
-    @Query("SELECT * FROM lines WHERE chapterId = :chapterId")
+    @Query("SELECT * FROM lines WHERE chapterId = :chapterId ORDER BY sortOrder ASC")
     fun getLinesForChapter(chapterId: Int): Flow<List<Line>>
 
     @Query("SELECT COUNT(*) FROM lines WHERE chapterId = :chapterId")

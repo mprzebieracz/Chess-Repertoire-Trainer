@@ -57,6 +57,9 @@ dependencies {
     // Chess Logic
     implementation(libs.chesslib)
 
+    // Drag-to-reorder
+    implementation(libs.reorderable)
+
         // Settings / preferences
         implementation(libs.androidx.datastore.preferences)
 

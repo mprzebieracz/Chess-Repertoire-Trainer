@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.chessrepertoiretrainer.core.database.dao.PuzzleDao
 import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.core.database.dao.RepertoirePositionIndexDao
@@ -25,7 +27,7 @@ import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
         Puzzle::class,
         SavedGame::class,
         RepertoirePositionIndex::class,
-    ], version = 17, exportSchema = false
+    ], version = 18, exportSchema = false
 )
 abstract class ChessDatabase : RoomDatabase() {
 
@@ -36,6 +38,12 @@ abstract class ChessDatabase : RoomDatabase() {
 
     companion object {
 
+        private val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE lines ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         @Volatile
         private var INSTANCE: ChessDatabase? = null
 
@@ -43,7 +51,9 @@ abstract class ChessDatabase : RoomDatabase() {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext, ChessDatabase::class.java, "chess_database"
-                ).fallbackToDestructiveMigration(false).build()
+                ).fallbackToDestructiveMigration(false)
+                    .addMigrations(MIGRATION_17_18)
+                    .build()
                 INSTANCE = instance
                 return instance
             }

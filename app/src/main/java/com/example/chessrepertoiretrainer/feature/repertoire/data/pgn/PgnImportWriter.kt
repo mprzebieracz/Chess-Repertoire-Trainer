@@ -13,6 +13,7 @@ class PgnImportWriter(
         lineName: String,
         moves: List<PgnLineResolver.ResolvedMove>
     ): Int {
+        val existingCount = repertoireDao.getLineCountForChapter(chapterId)
         val lineId = repertoireDao.insertLine(
             Line(
                 chapterId = chapterId,
@@ -20,7 +21,8 @@ class PgnImportWriter(
                 nextReviewDate = System.currentTimeMillis(),
                 interval = 0,
                 easeFactor = 2.5f,
-                consecutiveCorrect = 0
+                consecutiveCorrect = 0,
+                sortOrder = existingCount
             )
         ).toInt()
 
@@ -40,4 +42,3 @@ class PgnImportWriter(
         return lineId
     }
 }
-

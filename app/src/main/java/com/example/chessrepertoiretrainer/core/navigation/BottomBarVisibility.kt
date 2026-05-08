@@ -9,6 +9,9 @@ fun shouldShowBottomBar(destination: NavDestination?): Boolean {
         route.startsWith(Screen.ChapterLearn.route.substringBefore("/")) -> false
         route.startsWith(Screen.ChapterReview.route.substringBefore("/")) -> false
         route.startsWith(Screen.LineTraining.route.substringBefore("/")) -> false
+        route.startsWith(Screen.EditCourse.route.substringBefore("/")) -> false
+        route.startsWith(Screen.EditChapter.route.substringBefore("/")) -> false
+        route == Screen.MultiChapterTraining.route -> false
         route == Screen.Analysis.route -> false
         route == Screen.PuzzleTraining.route -> false
         route.startsWith(Screen.OpeningTree.route.substringBefore("/")) -> false

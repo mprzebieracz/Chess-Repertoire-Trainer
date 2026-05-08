@@ -36,4 +36,5 @@ class AppContainer(context: Context) {
 
     var latestOpeningTree: OpeningTree? = null
     var latestGame: SavedGame? = null
+    var selectedChapterIds: List<Int>? = null
 }

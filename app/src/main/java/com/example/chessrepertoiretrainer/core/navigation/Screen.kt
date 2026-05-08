@@ -22,14 +22,6 @@ sealed class Screen(
         fun createRoute(repertoireId: Int) = "course_overview/$repertoireId"
     }
 
-    object Chapters : Screen("chapters/{repertoireId}") {
-        fun createRoute(repertoireId: Int) = "chapters/$repertoireId"
-    }
-
-    object Lines : Screen("lines/{chapterId}") {
-        fun createRoute(chapterId: Int) = "lines/$chapterId"
-    }
-
     object ChapterLearn : Screen("chapter_learn/{chapterId}") {
         fun createRoute(chapterId: Int) = "chapter_learn/$chapterId"
     }
@@ -65,4 +57,14 @@ sealed class Screen(
     object GamesList : Screen("games_list")
 
     object OpeningTree : Screen("opening_tree")
+
+    object EditCourse : Screen("edit_course/{repertoireId}") {
+        fun createRoute(repertoireId: Int) = "edit_course/$repertoireId"
+    }
+
+    object EditChapter : Screen("edit_chapter/{chapterId}") {
+        fun createRoute(chapterId: Int) = "edit_chapter/$chapterId"
+    }
+
+    object MultiChapterTraining : Screen("multi_chapter_training")
 }

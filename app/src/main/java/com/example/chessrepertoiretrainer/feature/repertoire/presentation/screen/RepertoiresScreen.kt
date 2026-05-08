@@ -1,11 +1,11 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,12 +14,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -33,14 +36,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.CourseProgress
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.RepertoiresViewModel
@@ -51,29 +56,54 @@ fun RepertoiresScreen(
     viewModel: RepertoiresViewModel,
     onNavigateToChapters: (Int) -> Unit
 ) {
-    val courses by viewModel.courses.collectAsState()
-    val isRebuildingIndex by viewModel.isRebuildingIndex.collectAsState()
-    val showAddDialog = remember { mutableStateOf(false) }
+    val courses by viewModel.courses.collectAsStateWithLifecycle()
+    val isRebuildingIndex by viewModel.isRebuildingIndex.collectAsStateWithLifecycle()
+    var showAddDialog by remember { mutableStateOf(false) }
 
-    RepertoiresScaffold(
-        onAddClick = { showAddDialog.value = true },
-        isRebuildingIndex = isRebuildingIndex,
-        onRebuildIndex = viewModel::rebuildComplianceIndex
+    Scaffold(
+        topBar = {
+            RepertoiresTopBar(
+                isRebuildingIndex = isRebuildingIndex,
+                onRebuildIndex = viewModel::rebuildComplianceIndex
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAddDialog = true }) {
+                Icon(AppIcons.AddRepertoire, contentDescription = "Add course")
+            }
+        }
     ) { paddingValues ->
-        RepertoiresContent(
-            courses = courses,
-            paddingValues = paddingValues,
-            onNavigateToChapters = onNavigateToChapters,
-            onDeleteCourse = { viewModel.deleteRepertoire(it) }
-        )
+        if (courses.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No courses yet. Tap + to add one.")
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                items(courses) { course ->
+                    RepertoireCard(
+                        course = course,
+                        onClick = { onNavigateToChapters(course.repertoire.id) }
+                    )
+                }
+            }
+        }
     }
 
-    if (showAddDialog.value) {
+    if (showAddDialog) {
         AddRepertoireDialog(
-            onDismiss = { showAddDialog.value = false },
+            onDismiss = { showAddDialog = false },
             onConfirm = { name, color ->
                 viewModel.addRepertoire(name, color)
-                showAddDialog.value = false
+                showAddDialog = false
             }
         )
     }
@@ -81,95 +111,53 @@ fun RepertoiresScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RepertoiresScaffold(
-    onAddClick: () -> Unit,
+private fun RepertoiresTopBar(
     isRebuildingIndex: Boolean,
-    onRebuildIndex: () -> Unit,
-    content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
+    onRebuildIndex: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Your Courses") },
-                actions = {
-                    if (isRebuildingIndex) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 4.dp), strokeWidth = 2.dp)
-                    } else {
-                        IconButton(onClick = onRebuildIndex) {
-                            Icon(Icons.Filled.Refresh, contentDescription = "Rebuild compliance index")
+    var menuExpanded by remember { mutableStateOf(false) }
+    TopAppBar(
+        title = { Text("Your Courses") },
+        actions = {
+            IconButton(onClick = { menuExpanded = true }) {
+                Icon(Icons.Default.MoreVert, contentDescription = "Options")
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { menuExpanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = {
+                        if (isRebuildingIndex) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Text("Rebuilding…")
+                            }
+                        } else {
+                            Text("Rebuild Compliance Index")
                         }
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
-                Icon(AppIcons.AddRepertoire, contentDescription = "Add course")
+                    },
+                    onClick = {
+                        menuExpanded = false
+                        onRebuildIndex()
+                    },
+                    enabled = !isRebuildingIndex
+                )
             }
         }
-    ) { paddingValues ->
-        content(paddingValues)
-    }
-}
-
-@Composable
-private fun RepertoiresContent(
-    courses: List<CourseProgress>,
-    paddingValues: androidx.compose.foundation.layout.PaddingValues,
-    onNavigateToChapters: (Int) -> Unit,
-    onDeleteCourse: (com.example.chessrepertoiretrainer.core.database.entity.Repertoire) -> Unit
-) {
-    if (courses.isEmpty()) {
-        RepertoiresEmptyState(paddingValues = paddingValues)
-    } else {
-        RepertoiresList(
-            courses = courses,
-            paddingValues = paddingValues,
-            onNavigateToChapters = onNavigateToChapters,
-            onDeleteCourse = onDeleteCourse
-        )
-    }
-}
-
-@Composable
-private fun RepertoiresEmptyState(paddingValues: androidx.compose.foundation.layout.PaddingValues) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("No courses yet. Tap + to add one.")
-    }
-}
-
-@Composable
-private fun RepertoiresList(
-    courses: List<CourseProgress>,
-    paddingValues: androidx.compose.foundation.layout.PaddingValues,
-    onNavigateToChapters: (Int) -> Unit,
-    onDeleteCourse: (com.example.chessrepertoiretrainer.core.database.entity.Repertoire) -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-    ) {
-        items(courses) { course ->
-            RepertoireCard(
-                course = course,
-                onClick = { onNavigateToChapters(course.repertoire.id) },
-                onDelete = { onDeleteCourse(course.repertoire) }
-            )
-        }
-    }
+    )
 }
 
 @Composable
 private fun RepertoireCard(
     course: CourseProgress,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -177,35 +165,34 @@ private fun RepertoireCard(
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .clickable(onClick = onClick)
     ) {
-        Row(
+        RepertoireCardContent(
+            course = course,
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            RepertoireCardContent(course = course)
-            RepertoireDeleteButton(onDelete = onDelete)
-        }
+                .fillMaxWidth()
+        )
     }
 }
 
 @Composable
-private fun RowScope.RepertoireCardContent(course: CourseProgress) {
-    Column(modifier = Modifier.weight(1f)) {
-        Text(
-            text = course.repertoire.name,
-            style = MaterialTheme.typography.titleLarge
-        )
-        Text(
-            text = "Side: ${course.repertoire.color}",
-            style = MaterialTheme.typography.bodyMedium
-        )
+private fun RepertoireCardContent(course: CourseProgress, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(text = course.repertoire.name, style = MaterialTheme.typography.titleLarge)
+            ColorBadge(color = course.repertoire.color)
+        }
 
         val total = course.totalLines
         val learned = course.learnedLines
         if (total > 0) {
-            CourseProgressText(learned = learned, total = total)
+            val percent = (learned * 100 / total)
+            Text(
+                text = "$learned / $total lines learned ($percent%)",
+                style = MaterialTheme.typography.bodySmall
+            )
             LinearProgressIndicator(
                 progress = { course.learnedFraction },
                 modifier = Modifier
@@ -213,30 +200,27 @@ private fun RowScope.RepertoireCardContent(course: CourseProgress) {
                     .padding(top = 4.dp)
             )
         } else {
-            Text(
-                text = "No lines yet",
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text(text = "No lines yet", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
-private fun CourseProgressText(learned: Int, total: Int) {
-    val percent = (learned * 100 / total)
-    Text(
-        text = "$learned / $total lines learned ($percent%)",
-        style = MaterialTheme.typography.bodySmall
-    )
-}
-
-@Composable
-private fun RepertoireDeleteButton(onDelete: () -> Unit) {
-    IconButton(onClick = onDelete) {
-        Icon(
-            AppIcons.DeleteRepertoire,
-            contentDescription = "Delete",
-            tint = MaterialTheme.colorScheme.error
+private fun ColorBadge(color: String) {
+    val isWhite = color.equals("White", ignoreCase = true)
+    val bgColor = if (isWhite) Color(0xFFF5F5F5) else Color(0xFF212121)
+    val textColor = if (isWhite) Color(0xFF212121) else Color(0xFFF5F5F5)
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(bgColor)
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = color,
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor
         )
     }
 }
@@ -254,12 +238,32 @@ private fun AddRepertoireDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add New Repertoire") },
         text = {
-            AddRepertoireDialogContent(
-                name = name,
-                selectedColor = selectedColor,
-                onNameChange = { name = it },
-                onSelectedColorChange = { selectedColor = it }
-            )
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Repertoire Name (e.g. Sicilian)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Select Side:", style = MaterialTheme.typography.labelLarge)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedColor == "White",
+                        onClick = { selectedColor = "White" },
+                        label = { Text("White") }
+                    )
+                    FilterChip(
+                        selected = selectedColor == "Black",
+                        onClick = { selectedColor = "Black" },
+                        label = { Text("Black") }
+                    )
+                }
+            }
         },
         confirmButton = {
             Button(onClick = { if (name.isNotBlank()) onConfirm(name, selectedColor) }) {
@@ -267,73 +271,7 @@ private fun AddRepertoireDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
-    )
-}
-
-@Composable
-private fun AddRepertoireDialogContent(
-    name: String,
-    selectedColor: String,
-    onNameChange: (String) -> Unit,
-    onSelectedColorChange: (String) -> Unit
-) {
-    Column {
-        AddRepertoireNameField(name = name, onNameChange = onNameChange)
-        Spacer(modifier = Modifier.height(16.dp))
-        AddRepertoireColorSelector(
-            selectedColor = selectedColor,
-            onSelectedColorChange = onSelectedColorChange
-        )
-    }
-}
-
-@Composable
-private fun AddRepertoireNameField(name: String, onNameChange: (String) -> Unit) {
-    OutlinedTextField(
-        value = name,
-        onValueChange = onNameChange,
-        label = { Text("Repertoire Name (e.g. Sicilian)") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
-    )
-}
-
-@Composable
-private fun AddRepertoireColorSelector(
-    selectedColor: String,
-    onSelectedColorChange: (String) -> Unit
-) {
-    Text("Select Side:", style = MaterialTheme.typography.labelLarge)
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        ColorChip(
-            label = "White",
-            selected = selectedColor == "White",
-            onClick = { onSelectedColorChange("White") }
-        )
-        ColorChip(
-            label = "Black",
-            selected = selectedColor == "Black",
-            onClick = { onSelectedColorChange("Black") }
-        )
-    }
-}
-
-@Composable
-private fun ColorChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    FilterChip(
-        selected = selected,
-        onClick = onClick,
-        label = { Text(label) }
     )
 }
