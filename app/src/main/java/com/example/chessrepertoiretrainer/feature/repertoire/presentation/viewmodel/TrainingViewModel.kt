@@ -24,6 +24,7 @@ data class TrainingUiState(val isLoading: Boolean = true,
                            val isSessionEmpty: Boolean = false,
                            val isSessionComplete: Boolean = false,
                            val currentLineName: String? = null,
+                           val currentChapterName: String? = null,
                            val currentLineNumber: Int = 0,
                            val totalLines: Int = 0,
                            val myColor: String? = null,
@@ -204,7 +205,7 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
 
         configureMoveTrainer()
         configureBoardForCurrentSide()
-        updateLineUi(line = line, colorString = lineContext.colorName, index = index)
+        updateLineUi(line = line, colorString = lineContext.colorName, index = index, chapterName = lineContext.chapterName)
 
         if (currentLineMoves.isEmpty()) {
             finishCurrentLine()
@@ -221,7 +222,7 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
         val side = colorString.toSide()
         val moves = repertoireRepository.getMovesForLine(line.id).first()
 
-        return LineContext(colorName = colorString, side = side, moves = moves)
+        return LineContext(colorName = colorString, side = side, moves = moves, chapterName = chapter?.name)
     }
 
     private fun configureMoveTrainer() {
@@ -235,12 +236,13 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
         chessController.orientForSide(mySide)
     }
 
-    private fun updateLineUi(line: Line, colorString: String, index: Int) {
+    private fun updateLineUi(line: Line, colorString: String, index: Int, chapterName: String?) {
         _uiState.update {
             it.copy(isLoading = false,
                     isSessionEmpty = false,
                     isSessionComplete = false,
                     currentLineName = line.name,
+                    currentChapterName = chapterName,
                     currentLineNumber = index + 1,
                     totalLines = lines.size,
                     myColor = colorString,
@@ -250,6 +252,15 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
                     isWaitingForUserMove = false,
                     statusMessage = null)
         }
+    }
+
+    fun showHint() {
+        val sq = moveTrainer.computeHintSquare() ?: return
+        chessController.markedSquare = sq
+    }
+
+    fun showSolution() {
+        viewModelScope.launch { moveTrainer.playSolutionStep() }
     }
 
     private suspend fun autoPlayOpeningReplies() {
@@ -286,7 +297,7 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
         }
     }
 
-    private data class LineContext(val colorName: String, val side: Side, val moves: List<LineMove>)
+    private data class LineContext(val colorName: String, val side: Side, val moves: List<LineMove>, val chapterName: String?)
 
     class Factory(private val repertoireRepository: RepertoireRepository,
                   private val appContainer: AppContainer? = null) : ViewModelProvider.Factory {

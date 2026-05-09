@@ -107,6 +107,10 @@ fun NavGraphBuilder.repertoireGraph(navController: NavHostController,
                            },
                            onStartLineTraining = {
                                navController.navigate(Screen.LineTraining.createRoute(it))
+                           },
+                           onOpenInAnalysis = { fen ->
+                               appContainer.analysisStartFen = fen
+                               navController.navigate(Screen.Analysis.route)
                            })
     }
 

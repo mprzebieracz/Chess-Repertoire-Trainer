@@ -1,29 +1,26 @@
 package com.example.chessrepertoiretrainer.feature.analysis
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.chessrepertoiretrainer.core.chess.ui.BoardBottomBar
+import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
-import com.example.chessrepertoiretrainer.core.chess.ui.EnginePanel
+import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
+import com.example.chessrepertoiretrainer.core.chess.ui.MoveNavControls
+import com.example.chessrepertoiretrainer.core.chess.ui.PgnViewer
 
 @Composable
 fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
@@ -31,62 +28,73 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
     val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
+    val chessCtrl = viewModel.chessController
 
-    Scaffold(bottomBar = {
-        Column {
-            engineError?.let {
-                Text(text = it,
-                     style = MaterialTheme.typography.labelSmall,
-                     color = MaterialTheme.colorScheme.error,
-                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
+    ChessScreenLayout(
+        chessCtrl = chessCtrl,
+        topBar = {
+            ChessTopBar(
+                title = "Analysis",
+                onBackClick = onBackClick,
+                actions = {
+                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                },
+            )
+        },
+        engineSection = {
+            if (!engineError.isNullOrBlank()) {
+                Text(
+                    text = engineError!!,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                )
             }
-            BoardBottomBar(chessCtrl = viewModel.chessController)
-        }
-    }) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-            ChessScreenLayout(title = "Analysis",
-                              chessCtrl = viewModel.chessController,
-                              showNavigationControls = false,
-                              showBoardActionButtons = false,
-                              evaluationBarFraction = if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction
-                                  ?: 0.5f)
-                              else null,
-                              titleEndContent = {
-                                  EngineToggleButton(isEnabled = isEngineEnabled,
-                                                     onClick = viewModel::toggleEngine)
-                              },
-                              topContent = { AnalysisTopBar(onBackClick = onBackClick) },
-                              midContent = {
-                                  if (isEngineEnabled) {
-                                      EnginePanel(analysis = engineAnalysis,
-                                                  searchState = engineSearchState,
-                                                  onDeeperClick = viewModel::analyzeDeeper)
-                                  }
-                              })
-        }
-    }
+            if (isEngineEnabled) {
+                EngineSection(
+                    analysis = engineAnalysis,
+                    searchState = engineSearchState,
+                    isFlipped = chessCtrl.isFlipped,
+                    onDeeperClick = viewModel::analyzeDeeper,
+                )
+            }
+        },
+        contentBar = {
+            PgnViewer(
+                sanHistory = chessCtrl.sanHistory,
+                currentMoveIndex = chessCtrl.currentMoveIndex,
+                onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
+                modifier = Modifier.fillMaxSize(),
+            )
+        },
+        bottomBar = {
+            ChessBottomBar(
+                startContent = {
+                    OutlinedButton(onClick = { chessCtrl.flipBoard() }) { Text("Flip") }
+                    OutlinedButton(
+                        onClick = { chessCtrl.resetBoard() },
+                        modifier = Modifier.padding(start = 8.dp),
+                    ) { Text("Reset") }
+                },
+                endContent = {
+                    MoveNavControls(
+                        onBack = { chessCtrl.navigateBack() },
+                        onForward = { chessCtrl.navigateForward() },
+                    )
+                },
+            )
+        },
+    )
 }
 
 @Composable
 fun EngineToggleButton(isEnabled: Boolean, onClick: () -> Unit) {
     IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-        Icon(imageVector = Icons.Filled.Search,
-             contentDescription = if (isEnabled) "Disable engine" else "Enable engine",
-             tint = if (isEnabled) MaterialTheme.colorScheme.primary
-             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-    }
-}
-
-@Composable
-private fun AnalysisTopBar(onBackClick: () -> Unit) {
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = onBackClick) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-        }
-        Spacer(Modifier.width(8.dp))
-        Text(text = "Back", style = MaterialTheme.typography.bodyMedium)
+        Icon(
+            imageVector = Icons.Filled.Search,
+            contentDescription = if (isEnabled) "Disable engine" else "Enable engine",
+            tint = if (isEnabled) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+        )
     }
 }

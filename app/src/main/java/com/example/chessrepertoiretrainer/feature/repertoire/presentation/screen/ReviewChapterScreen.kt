@@ -1,45 +1,31 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
-import com.example.chessrepertoiretrainer.core.chess.ui.ChessUiConstants
-import com.example.chessrepertoiretrainer.core.chess.ui.ChessboardUI
-import com.example.chessrepertoiretrainer.core.chess.ui.EnginePanel
-import com.example.chessrepertoiretrainer.core.chess.ui.EvaluationBar
-import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
-import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
+import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
+import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
+import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
+import com.example.chessrepertoiretrainer.core.chess.ui.MoveNavControls
 import com.example.chessrepertoiretrainer.feature.analysis.EngineToggleButton
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.ReviewChapterViewModel
 
@@ -50,242 +36,125 @@ fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Un
     val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
-    ReviewChapterScaffold(uiState = uiState,
-                          chessCtrl = viewModel.chessController,
-                          isEngineEnabled = isEngineEnabled,
-                          engineAnalysis = engineAnalysis,
-                          engineSearchState = engineSearchState,
-                          engineError = engineError,
-                          onBackClick = onBackClick,
-                          onPreviousMove = viewModel::onPreviousMove,
-                          onNextMove = viewModel::onNextMove,
-                          onRestartCurrentLine = viewModel::restartCurrentLine,
-                          onGoToPreviousLine = viewModel::goToPreviousLine,
-                          onGoToNextLine = viewModel::goToNextLine,
-                          onToggleEngine = viewModel::toggleEngine,
-                          onDeeperClick = viewModel::analyzeDeeper)
+    val chessCtrl = viewModel.chessController
+
+    ChessScreenLayout(
+        chessCtrl = chessCtrl,
+        topBar = {
+            ChessTopBar(
+                title = uiState.chapterName.ifBlank { "Review" },
+                onBackClick = onBackClick,
+                actions = {
+                    // Line navigation — ◄ X/Y ►
+                    IconButton(onClick = viewModel::goToPreviousLine) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous line")
+                    }
+                    Text(
+                        text = if (uiState.totalLines > 0) "${uiState.currentLineNumber}/${uiState.totalLines}" else "",
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    IconButton(onClick = viewModel::goToNextLine) {
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next line")
+                    }
+                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                },
+            )
+        },
+        engineSection = {
+            if (!engineError.isNullOrBlank()) {
+                Text(
+                    text = engineError!!,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                )
+            }
+            if (isEngineEnabled) {
+                EngineSection(
+                    analysis = engineAnalysis,
+                    searchState = engineSearchState,
+                    isFlipped = chessCtrl.isFlipped,
+                    onDeeperClick = viewModel::analyzeDeeper,
+                )
+            }
+        },
+        contentBar = {
+            ReviewContentArea(uiState = uiState)
+        },
+        bottomBar = {
+            if (!uiState.isLoading && !uiState.hasNoLines) {
+                ChessBottomBar(
+                    startContent = {
+                        OutlinedButton(onClick = viewModel::restartCurrentLine) { Text("Restart") }
+                    },
+                    endContent = {
+                        MoveNavControls(
+                            onBack = viewModel::onPreviousMove,
+                            onForward = viewModel::onNextMove,
+                        )
+                    },
+                )
+            }
+        },
+    )
 }
 
 @Composable
-private fun ReviewChapterScaffold(uiState: ReviewChapterViewModel.ReviewChapterUiState,
-                                  chessCtrl: ChessBoardController,
-                                  isEngineEnabled: Boolean,
-                                  engineAnalysis: EngineAnalysis?,
-                                  engineSearchState: EngineSearchState,
-                                  engineError: String?,
-                                  onBackClick: () -> Unit,
-                                  onPreviousMove: () -> Unit,
-                                  onNextMove: () -> Unit,
-                                  onRestartCurrentLine: () -> Unit,
-                                  onGoToPreviousLine: () -> Unit,
-                                  onGoToNextLine: () -> Unit,
-                                  onToggleEngine: () -> Unit,
-                                  onDeeperClick: () -> Unit) {
-    Scaffold(bottomBar = {
-        if (!uiState.isLoading && !uiState.hasNoLines) {
-            Column {
-                engineError?.let {
-                    Text(text = it,
-                         style = MaterialTheme.typography.labelSmall,
-                         color = MaterialTheme.colorScheme.error,
-                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
-                }
-                ReviewMoveBottomBar(uiState = uiState,
-                                    onPreviousMove = onPreviousMove,
-                                    onNextMove = onNextMove,
-                                    onRestartCurrentLine = onRestartCurrentLine)
-            }
-        }
-    }) { innerPadding ->
-        Column(modifier = Modifier
+private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
+    Column(
+        modifier = Modifier
             .fillMaxSize()
-            .padding(innerPadding)) {
-            ReviewChapterTopSection(uiState = uiState,
-                                    isEngineEnabled = isEngineEnabled,
-                                    onBackClick = onBackClick,
-                                    onGoToPreviousLine = onGoToPreviousLine,
-                                    onGoToNextLine = onGoToNextLine,
-                                    onToggleEngine = onToggleEngine)
-
-            when {
-                uiState.isLoading -> ReviewChapterLoadingState()
-                uiState.hasNoLines -> ReviewChapterEmptyState(uiState = uiState)
-                else -> ReviewChapterBody(uiState = uiState,
-                                          chessCtrl = chessCtrl,
-                                          isEngineEnabled = isEngineEnabled,
-                                          engineAnalysis = engineAnalysis,
-                                          engineSearchState = engineSearchState,
-                                          onDeeperClick = onDeeperClick)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        when {
+            uiState.isLoading -> Text("Loading chapter…", style = MaterialTheme.typography.bodyMedium)
+            uiState.hasNoLines -> {
+                Text(
+                    text = uiState.statusMessage ?: "No lines in this chapter yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             }
-        }
-    }
-}
+            else -> {
+                if (uiState.totalLines > 0) {
+                    Text(
+                        text = "${uiState.currentLineName ?: ""}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+                uiState.myColor?.let {
+                    Text(
+                        text = "You play $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
 
-@Composable
-private fun ReviewChapterTopSection(uiState: ReviewChapterViewModel.ReviewChapterUiState,
-                                    isEngineEnabled: Boolean,
-                                    onBackClick: () -> Unit,
-                                    onGoToPreviousLine: () -> Unit,
-                                    onGoToNextLine: () -> Unit,
-                                    onToggleEngine: () -> Unit) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 4.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            // Back button
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-            Spacer(Modifier.width(4.dp))
-            Text(text = "Back", style = MaterialTheme.typography.bodyMedium)
-
-            Spacer(Modifier.weight(1f))
-
-            // Line navigation
-            IconButton(onClick = onGoToPreviousLine) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                     contentDescription = "Previous line")
-            }
-            Text(text = if (uiState.totalLines > 0) "${uiState.currentLineNumber}/${uiState.totalLines}" else "",
-                 style = MaterialTheme.typography.bodySmall)
-            IconButton(onClick = onGoToNextLine) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next line")
-            }
-
-            // Engine toggle — top right
-            EngineToggleButton(isEnabled = isEngineEnabled, onClick = onToggleEngine)
-        }
-
-        ReviewChapterHeader(uiState = uiState)
-    }
-}
-
-@Composable
-private fun ReviewChapterHeader(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
-    if (uiState.hasNoLines) {
-        Text("No lines in this chapter yet.", style = MaterialTheme.typography.bodyMedium)
-    }
-    else if (!uiState.isLoading) {
-        uiState.currentLineName?.let {
-            Text(text = it, style = MaterialTheme.typography.bodyMedium)
-        }
-        uiState.myColor?.let {
-            Text(text = "You play $it", style = MaterialTheme.typography.bodySmall)
-        }
-    }
-}
-
-@Composable
-private fun ReviewChapterLoadingState() {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center) {
-        Text("Loading chapter...", style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun ReviewChapterEmptyState(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center) {
-        Text(text = uiState.statusMessage
-            ?: "No lines in this chapter. Use edit mode to add lines.",
-             style = MaterialTheme.typography.bodyMedium)
-    }
-}
-
-@Composable
-private fun ReviewChapterBody(uiState: ReviewChapterViewModel.ReviewChapterUiState,
-                              chessCtrl: ChessBoardController,
-                              isEngineEnabled: Boolean = false,
-                              engineAnalysis: EngineAnalysis? = null,
-                              engineSearchState: EngineSearchState = EngineSearchState.IDLE,
-                              onDeeperClick: () -> Unit = {}) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        if (isEngineEnabled) {
-            EnginePanel(analysis = engineAnalysis,
-                        searchState = engineSearchState,
-                        onDeeperClick = onDeeperClick)
-        }
-
-        val boardPadding = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        val barFraction =
-            if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction ?: 0.5f) else null
-
-        if (barFraction != null) {
-            BoxWithConstraints(modifier = boardPadding.fillMaxWidth()) {
-                val boardSize =
-                    maxWidth - ChessUiConstants.ScreenChrome.EvalBar.width - ChessUiConstants.ScreenChrome.EvalBar.spacing
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .height(boardSize),
-                    verticalAlignment = Alignment.Top) {
-                    EvaluationBar(fraction = barFraction,
-                                  isFlipped = chessCtrl.isFlipped,
-                                  modifier = Modifier
-                                      .width(ChessUiConstants.ScreenChrome.EvalBar.width)
-                                      .fillMaxHeight())
-                    Spacer(Modifier.width(ChessUiConstants.ScreenChrome.EvalBar.spacing))
-                    Box(modifier = Modifier.weight(1f)) {
-                        ChessboardUI(state = chessCtrl)
+                val comment = uiState.currentMoveComment
+                if (!comment.isNullOrBlank()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    ) {
+                        Text(
+                            text = comment,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(12.dp),
+                        )
                     }
                 }
-            }
-        }
-        else {
-            Box(modifier = boardPadding) {
-                ChessboardUI(state = chessCtrl)
-            }
-        }
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)) {
-            ReviewChapterCommentCard(uiState = uiState)
-        }
-    }
-}
 
-@Composable
-private fun ReviewMoveBottomBar(uiState: ReviewChapterViewModel.ReviewChapterUiState,
-                                onPreviousMove: () -> Unit,
-                                onNextMove: () -> Unit,
-                                onRestartCurrentLine: () -> Unit) {
-    val scrollState = rememberScrollState()
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 8.dp)
-        .horizontalScroll(scrollState), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
-        Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
-        OutlinedButton(onClick = onRestartCurrentLine) { Text("Restart") }
-    }
-}
-
-@Composable
-private fun ReviewChapterCommentCard(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
-    Card(modifier = Modifier.fillMaxWidth(),
-         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(12.dp)) {
-            uiState.statusMessage?.let { message ->
-                Text(text = message,
-                     style = MaterialTheme.typography.bodySmall,
-                     color = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.height(4.dp))
-            }
-
-            val comment = uiState.currentMoveComment
-            if (comment.isNullOrBlank()) {
-                Text(text = "No comment for this move.",
-                     style = MaterialTheme.typography.bodySmall,
-                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            else {
-                Text(text = comment, style = MaterialTheme.typography.bodyMedium)
+                uiState.statusMessage?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
             }
         }
     }

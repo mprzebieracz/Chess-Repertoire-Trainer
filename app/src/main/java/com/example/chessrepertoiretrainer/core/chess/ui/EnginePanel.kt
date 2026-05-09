@@ -2,6 +2,7 @@ package com.example.chessrepertoiretrainer.core.chess.ui
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -81,5 +82,31 @@ fun EnginePanel(analysis: EngineAnalysis?,
         else {
             Spacer(Modifier.weight(1f))
         }
+    }
+}
+
+/**
+ * Combined engine section: horizontal eval bar on top, engine line panel below.
+ * Pass this as the [engineSection] slot of [ChessScreenLayout].
+ */
+@Composable
+fun EngineSection(
+    analysis: EngineAnalysis?,
+    searchState: EngineSearchState,
+    isFlipped: Boolean,
+    onDeeperClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        HorizontalEvaluationBar(
+            fraction = analysis?.evaluationBarFraction ?: 0.5f,
+            isFlipped = isFlipped,
+            scoreLabel = analysis?.scoreLabel ?: "0.0",
+        )
+        EnginePanel(
+            analysis = analysis,
+            searchState = searchState,
+            onDeeperClick = onDeeperClick,
+        )
     }
 }

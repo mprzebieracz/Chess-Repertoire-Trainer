@@ -4,19 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -26,9 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.chessrepertoiretrainer.core.chess.ui.BoardNavigationControls
+import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
-import com.example.chessrepertoiretrainer.core.chess.ui.EnginePanel
+import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
+import com.example.chessrepertoiretrainer.core.chess.ui.MoveNavControls
+import com.example.chessrepertoiretrainer.core.chess.ui.PgnViewer
 import com.example.chessrepertoiretrainer.feature.analysis.EngineToggleButton
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.ComplianceStatus
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
@@ -39,9 +39,11 @@ import java.util.Locale
 private val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
 
 @Composable
-fun GameDetailScreen(viewModel: GameDetailViewModel,
-                     onBackClick: () -> Unit,
-                     onViewInCourse: (chapterId: Int, lineId: Int) -> Unit) {
+fun GameDetailScreen(
+    viewModel: GameDetailViewModel,
+    onBackClick: () -> Unit,
+    onViewInCourse: (chapterId: Int, lineId: Int) -> Unit,
+) {
     val complianceEnabled by viewModel.complianceEnabled.collectAsStateWithLifecycle()
     val currentAnnotation by viewModel.currentAnnotation.collectAsStateWithLifecycle()
     val isLoadingCompliance by viewModel.isLoadingCompliance.collectAsStateWithLifecycle()
@@ -49,117 +51,132 @@ fun GameDetailScreen(viewModel: GameDetailViewModel,
     val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
-
-    Scaffold(bottomBar = {
-        Column {
-            engineError?.let {
-                Text(text = it,
-                     style = MaterialTheme.typography.labelSmall,
-                     color = MaterialTheme.colorScheme.error,
-                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
-            }
-            CompliancePanel(enabled = complianceEnabled,
-                            annotation = currentAnnotation,
-                            isLoading = isLoadingCompliance,
-                            onViewInCourse = onViewInCourse)
-            BoardNavigationControls(onBack = { viewModel.chessController.navigateBack() },
-                                    onForward = { viewModel.chessController.navigateForward() })
-        }
-    }) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
-            ChessScreenLayout(title = "Game",
-                              chessCtrl = viewModel.chessController,
-                              showNavigationControls = false,
-                              showBoardActionButtons = false,
-                              evaluationBarFraction = if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction
-                                  ?: 0.5f)
-                              else null,
-                              titleEndContent = {
-                                  EngineToggleButton(isEnabled = isEngineEnabled,
-                                                     onClick = viewModel::toggleEngine)
-                              },
-                              topContent = {
-                                  GameDetailHeader(viewModel = viewModel,
-                                                   complianceEnabled = complianceEnabled,
-                                                   onBackClick = onBackClick,
-                                                   onToggleCompliance = viewModel::toggleCompliance)
-                              },
-                              midContent = {
-                                  if (isEngineEnabled) {
-                                      EnginePanel(analysis = engineAnalysis,
-                                                  searchState = engineSearchState,
-                                                  onDeeperClick = viewModel::analyzeDeeper)
-                                  }
-                              })
-        }
-    }
-}
-
-@Composable
-private fun GameDetailHeader(viewModel: GameDetailViewModel,
-                             complianceEnabled: Boolean,
-                             onBackClick: () -> Unit,
-                             onToggleCompliance: () -> Unit) {
+    val chessCtrl = viewModel.chessController
     val game = viewModel.game
+
     val resultColor = when (game.playerResult) {
         "win" -> MaterialTheme.colorScheme.primary
         "loss" -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.onSurface
     }
+    val title = "${game.opponentName} — ${game.playerResult.replaceFirstChar { it.uppercase() }}"
 
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+    ChessScreenLayout(
+        chessCtrl = chessCtrl,
+        topBar = {
+            ChessTopBar(
+                title = title,
+                onBackClick = onBackClick,
+                actions = {
+                    FilterChip(
+                        selected = complianceEnabled,
+                        onClick = viewModel::toggleCompliance,
+                        label = { Text("Repertoire") },
+                    )
+                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                },
+            )
+        },
+        engineSection = {
+            if (!engineError.isNullOrBlank()) {
+                Text(
+                    text = engineError!!,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp),
+                )
             }
-            Spacer(Modifier.width(4.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = game.opponentName,
-                         style = MaterialTheme.typography.bodyMedium,
-                         fontWeight = FontWeight.SemiBold)
-                    Text(text = game.playerResult.replaceFirstChar { it.uppercase() },
-                         style = MaterialTheme.typography.bodyMedium,
-                         fontWeight = FontWeight.SemiBold,
-                         color = resultColor)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(text = "${if (game.isPlayerWhite) "White" else "Black"} · ${game.platform.replaceFirstChar { it.uppercase() }}",
-                         style = MaterialTheme.typography.bodySmall)
-                    if (game.timeCategory != null) {
-                        Text(text = "· ${game.timeCategory.replaceFirstChar { it.uppercase() }}",
-                             style = MaterialTheme.typography.bodySmall)
+            if (isEngineEnabled) {
+                EngineSection(
+                    analysis = engineAnalysis,
+                    searchState = engineSearchState,
+                    isFlipped = chessCtrl.isFlipped,
+                    onDeeperClick = viewModel::analyzeDeeper,
+                )
+            }
+        },
+        contentBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                // Game metadata
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = game.opponentName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = game.playerResult.replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = resultColor,
+                        )
                     }
-                    Text(text = "· ${dateFormat.format(Date(game.playedAt))}",
-                         style = MaterialTheme.typography.bodySmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "${if (game.isPlayerWhite) "White" else "Black"} · ${game.platform.replaceFirstChar { it.uppercase() }}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        game.timeCategory?.let {
+                            Text("· ${it.replaceFirstChar { c -> c.uppercase() }}", style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text("· ${dateFormat.format(Date(game.playedAt))}", style = MaterialTheme.typography.bodySmall)
+                    }
+                    game.opening?.takeIf { it.isNotBlank() }?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
-                if (!game.opening.isNullOrBlank()) {
-                    Text(text = game.opening, style = MaterialTheme.typography.bodySmall)
+
+                // Compliance panel
+                if (complianceEnabled) {
+                    CompliancePanel(
+                        annotation = currentAnnotation,
+                        isLoading = isLoadingCompliance,
+                        onViewInCourse = onViewInCourse,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
                 }
+
+                // PGN viewer
+                PgnViewer(
+                    sanHistory = chessCtrl.sanHistory,
+                    currentMoveIndex = chessCtrl.currentMoveIndex,
+                    onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
+                    modifier = Modifier.height(64.dp),
+                )
             }
-            FilterChip(selected = complianceEnabled,
-                       onClick = onToggleCompliance,
-                       label = { Text("Repertoire") })
-        }
-    }
+        },
+        bottomBar = {
+            ChessBottomBar(
+                endContent = {
+                    MoveNavControls(
+                        onBack = { chessCtrl.navigateBack() },
+                        onForward = { chessCtrl.navigateForward() },
+                    )
+                },
+            )
+        },
+    )
 }
 
 @Composable
-private fun CompliancePanel(enabled: Boolean,
-                            annotation: MoveAnnotation?,
-                            isLoading: Boolean,
-                            onViewInCourse: (chapterId: Int, lineId: Int) -> Unit) {
-    // Always reserve the same height so nav buttons never shift
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .height(36.dp)
-        .padding(horizontal = 16.dp),
+private fun CompliancePanel(
+    annotation: MoveAnnotation?,
+    isLoading: Boolean,
+    onViewInCourse: (chapterId: Int, lineId: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(36.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (!enabled) return@Row
-
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
             Text("Building index…", style = MaterialTheme.typography.bodySmall)
@@ -167,54 +184,55 @@ private fun CompliancePanel(enabled: Boolean,
         }
 
         when (annotation?.status) {
-            null -> Text("Navigate to see repertoire compliance",
-                         style = MaterialTheme.typography.bodySmall,
-                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-
+            null -> Text(
+                "Navigate to see repertoire compliance",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            )
             ComplianceStatus.IN_BOOK -> {
-                Text(text = "✓ ${annotation.playedSan} — in repertoire",
-                     style = MaterialTheme.typography.bodySmall,
-                     color = MaterialTheme.colorScheme.primary,
-                     modifier = Modifier.weight(1f, fill = false))
+                Text(
+                    text = "✓ ${annotation.playedSan} — in repertoire",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
                 if (annotation.chapterIdForNavigation != null && annotation.lineIdForNavigation != null) {
-                    TextButton(onClick = {
-                        onViewInCourse(annotation.chapterIdForNavigation,
-                                       annotation.lineIdForNavigation)
-                    }, modifier = Modifier.height(28.dp)) {
-                        Text("View →", style = MaterialTheme.typography.bodySmall)
-                    }
+                    TextButton(
+                        onClick = { onViewInCourse(annotation.chapterIdForNavigation, annotation.lineIdForNavigation) },
+                        modifier = Modifier.height(28.dp),
+                    ) { Text("View →", style = MaterialTheme.typography.bodySmall) }
                 }
             }
-
             ComplianceStatus.DEVIATION -> {
-                Text(text = "✗ ${annotation.playedSan} — deviation",
-                     style = MaterialTheme.typography.bodySmall,
-                     color = MaterialTheme.colorScheme.error,
-                     fontWeight = FontWeight.SemiBold,
-                     modifier = Modifier.weight(1f, fill = false))
+                Text(
+                    text = "✗ ${annotation.playedSan} — deviation",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
                 if (annotation.chapterIdForNavigation != null && annotation.lineIdForNavigation != null) {
-                    TextButton(onClick = {
-                        onViewInCourse(annotation.chapterIdForNavigation,
-                                       annotation.lineIdForNavigation)
-                    }, modifier = Modifier.height(28.dp)) {
-                        Text("View →", style = MaterialTheme.typography.bodySmall)
-                    }
+                    TextButton(
+                        onClick = { onViewInCourse(annotation.chapterIdForNavigation, annotation.lineIdForNavigation) },
+                        modifier = Modifier.height(28.dp),
+                    ) { Text("View →", style = MaterialTheme.typography.bodySmall) }
                 }
             }
-
-            ComplianceStatus.OUT_OF_BOOK -> Text(text = "○ Out of book",
-                                                 style = MaterialTheme.typography.bodySmall,
-                                                 color = MaterialTheme.colorScheme.onSurface.copy(
-                                                     alpha = 0.4f))
-
-            ComplianceStatus.OPPONENT_IN_BOOK -> Text(text = "Opponent followed expected lines",
-                                                      style = MaterialTheme.typography.bodySmall,
-                                                      color = MaterialTheme.colorScheme.onSurface.copy(
-                                                          alpha = 0.5f))
-
-            ComplianceStatus.OPPONENT_DEVIATION -> Text(text = "Opponent deviated — ${annotation.playedSan}",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.tertiary)
+            ComplianceStatus.OUT_OF_BOOK -> Text(
+                "○ Out of book",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            )
+            ComplianceStatus.OPPONENT_IN_BOOK -> Text(
+                "Opponent followed expected lines",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            )
+            ComplianceStatus.OPPONENT_DEVIATION -> Text(
+                "Opponent deviated — ${annotation.playedSan}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary,
+            )
         }
     }
 }

@@ -16,9 +16,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AnalysisViewModel(private val engine: StockfishEngine) : ViewModel() {
+class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? = null) : ViewModel() {
 
-    val chessController: ChessBoardController = DefaultChessBoardController()
+    val chessController: ChessBoardController = DefaultChessBoardController().also { ctrl ->
+        if (startFen != null) ctrl.loadPositionFromFen(startFen)
+    }
 
     val isEngineEnabled: StateFlow<Boolean> =
         engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
@@ -51,9 +53,9 @@ class AnalysisViewModel(private val engine: StockfishEngine) : ViewModel() {
         engine.disable()
     }
 
-    class Factory(private val engine: StockfishEngine) : ViewModelProvider.Factory {
+    class Factory(private val engine: StockfishEngine, private val startFen: String? = null) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
-            AnalysisViewModel(engine) as T
+            AnalysisViewModel(engine, startFen) as T
     }
 }

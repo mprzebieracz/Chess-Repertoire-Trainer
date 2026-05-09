@@ -32,8 +32,9 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController,
     }
 
     composable(Screen.Analysis.route) {
+        val startFen = appContainer.analysisStartFen.also { appContainer.analysisStartFen = null }
         val vm: AnalysisViewModel =
-            viewModel(factory = AnalysisViewModel.Factory(appContainer.stockfishEngine))
+            viewModel(factory = AnalysisViewModel.Factory(appContainer.stockfishEngine, startFen))
         AnalysisScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 
