@@ -21,21 +21,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class PuzzleTrainingUiState(
-    val isLoading: Boolean = true,
-    val isSessionComplete: Boolean = false,
-    val currentRating: Int? = null,
-    val currentThemes: String? = null,
-    val userSideLabel: String? = null,
-    val attemptsForCurrent: Int = 0,
-    val lastMoveWasCorrect: Boolean? = null,
-    val isWaitingForUserMove: Boolean = false,
-    val statusMessage: String? = null
-)
+data class PuzzleTrainingUiState(val isLoading: Boolean = true,
+                                 val isSessionComplete: Boolean = false,
+                                 val currentRating: Int? = null,
+                                 val currentThemes: String? = null,
+                                 val userSideLabel: String? = null,
+                                 val attemptsForCurrent: Int = 0,
+                                 val lastMoveWasCorrect: Boolean? = null,
+                                 val isWaitingForUserMove: Boolean = false,
+                                 val statusMessage: String? = null)
 
-class PuzzleTrainingViewModel(
-    private val repository: PuzzleRepository
-) : ViewModel() {
+class PuzzleTrainingViewModel(private val repository: PuzzleRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PuzzleTrainingUiState())
     val uiState: StateFlow<PuzzleTrainingUiState> = _uiState.asStateFlow()
@@ -72,8 +68,8 @@ class PuzzleTrainingViewModel(
             return
         }
 
-        val sanMoves = convertUciSequenceToSan(
-            puzzle.fen, puzzle.moves.split(" ").filter { it.isNotBlank() })
+        val sanMoves =
+            convertUciSequenceToSan(puzzle.fen, puzzle.moves.split(" ").filter { it.isNotBlank() })
 
         if (sanMoves.isEmpty()) {
             setErrorState("Puzzle data is invalid.")
@@ -84,24 +80,22 @@ class PuzzleTrainingViewModel(
 
         chessController.loadPositionFromFen(puzzle.fen)
         chessController.allowedMoveSide = mySide
-        if ((mySide == Side.BLACK) != chessController.isFlipped) chessController.flipBoard()
+        chessController.orientForSide(mySide)
 
         currentPuzzle = puzzle
         currentAttempts = puzzle.attempts
         moveTrainer.reset(MoveTrainingEngine.Config(mySide = mySide, sanMoves = sanMoves))
 
         _uiState.update {
-            it.copy(
-                isLoading = false,
-                isSessionComplete = false,
-                currentRating = puzzle.rating,
-                currentThemes = puzzle.themes,
-                userSideLabel = if (mySide == Side.WHITE) "White" else "Black",
-                attemptsForCurrent = currentAttempts,
-                lastMoveWasCorrect = null,
-                isWaitingForUserMove = true,
-                statusMessage = "Your turn"
-            )
+            it.copy(isLoading = false,
+                    isSessionComplete = false,
+                    currentRating = puzzle.rating,
+                    currentThemes = puzzle.themes,
+                    userSideLabel = if (mySide == Side.WHITE) "White" else "Black",
+                    attemptsForCurrent = currentAttempts,
+                    lastMoveWasCorrect = null,
+                    isWaitingForUserMove = true,
+                    statusMessage = "Your turn")
         }
     }
 
@@ -114,10 +108,7 @@ class PuzzleTrainingViewModel(
             }
             else {
                 _uiState.update {
-                    it.copy(
-                        statusMessage = "Solution move played.",
-                        isWaitingForUserMove = true
-                    )
+                    it.copy(statusMessage = "Solution move played.", isWaitingForUserMove = true)
                 }
             }
         }
@@ -148,10 +139,7 @@ class PuzzleTrainingViewModel(
                     }
                     else {
                         _uiState.update {
-                            it.copy(
-                                isWaitingForUserMove = true,
-                                statusMessage = "Your turn"
-                            )
+                            it.copy(isWaitingForUserMove = true, statusMessage = "Your turn")
                         }
                     }
                 }
@@ -163,12 +151,10 @@ class PuzzleTrainingViewModel(
                     updatePuzzleAttemptsUseCase(id = puzzle.id, attempts = currentAttempts)
                 }
                 _uiState.update {
-                    it.copy(
-                        lastMoveWasCorrect = false,
-                        attemptsForCurrent = currentAttempts,
-                        isWaitingForUserMove = true,
-                        statusMessage = "Incorrect, try again"
-                    )
+                    it.copy(lastMoveWasCorrect = false,
+                            attemptsForCurrent = currentAttempts,
+                            isWaitingForUserMove = true,
+                            statusMessage = "Incorrect, try again")
                 }
                 chessController.navigateBack()
             }
@@ -180,11 +166,9 @@ class PuzzleTrainingViewModel(
         viewModelScope.launch {
             markPuzzleSolvedUseCase(id = puzzle.id, attempts = currentAttempts)
             _uiState.update {
-                it.copy(
-                    isSessionComplete = true,
-                    isWaitingForUserMove = false,
-                    statusMessage = "Daily puzzle complete!"
-                )
+                it.copy(isSessionComplete = true,
+                        isWaitingForUserMove = false,
+                        statusMessage = "Daily puzzle complete!")
             }
         }
     }
@@ -193,9 +177,7 @@ class PuzzleTrainingViewModel(
         currentPuzzle = null
         chessController.resetBoard()
         _uiState.update {
-            it.copy(
-                isLoading = false, isSessionComplete = true, statusMessage = message
-            )
+            it.copy(isLoading = false, isSessionComplete = true, statusMessage = message)
         }
     }
 

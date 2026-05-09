@@ -35,6 +35,3 @@ object AppIcons {
     val AddLine: ImageVector = Icons.Filled.Add
     val DeleteLine: ImageVector = Icons.Filled.Delete
 }
-
-
-

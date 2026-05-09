@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.chess.domain.toSide
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
@@ -23,11 +24,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class LineEditorViewModel(
-    private val repertoireRepository: RepertoireRepository,
-    savedStateHandle: SavedStateHandle,
-    private val engine: StockfishEngine
-) : ViewModel() {
+class LineEditorViewModel(private val repertoireRepository: RepertoireRepository,
+                          savedStateHandle: SavedStateHandle,
+                          private val engine: StockfishEngine) : ViewModel() {
 
     val lineId: Int = checkNotNull(savedStateHandle["lineId"])
     val chessController = DefaultChessBoardController()
@@ -38,37 +37,30 @@ class LineEditorViewModel(
     private val _hasChanges = MutableStateFlow(false)
     val hasChanges: StateFlow<Boolean> = _hasChanges.asStateFlow()
 
-    val dbMoves: StateFlow<List<LineMove>> =
-        repertoireRepository.getMovesForLine(lineId).stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            emptyList()
-        )
+    val dbMoves: StateFlow<List<LineMove>> = repertoireRepository.getMovesForLine(lineId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val isEngineEnabled: StateFlow<Boolean> = engine.isEnabled.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), false
-    )
-    val engineAnalysis: StateFlow<EngineAnalysis?> = engine.analysis.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
-    )
-    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), EngineSearchState.IDLE
-    )
-    val engineError: StateFlow<String?> = engine.engineError.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
-    )
+    val isEngineEnabled: StateFlow<Boolean> =
+        engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val engineAnalysis: StateFlow<EngineAnalysis?> =
+        engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(viewModelScope,
+                                                                                     SharingStarted.WhileSubscribed(
+                                                                                         5_000),
+                                                                                     EngineSearchState.IDLE)
+    val engineError: StateFlow<String?> =
+        engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
         viewModelScope.launch {
             val line = repertoireRepository.getLineById(lineId)
             if (line != null) {
                 val chapter = repertoireRepository.getChapterById(line.chapterId)
-                val repertoire = chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
+                val repertoire =
+                    chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
                 val colorString = repertoire?.color ?: "White"
 
-                if (colorString.equals("Black", ignoreCase = true) && !chessController.isFlipped) {
-                    chessController.flipBoard()
-                }
+                chessController.orientForSide(colorString.toSide())
             }
 
             val moves = repertoireRepository.getMovesForLine(lineId).first()
@@ -88,21 +80,19 @@ class LineEditorViewModel(
                 _hasChanges.value = true
                 viewModelScope.launch {
                     val nextIndex = dbMoves.value.size
-                    repertoireRepository.insertLineMove(
-                        LineMove(
-                            lineId = lineId, moveIndex = nextIndex, moveSan = san, fen = fen,
-                            comment = null, arrows = null
-                        )
-                    )
+                    repertoireRepository.insertLineMove(LineMove(lineId = lineId,
+                                                                 moveIndex = nextIndex,
+                                                                 moveSan = san,
+                                                                 fen = fen,
+                                                                 comment = null,
+                                                                 arrows = null))
                 }
             }
 
             viewModelScope.launch {
-                snapshotFlow { chessController.boardState }
-                    .distinctUntilChanged()
-                    .collect { fen ->
-                        if (engine.isEnabled.value) engine.updatePosition(fen)
-                    }
+                snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
+                    if (engine.isEnabled.value) engine.updatePosition(fen)
+                }
             }
         }
     }
@@ -166,10 +156,8 @@ class LineEditorViewModel(
         engine.disable()
     }
 
-    class Factory(
-        private val repertoireRepository: RepertoireRepository,
-        private val engine: StockfishEngine
-    ) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository,
+                  private val engine: StockfishEngine) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()

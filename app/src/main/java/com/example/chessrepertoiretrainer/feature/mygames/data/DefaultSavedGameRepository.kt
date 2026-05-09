@@ -14,24 +14,22 @@ fun FetchedGame.toSavedGame(platform: String, username: String): SavedGame {
         "1/2-1/2" -> "draw"
         else -> "unknown"
     }
-    return SavedGame(
-        id = "${platform}_${platformGameId}",
-        platform = platform,
-        platformGameId = platformGameId,
-        playerUsername = username,
-        opponentName = opponentName,
-        isPlayerWhite = isUserWhite,
-        result = result,
-        playerResult = playerResult,
-        timeControl = timeControl,
-        timeCategory = timeCategory,
-        opening = opening,
-        playerRating = playerRating,
-        opponentRating = opponentRating,
-        rated = rated,
-        playedAt = playedAt,
-        pgn = pgn
-    )
+    return SavedGame(id = "${platform}_${platformGameId}",
+                     platform = platform,
+                     platformGameId = platformGameId,
+                     playerUsername = username,
+                     opponentName = opponentName,
+                     isPlayerWhite = isUserWhite,
+                     result = result,
+                     playerResult = playerResult,
+                     timeControl = timeControl,
+                     timeCategory = timeCategory,
+                     opening = opening,
+                     playerRating = playerRating,
+                     opponentRating = opponentRating,
+                     rated = rated,
+                     playedAt = playedAt,
+                     pgn = pgn)
 }
 
 class DefaultSavedGameRepository(private val dao: SavedGameDao) : SavedGameRepository {
@@ -44,25 +42,38 @@ class DefaultSavedGameRepository(private val dao: SavedGameDao) : SavedGameRepos
     override suspend fun countGames(platform: String, username: String): Int =
         dao.countGames(platform, username)
 
-    override fun getAllGamesFiltered(
-        platform: String?, result: String?, isWhite: Boolean?
-    ): Flow<List<SavedGame>> =
+    override fun getAllGamesFiltered(platform: String?,
+                                     result: String?,
+                                     isWhite: Boolean?): Flow<List<SavedGame>> =
         dao.getAllGamesFiltered(platform, result, isWhite)
 
-    override suspend fun getStats(
-        username: String, platform: String, category: String?, isWhite: Boolean?, since: Long
-    ): GameStatsRaw = dao.getStatsRaw(username, platform, category, isWhite, since)
+    override suspend fun getStats(username: String,
+                                  platform: String,
+                                  category: String?,
+                                  isWhite: Boolean?,
+                                  since: Long): GameStatsRaw =
+        dao.getStatsRaw(username, platform, category, isWhite, since)
 
-    override suspend fun getCurrentRating(username: String, platform: String, category: String): Int? =
+    override suspend fun getCurrentRating(username: String,
+                                          platform: String,
+                                          category: String): Int? =
         dao.getCurrentRating(username, platform, category)
 
-    override suspend fun getRatingAtStartOfPeriod(username: String, platform: String, category: String, since: Long): Int? =
+    override suspend fun getRatingAtStartOfPeriod(username: String,
+                                                  platform: String,
+                                                  category: String,
+                                                  since: Long): Int? =
         dao.getRatingAtStartOfPeriod(username, platform, category, since)
 
-    override suspend fun getPeakRating(username: String, platform: String, category: String): RatingPeakRaw? =
+    override suspend fun getPeakRating(username: String,
+                                       platform: String,
+                                       category: String): RatingPeakRaw? =
         dao.getPeakRating(username, platform, category)
 
-    override suspend fun getAvgOpponentRating(username: String, platform: String, category: String?, since: Long): Double? =
+    override suspend fun getAvgOpponentRating(username: String,
+                                              platform: String,
+                                              category: String?,
+                                              since: Long): Double? =
         dao.getAvgOpponentRating(username, platform, category, since)
 
     override suspend fun getGameById(id: String): SavedGame? = dao.getGameById(id)

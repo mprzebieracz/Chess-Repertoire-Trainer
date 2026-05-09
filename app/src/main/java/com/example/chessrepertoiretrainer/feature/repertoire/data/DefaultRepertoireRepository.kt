@@ -7,11 +7,8 @@ import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 
-class DefaultRepertoireRepository(
-    private val repertoireDao: RepertoireDao
-) : RepertoireRepository {
+class DefaultRepertoireRepository(private val repertoireDao: RepertoireDao) : RepertoireRepository {
 
     private val pgnImporter: PgnImporter by lazy { PgnImporter(repertoireDao) }
 
@@ -77,10 +74,9 @@ class DefaultRepertoireRepository(
     override suspend fun updateChapter(chapter: Chapter) = repertoireDao.updateChapter(chapter)
 
     override suspend fun getLinesForChapters(chapterIds: List<Int>): List<Line> =
-        chapterIds.flatMap { repertoireDao.getLinesForChapter(it).first() }
+        repertoireDao.getLinesForChapters(chapterIds)
 
     override suspend fun importPgnToChapter(pgnString: String, chapterId: Int) {
         pgnImporter.importPgnToChapter(pgnString = pgnString, chapterId = chapterId)
     }
 }
-

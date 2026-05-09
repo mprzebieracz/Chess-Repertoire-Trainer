@@ -4,7 +4,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -15,9 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.unit.dp
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.github.bhlangonijr.chesslib.Square
 
@@ -37,49 +34,41 @@ fun ChessboardUI(state: ChessBoardController) {
         } ?: emptyList()
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }
-            .shadow(
-                elevation = ChessUiConstants.BoardFrame.shadowElevation,
-                shape = ChessUiConstants.BoardFrame.shape
-            )
-            .clip(ChessUiConstants.BoardFrame.shape)
-            .border(
-                width = ChessUiConstants.BoardFrame.borderWidth,
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .aspectRatio(1f)
+        .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }
+        .shadow(elevation = ChessUiConstants.BoardFrame.shadowElevation,
+                shape = ChessUiConstants.BoardFrame.shape)
+        .clip(ChessUiConstants.BoardFrame.shape)
+        .border(width = ChessUiConstants.BoardFrame.borderWidth,
                 color = ChessUiConstants.BoardFrame.borderColor,
-                shape = ChessUiConstants.BoardFrame.shape
-            )) {
+                shape = ChessUiConstants.BoardFrame.shape)) {
         val squareSizePx = if (boardSizePx > 0) boardSizePx / 8 else 0f
 
-        ChessboardGrid(
-            state = state,
-            board = board,
-            legalMoves = legalMoves,
-            draggingSquare = draggingSquare,
-            squareSizePx = squareSizePx,
-            onDragStart = { sq, offset ->
-                draggingSquare = sq
-                dragOffset = Offset.Zero
-                initialTouchOffset = offset
-            },
-            onDragUpdate = { offset -> dragOffset += offset },
-            onDragEnd = {
-                draggingSquare = null
-                dragOffset = Offset.Zero
-            })
+        ChessboardGrid(state = state,
+                       board = board,
+                       legalMoves = legalMoves,
+                       draggingSquare = draggingSquare,
+                       squareSizePx = squareSizePx,
+                       onDragStart = { sq, offset ->
+                           draggingSquare = sq
+                           dragOffset = Offset.Zero
+                           initialTouchOffset = offset
+                       },
+                       onDragUpdate = { offset -> dragOffset += offset },
+                       onDragEnd = {
+                           draggingSquare = null
+                           dragOffset = Offset.Zero
+                       })
 
         if (draggingSquare != null && squareSizePx > 0f) {
-            DraggedPieceLayer(
-                piece = board.getPiece(draggingSquare!!),
-                square = draggingSquare!!,
-                squareSizePx = squareSizePx,
-                isFlipped = state.isFlipped,
-                initialTouchOffset = initialTouchOffset,
-                dragOffset = dragOffset
-            )
+            DraggedPieceLayer(piece = board.getPiece(draggingSquare!!),
+                              square = draggingSquare!!,
+                              squareSizePx = squareSizePx,
+                              isFlipped = state.isFlipped,
+                              initialTouchOffset = initialTouchOffset,
+                              dragOffset = dragOffset)
         }
 
         PromotionOverlay(state = state, board = board)

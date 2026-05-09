@@ -7,31 +7,23 @@ import com.github.bhlangonijr.chesslib.Board
 
 enum class GameOutcome { WIN, DRAW, LOSS }
 
-data class GameForOpeningTree(
-    val pgn: String, val isUserWhite: Boolean, val resultTag: String
-)
+data class GameForOpeningTree(val pgn: String, val isUserWhite: Boolean, val resultTag: String)
 
-data class OpeningTreeMoveAggregate(
-    val moveSan: String,
-    val toFen: String,
-    var games: Int = 0,
-    var wins: Int = 0,
-    var draws: Int = 0,
-    var losses: Int = 0
-)
+data class OpeningTreeMoveAggregate(val moveSan: String,
+                                    val toFen: String,
+                                    var games: Int = 0,
+                                    var wins: Int = 0,
+                                    var draws: Int = 0,
+                                    var losses: Int = 0)
 
-data class OpeningTreeNode(
-    val fen: String,
-    val parentFen: String?,
-    val moveSanFromParent: String?,
-    val children: MutableMap<String, OpeningTreeMoveAggregate> = mutableMapOf()
-)
+data class OpeningTreeNode(val fen: String,
+                           val parentFen: String?,
+                           val moveSanFromParent: String?,
+                           val children: MutableMap<String, OpeningTreeMoveAggregate> = mutableMapOf())
 
-data class OpeningTree(
-    val rootFen: String,
-    val playerIsBlack: Boolean,
-    internal val nodesByFen: Map<String, OpeningTreeNode>
-) {
+data class OpeningTree(val rootFen: String,
+                       val playerIsBlack: Boolean,
+                       internal val nodesByFen: Map<String, OpeningTreeNode>) {
     fun getNode(fen: String): OpeningTreeNode? = nodesByFen[fen]
 }
 
@@ -42,9 +34,7 @@ object OpeningTreeBuilder {
         val board = Board()
         val rootFen = board.fen
         val nodes = mutableMapOf<String, OpeningTreeNode>()
-        nodes[rootFen] = OpeningTreeNode(
-            fen = rootFen, parentFen = null, moveSanFromParent = null
-        )
+        nodes[rootFen] = OpeningTreeNode(fen = rootFen, parentFen = null, moveSanFromParent = null)
 
         games.forEachIndexed { index, game ->
             val outcome =
@@ -54,9 +44,7 @@ object OpeningTreeBuilder {
 
             try {
                 board.loadFromFen(rootFen)
-                applyGameMoves(
-                    board = board, nodes = nodes, sanMoves = sanMoves, outcome = outcome
-                )
+                applyGameMoves(board = board, nodes = nodes, sanMoves = sanMoves, outcome = outcome)
             }
             catch (e: Exception) {
                 Log.e("OpeningTreeBuilder", "Error processing game index=$index: ${e.message}", e)
@@ -66,18 +54,14 @@ object OpeningTreeBuilder {
         return OpeningTree(rootFen = rootFen, playerIsBlack = playerIsBlack, nodesByFen = nodes)
     }
 
-    private fun applyGameMoves(
-        board: Board,
-        nodes: MutableMap<String, OpeningTreeNode>,
-        sanMoves: List<String>,
-        outcome: GameOutcome
-    ) {
+    private fun applyGameMoves(board: Board,
+                               nodes: MutableMap<String, OpeningTreeNode>,
+                               sanMoves: List<String>,
+                               outcome: GameOutcome) {
         for (san in sanMoves) {
             val fenBefore = board.fen
             val node = nodes.getOrPut(fenBefore) {
-                OpeningTreeNode(
-                    fen = fenBefore, parentFen = null, moveSanFromParent = null
-                )
+                OpeningTreeNode(fen = fenBefore, parentFen = null, moveSanFromParent = null)
             }
 
             val move = board.moveFromSan(san) ?: break
@@ -85,9 +69,7 @@ object OpeningTreeBuilder {
             val fenAfter = board.fen
 
             val aggregate = node.children.getOrPut(san) {
-                OpeningTreeMoveAggregate(
-                    moveSan = san, toFen = fenAfter
-                )
+                OpeningTreeMoveAggregate(moveSan = san, toFen = fenAfter)
             }
 
             aggregate.games++
@@ -98,9 +80,8 @@ object OpeningTreeBuilder {
             }
 
             if (!nodes.containsKey(fenAfter)) {
-                nodes[fenAfter] = OpeningTreeNode(
-                    fen = fenAfter, parentFen = fenBefore, moveSanFromParent = san
-                )
+                nodes[fenAfter] =
+                    OpeningTreeNode(fen = fenAfter, parentFen = fenBefore, moveSanFromParent = san)
             }
         }
     }

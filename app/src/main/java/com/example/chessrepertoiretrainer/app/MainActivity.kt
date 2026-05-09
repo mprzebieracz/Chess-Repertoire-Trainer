@@ -27,9 +27,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val repository = (application as ChessApplication).appContainer.userSettingsRepository
             val updateSettingUseCase = UpdateSettingUseCase(repository)
-            val settingsViewModel: SettingsViewModel = viewModel(
-                factory = SettingsViewModel.Factory(repository, updateSettingUseCase)
-            )
+            val settingsViewModel: SettingsViewModel =
+                viewModel(factory = SettingsViewModel.Factory(repository, updateSettingUseCase))
 
             val settingsState by settingsViewModel.settings.collectAsStateWithLifecycle()
 
@@ -47,12 +46,9 @@ class MainActivity : ComponentActivity() {
 
             val useDynamic = settingsState.useDynamicColors
 
-            ChessRepertoireTrainerTheme(
-                darkTheme = darkTheme ?: isSystemInDarkTheme(), dynamicColor = useDynamic
-            ) {
-                CompositionLocalProvider(
-                    LocalBoardThemeColors provides boardColors
-                ) {
+            ChessRepertoireTrainerTheme(darkTheme = darkTheme ?: isSystemInDarkTheme(),
+                                        dynamicColor = useDynamic) {
+                CompositionLocalProvider(LocalBoardThemeColors provides boardColors) {
                     AppNavigation(settingsViewModel)
                 }
             }

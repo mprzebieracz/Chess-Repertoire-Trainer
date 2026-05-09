@@ -2,9 +2,7 @@ package com.example.chessrepertoiretrainer.core.chess.ui
 
 import com.github.bhlangonijr.chesslib.Square
 
-internal data class VisualSquarePosition(
-    val file: Int, val rank: Int
-)
+internal data class VisualSquarePosition(val file: Int, val rank: Int)
 
 internal fun visualPosition(square: Square, isFlipped: Boolean): VisualSquarePosition {
     val visualFile = if (isFlipped) 7 - square.file.ordinal else square.file.ordinal
@@ -12,14 +10,12 @@ internal fun visualPosition(square: Square, isFlipped: Boolean): VisualSquarePos
     return VisualSquarePosition(file = visualFile, rank = visualRank)
 }
 
-internal fun hoveredSquareFromPointer(
-    squareSizePx: Float,
-    isFlipped: Boolean,
-    rankIndex: Int,
-    fileIndex: Int,
-    pointerX: Float,
-    pointerY: Float
-): Square {
+internal fun hoveredSquareFromPointer(squareSizePx: Float,
+                                      isFlipped: Boolean,
+                                      rankIndex: Int,
+                                      fileIndex: Int,
+                                      pointerX: Float,
+                                      pointerY: Float): Square {
     val currentX = (if (isFlipped) 7 - fileIndex else fileIndex) * squareSizePx + pointerX
     val currentY = (if (isFlipped) rankIndex else 7 - rankIndex) * squareSizePx + pointerY
 

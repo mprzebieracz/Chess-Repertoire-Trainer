@@ -11,9 +11,8 @@ import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 
-class DefaultChessBoardController(
-    override var onMoveListener: ((Move, String, String) -> Unit)? = null
-) : ChessBoardController {
+class DefaultChessBoardController(override var onMoveListener: ((Move, String, String) -> Unit)? = null) :
+    ChessBoardController {
 
     companion object {
         private const val STARTING_POSITION_FEN =
@@ -215,6 +214,11 @@ class DefaultChessBoardController(
 
     override fun flipBoard() {
         isFlipped = !isFlipped
+    }
+
+    override fun orientForSide(side: Side) {
+        if (side == Side.BLACK && !isFlipped) flipBoard()
+        else if (side == Side.WHITE && isFlipped) flipBoard()
     }
 
     override fun resetBoard() {

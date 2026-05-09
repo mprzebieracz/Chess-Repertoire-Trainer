@@ -24,7 +24,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                 val cleanedPgn = textProcessor.preprocess(pgnString)
                 val games = textProcessor.splitIntoGames(cleanedPgn)
                 if (games.isEmpty()) {
-                    Log.e("PgnImporter", "Nie znaleziono zadnych partii w PGN.")
+                    Log.e("PgnImporter", "No games found in PGN.")
                     return@withContext
                 }
 
@@ -44,24 +44,23 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                         return@forEach
                     }
 
-                    val insertedForGame = parseSingleGameAndInsert(
-                        gameText = gameText,
-                        chapterId = chapterId,
-                        chapterName = chapterName,
-                        startingLineNumber = nextLineNumber
-                    )
+                    val insertedForGame = parseSingleGameAndInsert(gameText = gameText,
+                                                                   chapterId = chapterId,
+                                                                   chapterName = chapterName,
+                                                                   startingLineNumber = nextLineNumber)
                     nextLineNumber += insertedForGame
                 }
 
             }
             catch (e: Exception) {
-                Log.e("PgnImporter", "Blad importu PGN: ${e.message}", e)
+                Log.e("PgnImporter", "PGN import error: ${e.message}", e)
             }
         }
 
-    private suspend fun parseSingleGameAndInsert(
-        gameText: String, chapterId: Int, chapterName: String, startingLineNumber: Int
-    ): Int {
+    private suspend fun parseSingleGameAndInsert(gameText: String,
+                                                 chapterId: Int,
+                                                 chapterName: String,
+                                                 startingLineNumber: Int): Int {
         val (headerMap, body) = extractHeadersAndBody(gameText)
         if (body.isBlank()) {
             return 0
@@ -69,14 +68,14 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
 
         val allLines = parser.parseLinesFromMovetext(body)
         if (allLines.isEmpty()) {
-            Log.e("PgnImporter", "Nie udalo sie wyodrebnic ruchow z PGN.")
+            Log.e("PgnImporter", "Could not extract moves from PGN.")
             return 0
         }
 
         val white = headerMap["White"] ?: "White"
         val black = headerMap["Black"] ?: "Black"
         val event = headerMap["Event"] ?: "Imported"
-        val baseTitle = "$white - $black ($event)"
+        "$white - $black ($event)"
 
         var insertedLinesCount = 0
         var currentLineNumber = startingLineNumber
@@ -91,9 +90,9 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
 
             val lineName = "$chapterName #$currentLineNumber"
 
-            importWriter.insertLineWithMoves(
-                chapterId = chapterId, lineName = lineName, moves = resolvedMoves
-            )
+            importWriter.insertLineWithMoves(chapterId = chapterId,
+                                             lineName = lineName,
+                                             moves = resolvedMoves)
 
             insertedLinesCount++
             currentLineNumber++

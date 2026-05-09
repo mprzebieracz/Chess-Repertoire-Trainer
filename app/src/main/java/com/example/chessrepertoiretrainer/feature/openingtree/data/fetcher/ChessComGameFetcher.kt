@@ -13,53 +13,50 @@ object ChessComGameFetcher : GameFetcher {
     private const val BASE_URL = "https://api.chess.com/pub/player"
     override val platformKey: String = "chess.com"
 
-    override suspend fun fetchGamesForUser(
-        username: String,
-        maxGames: Int?,
-        colorFilter: String,
-        timeControlFilter: String,
-        since: Long?,
-        onProgress: ((fetched: Int) -> Unit)?
-    ): List<FetchedGame> = withContext(Dispatchers.IO) {
-        val normalizedUser = username.trim().lowercase()
-        if (normalizedUser.isBlank()) return@withContext emptyList()
+    override suspend fun fetchGamesForUser(username: String,
+                                           maxGames: Int?,
+                                           colorFilter: String,
+                                           timeControlFilter: String,
+                                           since: Long?,
+                                           onProgress: ((fetched: Int) -> Unit)?): List<FetchedGame> =
+        withContext(Dispatchers.IO) {
+            val normalizedUser = username.trim().lowercase()
+            if (normalizedUser.isBlank()) return@withContext emptyList()
 
-        val archiveUrls = fetchArchiveUrls(normalizedUser)
-        if (archiveUrls.isEmpty()) return@withContext emptyList()
+            val archiveUrls = fetchArchiveUrls(normalizedUser)
+            if (archiveUrls.isEmpty()) return@withContext emptyList()
 
-        val effectiveMaxGames = maxGames?.coerceAtLeast(1) ?: Int.MAX_VALUE
-        val timeControls = timeControlFilter.split(",")
-            .map { it.trim().lowercase() }
-            .filter { it.isNotBlank() }
-            .toSet()
+            val effectiveMaxGames = maxGames?.coerceAtLeast(1) ?: Int.MAX_VALUE
+            val timeControls = timeControlFilter.split(",").map { it.trim().lowercase() }
+                .filter { it.isNotBlank() }.toSet()
 
-        val sinceYearMonth = since?.let { epochMsToYearMonth(it) }
-        val result = mutableListOf<FetchedGame>()
+            val sinceYearMonth = since?.let { epochMsToYearMonth(it) }
+            val result = mutableListOf<FetchedGame>()
 
-        for (archiveUrl in archiveUrls.asReversed()) {
-            if (result.size >= effectiveMaxGames) break
-            if (sinceYearMonth != null && archiveUrlYearMonth(archiveUrl) < sinceYearMonth) break
-
-            val gamesInArchive = fetchGamesFromArchive(archiveUrl, normalizedUser)
-            for (game in gamesInArchive) {
+            for (archiveUrl in archiveUrls.asReversed()) {
                 if (result.size >= effectiveMaxGames) break
-                if (since != null && game.playedAt <= since) continue
+                if (sinceYearMonth != null && archiveUrlYearMonth(archiveUrl) < sinceYearMonth) break
 
-                if (colorFilter == "white" && !game.isUserWhite) continue
-                if (colorFilter == "black" && game.isUserWhite) continue
+                val gamesInArchive = fetchGamesFromArchive(archiveUrl, normalizedUser)
+                for (game in gamesInArchive) {
+                    if (result.size >= effectiveMaxGames) break
+                    if (since != null && game.playedAt <= since) continue
 
-                if (timeControls.isNotEmpty()) {
-                    val category = game.timeCategory ?: continue
-                    if (category !in timeControls) continue
+                    if (colorFilter == "white" && !game.isUserWhite) continue
+                    if (colorFilter == "black" && game.isUserWhite) continue
+
+                    if (timeControls.isNotEmpty()) {
+                        val category = game.timeCategory ?: continue
+                        if (category !in timeControls) continue
+                    }
+
+                    result.add(game)
+                    onProgress?.invoke(result.size)
                 }
-
-                result.add(game)
-                onProgress?.invoke(result.size)
             }
-        }
 
-        return@withContext result
-    }
+            return@withContext result
+        }
 
     private fun epochMsToYearMonth(epochMs: Long): Int {
         val date = Instant.ofEpochMilli(epochMs).atOffset(ZoneOffset.UTC)
@@ -82,8 +79,9 @@ object ChessComGameFetcher : GameFetcher {
     private fun fetchGamesFromArchive(archiveUrl: String, username: String): List<FetchedGame> {
         val body = httpGet(archiveUrl) ?: return emptyList()
         val gamesArray = JSONObject(body).optJSONArray("games") ?: return emptyList()
-        return List(gamesArray.length()) { gamesArray.optJSONObject(it) }
-            .mapNotNull { parseChessComGame(it, username) }
+        return List(gamesArray.length()) { gamesArray.optJSONObject(it) }.mapNotNull {
+            parseChessComGame(it, username)
+        }
     }
 
     private fun parseChessComGame(gameJson: JSONObject?, username: String): FetchedGame? {
@@ -109,20 +107,19 @@ object ChessComGameFetcher : GameFetcher {
         val whiteRating = gameJson.optJSONObject("white")?.optInt("rating", -1)?.takeIf { it > 0 }
         val blackRating = gameJson.optJSONObject("black")?.optInt("rating", -1)?.takeIf { it > 0 }
 
-        return FetchedGame(
-            platformGameId = uuid ?: url ?: "${username}_${playedAt}_${resultTag}",
-            opponentName = if (isUserWhite) blackUser else whiteUser,
-            isUserWhite = isUserWhite,
-            result = resultTag,
-            timeControl = headers["TimeControl"] ?: timeControlFromJson,
-            timeCategory = mapTimeClassToCategory(gameJson.optString("time_class", "")),
-            opening = opening,
-            playerRating = if (isUserWhite) whiteRating else blackRating,
-            opponentRating = if (isUserWhite) blackRating else whiteRating,
-            rated = gameJson.optBoolean("rated", false),
-            playedAt = playedAt,
-            pgn = pgn
-        )
+        return FetchedGame(platformGameId = uuid ?: url ?: "${username}_${playedAt}_${resultTag}",
+                           opponentName = if (isUserWhite) blackUser else whiteUser,
+                           isUserWhite = isUserWhite,
+                           result = resultTag,
+                           timeControl = headers["TimeControl"] ?: timeControlFromJson,
+                           timeCategory = mapTimeClassToCategory(gameJson.optString("time_class",
+                                                                                    "")),
+                           opening = opening,
+                           playerRating = if (isUserWhite) whiteRating else blackRating,
+                           opponentRating = if (isUserWhite) blackRating else whiteRating,
+                           rated = gameJson.optBoolean("rated", false),
+                           playedAt = playedAt,
+                           pgn = pgn)
     }
 
     private fun mapTimeClassToCategory(timeClass: String?): String? {

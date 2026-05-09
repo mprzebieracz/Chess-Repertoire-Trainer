@@ -25,11 +25,9 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
 @Composable
-fun TrainScreen(
-    viewModel: TrainingViewModel,
-    onBackClick: (() -> Unit)? = null,
-    onSessionComplete: (() -> Unit)? = null
-) {
+fun TrainScreen(viewModel: TrainingViewModel,
+                onBackClick: (() -> Unit)? = null,
+                onSessionComplete: (() -> Unit)? = null) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.isSessionComplete) {
@@ -38,29 +36,24 @@ fun TrainScreen(
         }
     }
 
-    ChessScreenLayout(
-        title = "Train",
-        chessCtrl = viewModel.chessController,
-        showNavigationControls = false,
-        showBoardActionButtons = false,
-        allowPgnNavigation = false,
-        topContent = {
-            TrainTopContent(uiState = uiState, onBackClick = onBackClick)
-        },
-        bottomContent = {
-            TrainBottomContent(uiState = uiState)
-        })
+    ChessScreenLayout(title = "Train",
+                      chessCtrl = viewModel.chessController,
+                      showNavigationControls = false,
+                      showBoardActionButtons = false,
+                      allowPgnNavigation = false,
+                      topContent = {
+                          TrainTopContent(uiState = uiState, onBackClick = onBackClick)
+                      },
+                      bottomContent = {
+                          TrainBottomContent(uiState = uiState)
+                      })
 }
 
 @Composable
-private fun TrainTopContent(
-    uiState: TrainingUiState, onBackClick: (() -> Unit)?
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-    ) {
+private fun TrainTopContent(uiState: TrainingUiState, onBackClick: (() -> Unit)?) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 4.dp)) {
         if (onBackClick != null) {
             TrainBackRow(onBackClick = onBackClick)
         }
@@ -71,9 +64,7 @@ private fun TrainTopContent(
 
 @Composable
 private fun TrainBackRow(onBackClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBackClick) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
@@ -87,20 +78,16 @@ private fun TrainBackRow(onBackClick: () -> Unit) {
 @Composable
 private fun TrainHeader(uiState: TrainingUiState) {
     if (uiState.isSessionEmpty) {
-        Text(
-            text = "No lines to train. Create lines in your repertoire first.",
-            style = MaterialTheme.typography.bodyMedium
-        )
+        Text(text = "No lines to train. Create lines in your repertoire first.",
+             style = MaterialTheme.typography.bodyMedium)
         return
     }
 
     uiState.currentLineName?.let { currentLineName ->
         if (uiState.totalLines > 0) {
-            Text(
-                text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text(text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
+                 style = MaterialTheme.typography.bodyMedium,
+                 fontWeight = FontWeight.SemiBold)
         }
 
         Text(text = currentLineName, style = MaterialTheme.typography.bodyMedium)
@@ -113,11 +100,9 @@ private fun TrainHeader(uiState: TrainingUiState) {
 
 @Composable
 private fun TrainBottomContent(uiState: TrainingUiState) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 8.dp)) {
         TrainStatusMessage(uiState = uiState)
     }
 }
@@ -126,38 +111,30 @@ private fun TrainBottomContent(uiState: TrainingUiState) {
 private fun TrainStatusMessage(uiState: TrainingUiState) {
     when {
         uiState.isSessionComplete -> {
-            Text(
-                text = uiState.statusMessage ?: "Training complete",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text(text = uiState.statusMessage ?: "Training complete",
+                 style = MaterialTheme.typography.bodyMedium,
+                 fontWeight = FontWeight.SemiBold)
         }
 
         uiState.lastMoveWasCorrect == true -> {
-            Text(
-                text = "Correct move",
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = "Correct move",
+                 color = MaterialTheme.colorScheme.primary,
+                 style = MaterialTheme.typography.bodyMedium)
         }
 
         uiState.lastMoveWasCorrect == false -> {
-            Text(
-                text = "Incorrect move",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = "Incorrect move",
+                 color = MaterialTheme.colorScheme.error,
+                 style = MaterialTheme.typography.bodyMedium)
         }
 
         !uiState.isSessionEmpty && !uiState.isSessionComplete -> {
-            Text(
-                text = if (uiState.isWaitingForUserMove) {
-                    "Your turn: follow the repertoire moves."
-                }
-                else {
-                    "Waiting for training session..."
-                }, style = MaterialTheme.typography.bodyMedium
-            )
+            Text(text = if (uiState.isWaitingForUserMove) {
+                "Your turn: follow the repertoire moves."
+            }
+            else {
+                "Waiting for training session..."
+            }, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

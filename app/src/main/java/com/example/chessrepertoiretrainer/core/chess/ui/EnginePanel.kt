@@ -26,69 +26,59 @@ import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
 
 @Composable
-fun EnginePanel(
-    analysis: EngineAnalysis?,
-    searchState: EngineSearchState,
-    onDeeperClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun EnginePanel(analysis: EngineAnalysis?,
+                searchState: EngineSearchState,
+                onDeeperClick: () -> Unit,
+                modifier: Modifier = Modifier) {
+
     val isSearching = searchState == EngineSearchState.SEARCHING
     val scrollState = rememberScrollState()
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(36.dp)
-            .padding(horizontal = 16.dp),
+    Row(modifier = modifier
+        .fillMaxWidth()
+        .height(36.dp)
+        .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
+        horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         if (isSearching && analysis == null) {
             CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
-            Text(
-                text = "Calculating…",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        } else if (analysis != null) {
-            Text(
-                text = analysis.scoreLabel,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.width(44.dp)
-            )
+            Text(text = "Calculating…",
+                 style = MaterialTheme.typography.bodySmall,
+                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
+        else if (analysis != null) {
+            Text(text = analysis.scoreLabel,
+                 style = MaterialTheme.typography.labelMedium,
+                 fontWeight = FontWeight.Bold,
+                 color = MaterialTheme.colorScheme.primary,
+                 modifier = Modifier.width(44.dp))
             if (isSearching) {
                 CircularProgressIndicator(modifier = Modifier.size(10.dp), strokeWidth = 1.5.dp)
-            } else {
-                Text(
-                    text = "d${analysis.depth}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    fontSize = 10.sp
-                )
             }
-            Text(
-                text = analysis.line,
-                style = MaterialTheme.typography.bodySmall,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                softWrap = false,
-                modifier = Modifier
-                    .weight(1f)
-                    .horizontalScroll(scrollState)
-            )
-            FilledTonalButton(
-                onClick = onDeeperClick,
-                enabled = searchState == EngineSearchState.COMPLETE,
-                modifier = Modifier.height(28.dp),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
-            ) {
+            else {
+                Text(text = "d${analysis.depth}",
+                     style = MaterialTheme.typography.labelSmall,
+                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                     fontSize = 10.sp)
+            }
+            Text(text = analysis.line,
+                 style = MaterialTheme.typography.bodySmall,
+                 fontFamily = FontFamily.Monospace,
+                 fontSize = 11.sp,
+                 color = MaterialTheme.colorScheme.onSurface,
+                 maxLines = 1,
+                 softWrap = false,
+                 modifier = Modifier
+                     .weight(1f)
+                     .horizontalScroll(scrollState))
+            FilledTonalButton(onClick = onDeeperClick,
+                              enabled = searchState == EngineSearchState.COMPLETE,
+                              modifier = Modifier.height(28.dp),
+                              contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)) {
                 Text("Deeper", fontSize = 11.sp)
             }
-        } else {
+        }
+        else {
             Spacer(Modifier.weight(1f))
         }
     }

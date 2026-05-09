@@ -15,27 +15,23 @@ import java.io.IOException
 
 private const val SETTINGS_DATASTORE_NAME = "user_settings"
 
-private val Context.settingsDataStore by preferencesDataStore(
-    name = SETTINGS_DATASTORE_NAME
-)
+private val Context.settingsDataStore by preferencesDataStore(name = SETTINGS_DATASTORE_NAME)
 
 enum class AppThemeMode { SYSTEM, LIGHT, DARK }
 
 enum class BoardTheme { CLASSIC, BLUE, BROWN }
 
-data class UserSettings(
-    val lichessUsername: String = "",
-    val chessComUsername: String = "",
-    val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
-    val boardTheme: BoardTheme = BoardTheme.CLASSIC,
-    val useDynamicColors: Boolean = true,
-    val defaultOnlinePlatform: String = "lichess",
-    val lichessLastSyncAt: Long = 0L,
-    val chessComLastSyncAt: Long = 0L,
-    val engineDepth: Int = 18,
-    val engineMovetime: Int = 2000,
-    val engineThreads: Int = 2
-)
+data class UserSettings(val lichessUsername: String = "",
+                        val chessComUsername: String = "",
+                        val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
+                        val boardTheme: BoardTheme = BoardTheme.CLASSIC,
+                        val useDynamicColors: Boolean = true,
+                        val defaultOnlinePlatform: String = "lichess",
+                        val lichessLastSyncAt: Long = 0L,
+                        val chessComLastSyncAt: Long = 0L,
+                        val engineDepth: Int = 18,
+                        val engineMovetime: Int = 2000,
+                        val engineThreads: Int = 2)
 
 class UserSettingsRepository(private val context: Context) {
 
@@ -61,22 +57,21 @@ class UserSettingsRepository(private val context: Context) {
             throw exception
         }
     }.map { prefs ->
-        UserSettings(
-            lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
-            chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
-            appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
-                runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
-            } ?: AppThemeMode.SYSTEM,
-            boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
-                runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
-            } ?: BoardTheme.CLASSIC,
-            useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
-            defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess",
-            lichessLastSyncAt = prefs[Keys.LICHESS_LAST_SYNC_AT] ?: 0L,
-            chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L,
-            engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 20,
-            engineMovetime = prefs[Keys.ENGINE_MOVETIME] ?: 2000,
-            engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2)
+        UserSettings(lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
+                     chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
+                     appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
+                         runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
+                     } ?: AppThemeMode.SYSTEM,
+                     boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
+                         runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
+                     } ?: BoardTheme.CLASSIC,
+                     useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
+                     defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess",
+                     lichessLastSyncAt = prefs[Keys.LICHESS_LAST_SYNC_AT] ?: 0L,
+                     chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L,
+                     engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 20,
+                     engineMovetime = prefs[Keys.ENGINE_MOVETIME] ?: 2000,
+                     engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2)
     }
 
     suspend fun updateLichessUsername(username: String) {
@@ -139,5 +134,3 @@ class UserSettingsRepository(private val context: Context) {
         context.settingsDataStore.edit { prefs -> prefs[Keys.ENGINE_THREADS] = threads }
     }
 }
-
-

@@ -30,72 +30,66 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.ReviewChapterViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
-fun NavGraphBuilder.repertoireGraph(
-    navController: NavHostController,
-    repertoireRepository: RepertoireRepository,
-    complianceAnalyzer: RepertoireComplianceAnalyzer,
-    appContainer: AppContainer
-) {
+fun NavGraphBuilder.repertoireGraph(navController: NavHostController,
+                                    repertoireRepository: RepertoireRepository,
+                                    complianceAnalyzer: RepertoireComplianceAnalyzer,
+                                    appContainer: AppContainer) {
     composable(Screen.RepertoireMain.route) {
-        val vm: RepertoiresViewModel =
-            viewModel(factory = RepertoiresViewModel.Factory(repertoireRepository, complianceAnalyzer))
-        RepertoiresScreen(
-            viewModel = vm,
-            onNavigateToChapters = { navController.navigate(Screen.CourseOverview.createRoute(it)) }
-        )
+        val vm: RepertoiresViewModel = viewModel(factory = RepertoiresViewModel.Factory(
+            repertoireRepository,
+            complianceAnalyzer))
+        RepertoiresScreen(viewModel = vm, onNavigateToChapters = {
+            navController.navigate(Screen.CourseOverview.createRoute(it))
+        })
     }
 
-    composable(
-        Screen.CourseOverview.route,
-        arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
-    ) {
+    composable(Screen.CourseOverview.route,
+               arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })) {
         val vm: CourseOverviewViewModel =
             viewModel(factory = CourseOverviewViewModel.Factory(repertoireRepository))
-        CourseOverviewScreen(
-            viewModel = vm,
-            onBackClick = { navController.popBackStack() },
-            onEditCourse = { navController.navigate(Screen.EditCourse.createRoute(it)) },
-            onOpenChapterLearn = { navController.navigate(Screen.ChapterLearn.createRoute(it)) },
-            onOpenChapterTrain = { navController.navigate(Screen.ChapterTraining.createRoute(it)) },
-            onOpenChapterReview = { navController.navigate(Screen.ChapterReview.createRoute(it)) },
-            onStartMultiChapterTraining = { chapterIds ->
-                appContainer.selectedChapterIds = chapterIds
-                navController.navigate(Screen.MultiChapterTraining.route)
-            }
-        )
+        CourseOverviewScreen(viewModel = vm,
+                             onBackClick = { navController.popBackStack() },
+                             onEditCourse = {
+                                 navController.navigate(Screen.EditCourse.createRoute(it))
+                             },
+                             onOpenChapterLearn = {
+                                 navController.navigate(Screen.ChapterLearn.createRoute(it))
+                             },
+                             onOpenChapterTrain = {
+                                 navController.navigate(Screen.ChapterTraining.createRoute(it))
+                             },
+                             onOpenChapterReview = {
+                                 navController.navigate(Screen.ChapterReview.createRoute(it))
+                             },
+                             onStartMultiChapterTraining = { chapterIds ->
+                                 appContainer.selectedChapterIds = chapterIds
+                                 navController.navigate(Screen.MultiChapterTraining.route)
+                             })
     }
 
-    composable(
-        Screen.EditCourse.route,
-        arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
-    ) {
+    composable(Screen.EditCourse.route,
+               arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })) {
         val vm: EditCourseViewModel =
             viewModel(factory = EditCourseViewModel.Factory(repertoireRepository))
-        EditCourseScreen(
-            viewModel = vm,
-            onNavigateToEditChapter = { navController.navigate(Screen.EditChapter.createRoute(it)) },
-            onCourseDeleted = { navController.popBackStack(Screen.RepertoireMain.route, false) },
-            onBackClick = { navController.popBackStack() }
-        )
+        EditCourseScreen(viewModel = vm, onNavigateToEditChapter = {
+            navController.navigate(Screen.EditChapter.createRoute(it))
+        }, onCourseDeleted = {
+            navController.popBackStack(Screen.RepertoireMain.route, false)
+        }, onBackClick = { navController.popBackStack() })
     }
 
-    composable(
-        Screen.EditChapter.route,
-        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
-    ) {
+    composable(Screen.EditChapter.route,
+               arguments = listOf(navArgument("chapterId") { type = NavType.IntType })) {
         val vm: EditChapterViewModel =
             viewModel(factory = EditChapterViewModel.Factory(repertoireRepository))
-        EditChapterScreen(
-            viewModel = vm,
-            onNavigateToLineEditor = { navController.navigate(Screen.LineEditor.createRoute(it)) },
-            onBackClick = { navController.popBackStack() }
-        )
+        EditChapterScreen(viewModel = vm, onNavigateToLineEditor = {
+            navController.navigate(Screen.LineEditor.createRoute(it))
+        }, onBackClick = { navController.popBackStack() })
     }
 
-    composable(
-        Screen.ChapterLearn.route,
-        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
-    ) { backStackEntry ->
+    composable(Screen.ChapterLearn.route, arguments = listOf(navArgument("chapterId") {
+        type = NavType.IntType
+    })) { backStackEntry ->
         val vm: LearnChapterViewModel =
             viewModel(factory = LearnChapterViewModel.Factory(repertoireRepository))
         val savedStateHandle = backStackEntry.savedStateHandle
@@ -106,59 +100,52 @@ fun NavGraphBuilder.repertoireGraph(
                 vm.onLineTrainingFinished(); savedStateHandle["lineTrainingFinished"] = false
             }
         }
-        LearnChapterScreen(
-            viewModel = vm,
-            onBackClick = { navController.popBackStack() },
-            onStartChapterTraining = { navController.navigate(Screen.ChapterTraining.createRoute(it)) },
-            onStartLineTraining = { navController.navigate(Screen.LineTraining.createRoute(it)) }
-        )
+        LearnChapterScreen(viewModel = vm,
+                           onBackClick = { navController.popBackStack() },
+                           onStartChapterTraining = {
+                               navController.navigate(Screen.ChapterTraining.createRoute(it))
+                           },
+                           onStartLineTraining = {
+                               navController.navigate(Screen.LineTraining.createRoute(it))
+                           })
     }
 
-    composable(
-        Screen.ChapterReview.route,
-        arguments = listOf(
-            navArgument("chapterId") { type = NavType.IntType },
-            navArgument("startLineId") { type = NavType.IntType; defaultValue = -1 }
-        )
-    ) {
-        val vm: ReviewChapterViewModel =
-            viewModel(factory = ReviewChapterViewModel.Factory(repertoireRepository, appContainer.stockfishEngine))
+    composable(Screen.ChapterReview.route,
+               arguments = listOf(navArgument("chapterId") { type = NavType.IntType },
+                                  navArgument("startLineId") {
+                                      type = NavType.IntType; defaultValue = -1
+                                  })) {
+        val vm: ReviewChapterViewModel = viewModel(factory = ReviewChapterViewModel.Factory(
+            repertoireRepository,
+            appContainer.stockfishEngine))
         ReviewChapterScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 
-    composable(
-        Screen.LineEditor.route,
-        arguments = listOf(navArgument("lineId") { type = NavType.IntType })
-    ) {
-        val vm: LineEditorViewModel =
-            viewModel(factory = LineEditorViewModel.Factory(repertoireRepository, appContainer.stockfishEngine))
+    composable(Screen.LineEditor.route,
+               arguments = listOf(navArgument("lineId") { type = NavType.IntType })) {
+        val vm: LineEditorViewModel = viewModel(factory = LineEditorViewModel.Factory(
+            repertoireRepository,
+            appContainer.stockfishEngine))
         LineEditorScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 
-    composable(
-        Screen.ChapterTraining.route,
-        arguments = listOf(navArgument("chapterId") { type = NavType.IntType })
-    ) {
+    composable(Screen.ChapterTraining.route,
+               arguments = listOf(navArgument("chapterId") { type = NavType.IntType })) {
         val vm: TrainingViewModel =
             viewModel(factory = TrainingViewModel.Factory(repertoireRepository))
         TrainScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 
-    composable(
-        Screen.LineTraining.route,
-        arguments = listOf(navArgument("lineId") { type = NavType.IntType })
-    ) {
+    composable(Screen.LineTraining.route,
+               arguments = listOf(navArgument("lineId") { type = NavType.IntType })) {
         val vm: TrainingViewModel =
             viewModel(factory = TrainingViewModel.Factory(repertoireRepository))
-        TrainScreen(
-            viewModel = vm,
-            onBackClick = { navController.popBackStack() },
-            onSessionComplete = {
-                navController.previousBackStackEntry?.savedStateHandle?.set(
-                    "lineTrainingFinished", true
-                ); navController.popBackStack()
-            }
-        )
+        TrainScreen(viewModel = vm,
+                    onBackClick = { navController.popBackStack() },
+                    onSessionComplete = {
+                        navController.previousBackStackEntry?.savedStateHandle?.set("lineTrainingFinished",
+                                                                                    true); navController.popBackStack()
+                    })
     }
 
     composable(Screen.MultiChapterTraining.route) {

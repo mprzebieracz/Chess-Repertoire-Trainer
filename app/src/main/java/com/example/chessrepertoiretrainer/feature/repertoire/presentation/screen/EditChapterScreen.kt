@@ -37,7 +37,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.EditChapterViewModel
 import sh.calvin.reorderable.ReorderableItem
@@ -45,11 +44,9 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditChapterScreen(
-    viewModel: EditChapterViewModel,
-    onNavigateToLineEditor: (lineId: Int) -> Unit,
-    onBackClick: () -> Unit
-) {
+fun EditChapterScreen(viewModel: EditChapterViewModel,
+                      onNavigateToLineEditor: (lineId: Int) -> Unit,
+                      onBackClick: () -> Unit) {
     val lines by viewModel.lines.collectAsStateWithLifecycle()
     var localLines by remember(lines) { mutableStateOf(lines) }
     val lazyListState = rememberLazyListState()
@@ -61,65 +58,49 @@ fun EditChapterScreen(
     var newLineName by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    val pgnLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        uri?.let { viewModel.importPgn(context, it) }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Edit Chapter") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(AppIcons.Back, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { pgnLauncher.launch(arrayOf("*/*")) }) {
-                        Icon(AppIcons.ImportPgn, contentDescription = "Import PGN")
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { showDialog = true }) {
-                Icon(AppIcons.AddLine, contentDescription = "Add Line")
-            }
+    val pgnLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let { viewModel.importPgn(context, it) }
         }
-    ) { padding ->
-        LazyColumn(
-            state = lazyListState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("Edit Chapter") }, navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(AppIcons.Back, contentDescription = "Back")
+            }
+        }, actions = {
+            IconButton(onClick = { pgnLauncher.launch(arrayOf("*/*")) }) {
+                Icon(AppIcons.ImportPgn, contentDescription = "Import PGN")
+            }
+        })
+    }, floatingActionButton = {
+        FloatingActionButton(onClick = { showDialog = true }) {
+            Icon(AppIcons.AddLine, contentDescription = "Add Line")
+        }
+    }) { padding ->
+        LazyColumn(state = lazyListState, modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
             items(localLines, key = { it.id }) { line ->
                 ReorderableItem(reorderState, key = line.id) { isDragging ->
-                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp, label = "elevation")
+                    val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp,
+                                                      label = "elevation")
                     Surface(shadowElevation = elevation) {
-                        ListItem(
-                            modifier = Modifier.clickable { onNavigateToLineEditor(line.id) },
-                            leadingContent = {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    contentDescription = "Drag to reorder",
-                                    modifier = Modifier.draggableHandle(
-                                        onDragStopped = {
-                                            viewModel.persistLineOrder(localLines)
-                                        }
-                                    ),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            },
-                            headlineContent = { Text(line.name) },
-                            trailingContent = {
-                                IconButton(onClick = { viewModel.deleteLine(line) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete")
-                                }
-                            }
-                        )
+                        ListItem(modifier = Modifier.clickable { onNavigateToLineEditor(line.id) },
+                                 leadingContent = {
+                                     Icon(Icons.Default.Menu,
+                                          contentDescription = "Drag to reorder",
+                                          modifier = Modifier.draggableHandle(onDragStopped = {
+                                              viewModel.persistLineOrder(localLines)
+                                          }),
+                                          tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                 },
+                                 headlineContent = { Text(line.name) },
+                                 trailingContent = {
+                                     IconButton(onClick = { viewModel.deleteLine(line) }) {
+                                         Icon(Icons.Default.Delete, contentDescription = "Delete")
+                                     }
+                                 })
                         HorizontalDivider()
                     }
                 }
@@ -128,27 +109,25 @@ fun EditChapterScreen(
     }
 
     if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false; newLineName = "" },
-            title = { Text("Create New Line") },
-            text = {
-                OutlinedTextField(
-                    value = newLineName,
-                    onValueChange = { newLineName = it },
-                    label = { Text("Line Name (optional)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                Button(onClick = {
-                    viewModel.addLine(newLineName)
-                    newLineName = ""
-                    showDialog = false
-                }) { Text("Create") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false; newLineName = "" }) { Text("Cancel") }
-            }
-        )
+        AlertDialog(onDismissRequest = { showDialog = false; newLineName = "" },
+                    title = { Text("Create New Line") },
+                    text = {
+                        OutlinedTextField(value = newLineName,
+                                          onValueChange = { newLineName = it },
+                                          label = { Text("Line Name (optional)") },
+                                          modifier = Modifier.fillMaxWidth())
+                    },
+                    confirmButton = {
+                        Button(onClick = {
+                            viewModel.addLine(newLineName)
+                            newLineName = ""
+                            showDialog = false
+                        }) { Text("Create") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            showDialog = false; newLineName = ""
+                        }) { Text("Cancel") }
+                    })
     }
 }

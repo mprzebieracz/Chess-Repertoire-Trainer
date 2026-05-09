@@ -31,79 +31,65 @@ import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTree
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OpeningTreeSearchScreen(
-    viewModel: OpeningTreeSearchViewModel,
-    defaultLichessUsername: String,
-    defaultChessComUsername: String,
-    defaultPlatform: String,
-    onOpenTree: (OpeningTree) -> Unit
-) {
+fun OpeningTreeSearchScreen(viewModel: OpeningTreeSearchViewModel,
+                            defaultLichessUsername: String,
+                            defaultChessComUsername: String,
+                            defaultPlatform: String,
+                            onOpenTree: (OpeningTree) -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val initialState = remember(defaultPlatform, defaultLichessUsername, defaultChessComUsername) {
-        OpeningTreeSearchFormState.initial(
-            defaultPlatform = defaultPlatform,
-            defaultLichessUsername = defaultLichessUsername,
-            defaultChessComUsername = defaultChessComUsername
-        )
+        OpeningTreeSearchFormState.initial(defaultPlatform = defaultPlatform,
+                                           defaultLichessUsername = defaultLichessUsername,
+                                           defaultChessComUsername = defaultChessComUsername)
     }
     var formState by remember(defaultPlatform, defaultLichessUsername, defaultChessComUsername) {
         mutableStateOf(initialState)
     }
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Opening tree search") }) }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+    Scaffold(topBar = { TopAppBar(title = { Text("Opening tree search") }) }) { padding ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .padding(16.dp),
+               verticalArrangement = Arrangement.spacedBy(8.dp)) {
             SearchIntro()
             UsernameSection(formState = formState, onFormStateChange = { formState = it })
-            PlatformSection(
-                formState = formState,
-                defaultLichessUsername = defaultLichessUsername,
-                defaultChessComUsername = defaultChessComUsername,
-                onFormStateChange = { formState = it }
-            )
+            PlatformSection(formState = formState,
+                            defaultLichessUsername = defaultLichessUsername,
+                            defaultChessComUsername = defaultChessComUsername,
+                            onFormStateChange = { formState = it })
             ColorSection(formState = formState, onFormStateChange = { formState = it })
             TimeControlsSection(formState = formState, onFormStateChange = { formState = it })
             MaxGamesSection(formState = formState, onFormStateChange = { formState = it })
-            DownloadSection(
-                isEnabled = formState.username.isNotBlank() && !uiState.isSyncing,
-                onDownloadGames = {
-                    val maxGames = formState.maxGamesOrNull()
-                    val timeControlFilter = formState.timeControlFilter()
-                    viewModel.searchAndPrepareOpeningTree(
-                        username = formState.username.trim(),
-                        platform = formState.platform,
-                        maxGames = maxGames,
-                        color = formState.colorFilter,
-                        timeControlFilter = timeControlFilter,
-                        onTreeReady = { tree -> onOpenTree(tree) }
-                    )
-                }
-            )
+            DownloadSection(isEnabled = formState.username.isNotBlank() && !uiState.isSyncing,
+                            onDownloadGames = {
+                                val maxGames = formState.maxGamesOrNull()
+                                val timeControlFilter = formState.timeControlFilter()
+                                viewModel.searchAndPrepareOpeningTree(username = formState.username.trim(),
+                                                                      platform = formState.platform,
+                                                                      maxGames = maxGames,
+                                                                      color = formState.colorFilter,
+                                                                      timeControlFilter = timeControlFilter,
+                                                                      onTreeReady = { tree ->
+                                                                          onOpenTree(tree)
+                                                                      })
+                            })
             SyncProgressSection(uiState = uiState)
         }
     }
 }
 
-data class OpeningTreeSearchFormState(
-    val platform: String,
-    val username: String,
-    val colorFilter: String = "white",
-    val bulletEnabled: Boolean = true,
-    val blitzEnabled: Boolean = true,
-    val rapidEnabled: Boolean = true,
-    val classicalEnabled: Boolean = true,
-    val maxGamesText: String = "200"
-) {
-    fun withPlatform(
-        newPlatform: String, defaultLichessUsername: String, defaultChessComUsername: String
-    ): OpeningTreeSearchFormState {
+data class OpeningTreeSearchFormState(val platform: String,
+                                      val username: String,
+                                      val colorFilter: String = "white",
+                                      val bulletEnabled: Boolean = true,
+                                      val blitzEnabled: Boolean = true,
+                                      val rapidEnabled: Boolean = true,
+                                      val classicalEnabled: Boolean = true,
+                                      val maxGamesText: String = "200") {
+    fun withPlatform(newPlatform: String,
+                     defaultLichessUsername: String,
+                     defaultChessComUsername: String): OpeningTreeSearchFormState {
         val nextUsername = when (newPlatform) {
             "chess.com" -> defaultChessComUsername.takeIf { it.isNotBlank() } ?: username
             else -> defaultLichessUsername.takeIf { it.isNotBlank() } ?: username
@@ -124,9 +110,9 @@ data class OpeningTreeSearchFormState(
     fun maxGamesOrNull(): Int? = maxGamesText.toIntOrNull()
 
     companion object {
-        fun initial(
-            defaultPlatform: String, defaultLichessUsername: String, defaultChessComUsername: String
-        ): OpeningTreeSearchFormState {
+        fun initial(defaultPlatform: String,
+                    defaultLichessUsername: String,
+                    defaultChessComUsername: String): OpeningTreeSearchFormState {
             val platform = if (defaultPlatform == "chess.com") "chess.com" else "lichess"
             val username = if (platform == "chess.com") {
                 defaultChessComUsername
@@ -141,61 +127,42 @@ data class OpeningTreeSearchFormState(
 
 @Composable
 private fun SearchIntro() {
-    Text(
-        text = "Build an opening tree from any player's online games",
-        style = MaterialTheme.typography.titleMedium
-    )
+    Text(text = "Build an opening tree from any player's online games",
+         style = MaterialTheme.typography.titleMedium)
 }
 
 @Composable
-private fun UsernameSection(
-    formState: OpeningTreeSearchFormState, onFormStateChange: (OpeningTreeSearchFormState) -> Unit
-) {
-    OutlinedTextField(
-        value = formState.username,
-        onValueChange = { onFormStateChange(formState.copy(username = it)) },
-        label = { Text("Username") },
-        modifier = Modifier.fillMaxWidth()
-    )
+private fun UsernameSection(formState: OpeningTreeSearchFormState,
+                            onFormStateChange: (OpeningTreeSearchFormState) -> Unit) {
+    OutlinedTextField(value = formState.username,
+                      onValueChange = { onFormStateChange(formState.copy(username = it)) },
+                      label = { Text("Username") },
+                      modifier = Modifier.fillMaxWidth())
 }
 
 @Composable
-private fun PlatformSection(
-    formState: OpeningTreeSearchFormState,
-    defaultLichessUsername: String,
-    defaultChessComUsername: String,
-    onFormStateChange: (OpeningTreeSearchFormState) -> Unit
-) {
+private fun PlatformSection(formState: OpeningTreeSearchFormState,
+                            defaultLichessUsername: String,
+                            defaultChessComUsername: String,
+                            onFormStateChange: (OpeningTreeSearchFormState) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = "Platform", style = MaterialTheme.typography.labelMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            PlatformOption(
-                label = "Lichess",
-                selected = formState.platform == "lichess",
-                onClick = {
-                    onFormStateChange(
-                        formState.withPlatform(
-                            newPlatform = "lichess",
-                            defaultLichessUsername = defaultLichessUsername,
-                            defaultChessComUsername = defaultChessComUsername
-                        )
-                    )
-                }
-            )
+            PlatformOption(label = "Lichess",
+                           selected = formState.platform == "lichess",
+                           onClick = {
+                               onFormStateChange(formState.withPlatform(newPlatform = "lichess",
+                                                                        defaultLichessUsername = defaultLichessUsername,
+                                                                        defaultChessComUsername = defaultChessComUsername))
+                           })
             Spacer(modifier = Modifier.width(16.dp))
-            PlatformOption(
-                label = "Chess.com",
-                selected = formState.platform == "chess.com",
-                onClick = {
-                    onFormStateChange(
-                        formState.withPlatform(
-                            newPlatform = "chess.com",
-                            defaultLichessUsername = defaultLichessUsername,
-                            defaultChessComUsername = defaultChessComUsername
-                        )
-                    )
-                }
-            )
+            PlatformOption(label = "Chess.com",
+                           selected = formState.platform == "chess.com",
+                           onClick = {
+                               onFormStateChange(formState.withPlatform(newPlatform = "chess.com",
+                                                                        defaultLichessUsername = defaultLichessUsername,
+                                                                        defaultChessComUsername = defaultChessComUsername))
+                           })
         }
     }
 }
@@ -209,61 +176,49 @@ private fun PlatformOption(label: String, selected: Boolean, onClick: () -> Unit
 }
 
 @Composable
-private fun ColorSection(
-    formState: OpeningTreeSearchFormState, onFormStateChange: (OpeningTreeSearchFormState) -> Unit
-) {
+private fun ColorSection(formState: OpeningTreeSearchFormState,
+                         onFormStateChange: (OpeningTreeSearchFormState) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = "Color", style = MaterialTheme.typography.labelMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = formState.colorFilter == "white",
-                onClick = { onFormStateChange(formState.copy(colorFilter = "white")) }
-            )
+            RadioButton(selected = formState.colorFilter == "white",
+                        onClick = { onFormStateChange(formState.copy(colorFilter = "white")) })
             Text(text = "White")
             Spacer(modifier = Modifier.width(16.dp))
-            RadioButton(
-                selected = formState.colorFilter == "black",
-                onClick = { onFormStateChange(formState.copy(colorFilter = "black")) }
-            )
+            RadioButton(selected = formState.colorFilter == "black",
+                        onClick = { onFormStateChange(formState.copy(colorFilter = "black")) })
             Text(text = "Black")
         }
     }
 }
 
 @Composable
-private fun TimeControlsSection(
-    formState: OpeningTreeSearchFormState, onFormStateChange: (OpeningTreeSearchFormState) -> Unit
-) {
+private fun TimeControlsSection(formState: OpeningTreeSearchFormState,
+                                onFormStateChange: (OpeningTreeSearchFormState) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(text = "Time controls", style = MaterialTheme.typography.labelMedium)
-        TimeControlRow(
-            firstLabel = "Bullet",
-            firstChecked = formState.bulletEnabled,
-            onFirstChange = { onFormStateChange(formState.copy(bulletEnabled = it)) },
-            secondLabel = "Blitz",
-            secondChecked = formState.blitzEnabled,
-            onSecondChange = { onFormStateChange(formState.copy(blitzEnabled = it)) }
-        )
-        TimeControlRow(
-            firstLabel = "Rapid",
-            firstChecked = formState.rapidEnabled,
-            onFirstChange = { onFormStateChange(formState.copy(rapidEnabled = it)) },
-            secondLabel = "Classical/Daily",
-            secondChecked = formState.classicalEnabled,
-            onSecondChange = { onFormStateChange(formState.copy(classicalEnabled = it)) }
-        )
+        TimeControlRow(firstLabel = "Bullet",
+                       firstChecked = formState.bulletEnabled,
+                       onFirstChange = { onFormStateChange(formState.copy(bulletEnabled = it)) },
+                       secondLabel = "Blitz",
+                       secondChecked = formState.blitzEnabled,
+                       onSecondChange = { onFormStateChange(formState.copy(blitzEnabled = it)) })
+        TimeControlRow(firstLabel = "Rapid",
+                       firstChecked = formState.rapidEnabled,
+                       onFirstChange = { onFormStateChange(formState.copy(rapidEnabled = it)) },
+                       secondLabel = "Classical/Daily",
+                       secondChecked = formState.classicalEnabled,
+                       onSecondChange = { onFormStateChange(formState.copy(classicalEnabled = it)) })
     }
 }
 
 @Composable
-private fun TimeControlRow(
-    firstLabel: String,
-    firstChecked: Boolean,
-    onFirstChange: (Boolean) -> Unit,
-    secondLabel: String,
-    secondChecked: Boolean,
-    onSecondChange: (Boolean) -> Unit
-) {
+private fun TimeControlRow(firstLabel: String,
+                           firstChecked: Boolean,
+                           onFirstChange: (Boolean) -> Unit,
+                           secondLabel: String,
+                           secondChecked: Boolean,
+                           onSecondChange: (Boolean) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Checkbox(checked = firstChecked, onCheckedChange = onFirstChange)
         Text(text = firstLabel)
@@ -274,19 +229,13 @@ private fun TimeControlRow(
 }
 
 @Composable
-private fun MaxGamesSection(
-    formState: OpeningTreeSearchFormState, onFormStateChange: (OpeningTreeSearchFormState) -> Unit
-) {
-    OutlinedTextField(
-        value = formState.maxGamesText,
-        onValueChange = { newValue ->
-            if (newValue.all { it.isDigit() }) {
-                onFormStateChange(formState.copy(maxGamesText = newValue))
-            }
-        },
-        label = { Text("Max games to download (empty = all)") },
-        modifier = Modifier.fillMaxWidth()
-    )
+private fun MaxGamesSection(formState: OpeningTreeSearchFormState,
+                            onFormStateChange: (OpeningTreeSearchFormState) -> Unit) {
+    OutlinedTextField(value = formState.maxGamesText, onValueChange = { newValue ->
+        if (newValue.all { it.isDigit() }) {
+            onFormStateChange(formState.copy(maxGamesText = newValue))
+        }
+    }, label = { Text("Max games to download (empty = all)") }, modifier = Modifier.fillMaxWidth())
 }
 
 @Composable
@@ -309,11 +258,9 @@ private fun SyncProgressSection(uiState: SearchUiState) {
     }
 
     uiState.errorMessage?.let { error ->
-        Text(
-            text = error,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall
-        )
+        Text(text = error,
+             color = MaterialTheme.colorScheme.error,
+             style = MaterialTheme.typography.bodySmall)
     }
 
     uiState.lastSyncSummary?.let { summary ->

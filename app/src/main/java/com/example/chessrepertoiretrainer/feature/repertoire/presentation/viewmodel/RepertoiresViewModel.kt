@@ -15,18 +15,15 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-data class CourseProgress(
-    val repertoire: Repertoire, val totalLines: Int, val learnedLines: Int
-) {
+data class CourseProgress(val repertoire: Repertoire, val totalLines: Int, val learnedLines: Int) {
     val learnedFraction: Float
         get() = if (totalLines == 0) 0f else learnedLines.toFloat() / totalLines
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class RepertoiresViewModel(
-    private val repertoireRepository: RepertoireRepository,
-    private val complianceAnalyzer: RepertoireComplianceAnalyzer
-) : ViewModel() {
+class RepertoiresViewModel(private val repertoireRepository: RepertoireRepository,
+                           private val complianceAnalyzer: RepertoireComplianceAnalyzer) :
+    ViewModel() {
 
     private val _isRebuildingIndex = MutableStateFlow(false)
     val isRebuildingIndex: StateFlow<Boolean> = _isRebuildingIndex.asStateFlow()
@@ -36,15 +33,11 @@ class RepertoiresViewModel(
             repertoires.map { rep ->
                 val total = repertoireRepository.getLineCountForRepertoire(rep.id)
                 val learned = repertoireRepository.getLearnedLineCountForRepertoire(rep.id)
-                CourseProgress(
-                    repertoire = rep, totalLines = total, learnedLines = learned
-                )
+                CourseProgress(repertoire = rep, totalLines = total, learnedLines = learned)
             }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+        }.stateIn(scope = viewModelScope,
+                  started = SharingStarted.WhileSubscribed(5000),
+                  initialValue = emptyList())
 
     fun addRepertoire(name: String, color: String) {
         viewModelScope.launch {
@@ -64,16 +57,16 @@ class RepertoiresViewModel(
             try {
                 complianceAnalyzer.rebuildIndex(playerIsWhite = true)
                 complianceAnalyzer.rebuildIndex(playerIsWhite = false)
-            } finally {
+            }
+            finally {
                 _isRebuildingIndex.value = false
             }
         }
     }
 
-    class Factory(
-        private val repertoireRepository: RepertoireRepository,
-        private val complianceAnalyzer: RepertoireComplianceAnalyzer
-    ) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository,
+                  private val complianceAnalyzer: RepertoireComplianceAnalyzer) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return RepertoiresViewModel(repertoireRepository, complianceAnalyzer) as T

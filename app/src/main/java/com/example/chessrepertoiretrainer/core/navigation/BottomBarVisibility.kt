@@ -2,22 +2,26 @@
 
 import androidx.navigation.NavDestination
 
+private val hiddenRouteExact = setOf(
+    Screen.MultiChapterTraining.route,
+    Screen.Analysis.route,
+    Screen.PuzzleTraining.route,
+    Screen.GamesList.route,
+)
+
+private val hiddenRoutePrefixes = listOf(
+    Screen.LineEditor,
+    Screen.ChapterLearn,
+    Screen.ChapterReview,
+    Screen.LineTraining,
+    Screen.EditCourse,
+    Screen.EditChapter,
+    Screen.OpeningTree,
+    Screen.GameDetail,
+    Screen.AccountStats,
+).map { it.route.substringBefore("/") }
+
 fun shouldShowBottomBar(destination: NavDestination?): Boolean {
     val route = destination?.route ?: return true
-    return when {
-        route.startsWith(Screen.LineEditor.route.substringBefore("/")) -> false
-        route.startsWith(Screen.ChapterLearn.route.substringBefore("/")) -> false
-        route.startsWith(Screen.ChapterReview.route.substringBefore("/")) -> false
-        route.startsWith(Screen.LineTraining.route.substringBefore("/")) -> false
-        route.startsWith(Screen.EditCourse.route.substringBefore("/")) -> false
-        route.startsWith(Screen.EditChapter.route.substringBefore("/")) -> false
-        route == Screen.MultiChapterTraining.route -> false
-        route == Screen.Analysis.route -> false
-        route == Screen.PuzzleTraining.route -> false
-        route.startsWith(Screen.OpeningTree.route.substringBefore("/")) -> false
-        route.startsWith(Screen.GameDetail.route.substringBefore("/")) -> false
-        route.startsWith(Screen.AccountStats.route.substringBefore("/")) -> false
-        route == Screen.GamesList.route -> false
-        else -> true
-    }
+    return route !in hiddenRouteExact && hiddenRoutePrefixes.none { route.startsWith(it) }
 }

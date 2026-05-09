@@ -7,14 +7,10 @@ import com.github.bhlangonijr.chesslib.Square
 import kotlinx.coroutines.delay
 
 
-class MoveTrainingEngine(
-    private val chessController: DefaultChessBoardController,
-    private val normalizeSan: (String) -> String
-) {
+class MoveTrainingEngine(private val chessController: DefaultChessBoardController,
+                         private val normalizeSan: (String) -> String) {
 
-    data class Config(
-        val mySide: Side, val sanMoves: List<String>
-    )
+    data class Config(val mySide: Side, val sanMoves: List<String>)
 
     sealed class MoveResult {
         data class Correct(val userSan: String, val expectedSan: String) : MoveResult()
@@ -123,7 +119,7 @@ class MoveTrainingEngine(
 
         return isSequenceComplete()
     }
-    
+
     fun computeHintSquare(): Square? {
         val cfg = config ?: return null
         if (cfg.sanMoves.isEmpty()) return null

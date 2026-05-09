@@ -17,25 +17,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GamesListViewModel(
-    private val repository: SavedGameRepository
-) : ViewModel() {
+class GamesListViewModel(private val repository: SavedGameRepository) : ViewModel() {
 
     private val _filter = MutableStateFlow(GameFilter())
     val filter: StateFlow<GameFilter> = _filter.asStateFlow()
 
-    val games: StateFlow<List<SavedGame>> = _filter
-        .flatMapLatest { f ->
-            repository.getAllGamesFiltered(
-                platform = f.platform,
-                result = f.playerResult,
-                isWhite = f.isPlayerWhite
-            ).map { games ->
-                if (f.timeCategories.isEmpty()) games
-                else games.filter { it.timeCategory in f.timeCategories }
-            }
+    val games: StateFlow<List<SavedGame>> = _filter.flatMapLatest { f ->
+        repository.getAllGamesFiltered(platform = f.platform,
+                                       result = f.playerResult,
+                                       isWhite = f.isPlayerWhite).map { games ->
+            if (f.timeCategories.isEmpty()) games
+            else games.filter { it.timeCategory in f.timeCategories }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun setFilter(filter: GameFilter) {
         _filter.value = filter
@@ -43,9 +37,8 @@ class GamesListViewModel(
 
     fun toggleTimeCategory(category: String) {
         val current = _filter.value.timeCategories
-        _filter.value = _filter.value.copy(
-            timeCategories = if (category in current) current - category else current + category
-        )
+        _filter.value =
+            _filter.value.copy(timeCategories = if (category in current) current - category else current + category)
     }
 
     class Factory(private val repository: SavedGameRepository) : ViewModelProvider.Factory {

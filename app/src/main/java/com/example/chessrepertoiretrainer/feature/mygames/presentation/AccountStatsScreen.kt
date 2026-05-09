@@ -47,36 +47,26 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountStatsScreen(
-    viewModel: AccountStatsViewModel,
-    onBackClick: () -> Unit
-) {
+fun AccountStatsScreen(viewModel: AccountStatsViewModel, onBackClick: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedCategoryIndex by remember { mutableIntStateOf(0) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(viewModel.username) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            LazyRow(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(viewModel.username) }, navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+        })
+    }) { padding ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
+            LazyRow(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(StatsTimeRange.entries) { range ->
-                    FilterChip(
-                        selected = uiState.selectedTimeRange == range,
-                        onClick = { viewModel.setTimeRange(range) },
-                        label = { Text(range.label) }
-                    )
+                    FilterChip(selected = uiState.selectedTimeRange == range,
+                               onClick = { viewModel.setTimeRange(range) },
+                               label = { Text(range.label) })
                 }
             }
 
@@ -93,46 +83,33 @@ fun AccountStatsScreen(
                     StatsTimeRange.DAYS_365 -> "last year"
                     StatsTimeRange.ALL_TIME -> "all time"
                 }
-                Text(
-                    text = "${uiState.totalGames} games · $periodLabel",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
+                Text(text = "${uiState.totalGames} games · $periodLabel",
+                     style = MaterialTheme.typography.bodyMedium,
+                     modifier = Modifier.padding(horizontal = 16.dp))
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 if (uiState.categoryStats.isNotEmpty()) {
-                    TabRow(
-                        selectedTabIndex = selectedCategoryIndex.coerceAtMost(uiState.categoryStats.size - 1)
-                    ) {
+                    TabRow(selectedTabIndex = selectedCategoryIndex.coerceAtMost(uiState.categoryStats.size - 1)) {
                         uiState.categoryStats.forEachIndexed { index, cs ->
-                            Tab(
-                                selected = selectedCategoryIndex == index,
-                                onClick = { selectedCategoryIndex = index }
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(vertical = 8.dp)
-                                ) {
-                                    Text(
-                                        text = categoryDisplayName(cs.category, viewModel.platform),
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
+                            Tab(selected = selectedCategoryIndex == index,
+                                onClick = { selectedCategoryIndex = index }) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally,
+                                       modifier = Modifier.padding(vertical = 8.dp)) {
+                                    Text(text = categoryDisplayName(cs.category,
+                                                                    viewModel.platform),
+                                         style = MaterialTheme.typography.labelMedium)
                                     val displayRating = cs.currentRating ?: cs.peakRating
                                     if (displayRating != null) {
-                                        Text(
-                                            text = displayRating.toString(),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        Text(text = displayRating.toString(),
+                                             style = MaterialTheme.typography.bodySmall,
+                                             fontWeight = FontWeight.Bold)
                                         if (cs.ratingDiff != null && cs.ratingDiff != 0) {
                                             val sign = if (cs.ratingDiff > 0) "+" else ""
-                                            Text(
-                                                text = "$sign${cs.ratingDiff}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = if (cs.ratingDiff > 0) MaterialTheme.colorScheme.primary
-                                                        else MaterialTheme.colorScheme.error
-                                            )
+                                            Text(text = "$sign${cs.ratingDiff}",
+                                                 style = MaterialTheme.typography.labelSmall,
+                                                 color = if (cs.ratingDiff > 0) MaterialTheme.colorScheme.primary
+                                                 else MaterialTheme.colorScheme.error)
                                         }
                                     }
                                 }
@@ -140,14 +117,10 @@ fun AccountStatsScreen(
                         }
                     }
 
-                    val currentStats = uiState.categoryStats.getOrNull(
-                        selectedCategoryIndex.coerceAtMost(uiState.categoryStats.size - 1)
-                    )
+                    val currentStats =
+                        uiState.categoryStats.getOrNull(selectedCategoryIndex.coerceAtMost(uiState.categoryStats.size - 1))
                     if (currentStats != null) {
-                        CategoryStatsContent(
-                            stats = currentStats,
-                            platform = viewModel.platform
-                        )
+                        CategoryStatsContent(stats = currentStats, platform = viewModel.platform)
                     }
                 }
             }
@@ -161,13 +134,11 @@ private fun categoryDisplayName(category: String, platform: String): String =
 
 @Composable
 private fun CategoryStatsContent(stats: CategoryStats, platform: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .verticalScroll(rememberScrollState())
+        .padding(16.dp),
+           verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (stats.allStats.played == 0) {
             Text("No games in this period", style = MaterialTheme.typography.bodyMedium)
         }
@@ -184,33 +155,27 @@ private fun CategoryStatsContent(stats: CategoryStats, platform: String) {
 
 @Composable
 private fun OverallStatsRow(stats: GameStats) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         StatCell(label = "Played", value = stats.played.toString())
-        StatCell(
-            label = "Won",
-            value = "${stats.wins}  (${(stats.winPct * 100).toInt()}%)",
-            color = MaterialTheme.colorScheme.primary
-        )
-        StatCell(
-            label = "Lost",
-            value = "${stats.losses}  (${(stats.lossPct * 100).toInt()}%)",
-            color = MaterialTheme.colorScheme.error
-        )
+        StatCell(label = "Won",
+                 value = "${stats.wins}  (${(stats.winPct * 100).toInt()}%)",
+                 color = MaterialTheme.colorScheme.primary)
+        StatCell(label = "Lost",
+                 value = "${stats.losses}  (${(stats.lossPct * 100).toInt()}%)",
+                 color = MaterialTheme.colorScheme.error)
         StatCell(label = "Drawn", value = "${stats.draws}  (${(stats.drawPct * 100).toInt()}%)")
     }
 }
 
 @Composable
-private fun StatCell(
-    label: String,
-    value: String,
-    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
-) {
+private fun StatCell(label: String,
+                     value: String,
+                     color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = color)
+        Text(text = value,
+             style = MaterialTheme.typography.bodyMedium,
+             fontWeight = FontWeight.Bold,
+             color = color)
         Text(text = label, style = MaterialTheme.typography.labelSmall)
     }
 }
@@ -218,7 +183,9 @@ private fun StatCell(
 @Composable
 private fun ColorBreakdownTable(stats: CategoryStats) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text("By color", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+        Text("By color",
+             style = MaterialTheme.typography.labelMedium,
+             fontWeight = FontWeight.SemiBold)
         ColorRow("All", stats.allStats)
         ColorRow("White ♔", stats.whiteStats)
         ColorRow("Black ♚", stats.blackStats)
@@ -228,23 +195,16 @@ private fun ColorBreakdownTable(stats: CategoryStats) {
 @Composable
 private fun ColorRow(label: String, stats: GameStats) {
     if (stats.played == 0) return
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(72.dp))
         Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = "${stats.wins}W  ${stats.losses}L  ${stats.draws}D",
-            style = MaterialTheme.typography.bodySmall
-        )
+        Text(text = "${stats.wins}W  ${stats.losses}L  ${stats.draws}D",
+             style = MaterialTheme.typography.bodySmall)
         Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = "${(stats.winPct * 100).toInt()}%",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold
-        )
+        Text(text = "${(stats.winPct * 100).toInt()}%",
+             style = MaterialTheme.typography.bodySmall,
+             color = MaterialTheme.colorScheme.primary,
+             fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -256,11 +216,9 @@ private fun ExtraInfoSection(stats: CategoryStats) {
         Row {
             Text("Highest rating:  ", style = MaterialTheme.typography.bodySmall)
             if (stats.peakRating != null) {
-                Text(
-                    stats.peakRating.toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(stats.peakRating.toString(),
+                     style = MaterialTheme.typography.bodySmall,
+                     fontWeight = FontWeight.Bold)
                 val dateStr = stats.peakRatingDate?.let { dateFormat.format(Date(it)) }
                 if (!dateStr.isNullOrBlank()) {
                     Text("  ·  $dateStr", style = MaterialTheme.typography.bodySmall)
@@ -272,11 +230,9 @@ private fun ExtraInfoSection(stats: CategoryStats) {
         }
         Row {
             Text("Avg opponent:  ", style = MaterialTheme.typography.bodySmall)
-            Text(
-                text = stats.avgOpponentRating?.toString() ?: "—",
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold
-            )
+            Text(text = stats.avgOpponentRating?.toString() ?: "—",
+                 style = MaterialTheme.typography.bodySmall,
+                 fontWeight = FontWeight.Bold)
         }
     }
 }

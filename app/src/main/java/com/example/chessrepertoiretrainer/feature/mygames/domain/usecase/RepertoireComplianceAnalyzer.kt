@@ -13,20 +13,19 @@ import kotlinx.coroutines.withContext
 // fen → (chapterId, lineId)
 typealias ComplianceIndex = Map<String, Pair<Int, Int>>
 
-class RepertoireComplianceAnalyzer(
-    private val repertoireDao: RepertoireDao,
-    private val indexDao: RepertoirePositionIndexDao
-) {
+class RepertoireComplianceAnalyzer(private val repertoireDao: RepertoireDao,
+                                   private val indexDao: RepertoirePositionIndexDao) {
 
-    suspend fun buildIndex(playerIsWhite: Boolean): ComplianceIndex =
-        withContext(Dispatchers.IO) {
-            val color = colorFor(playerIsWhite)
-            if (indexDao.countForColor(color) == 0) {
-                rebuildIndex(playerIsWhite)
-            } else {
-                indexDao.getForColor(color).associate { it.normalizedFen to Pair(it.chapterId, it.lineId) }
-            }
+    suspend fun buildIndex(playerIsWhite: Boolean): ComplianceIndex = withContext(Dispatchers.IO) {
+        val color = colorFor(playerIsWhite)
+        if (indexDao.countForColor(color) == 0) {
+            rebuildIndex(playerIsWhite)
         }
+        else {
+            indexDao.getForColor(color)
+                .associate { it.normalizedFen to Pair(it.chapterId, it.lineId) }
+        }
+    }
 
     suspend fun rebuildIndex(playerIsWhite: Boolean): ComplianceIndex =
         withContext(Dispatchers.IO) {
@@ -38,7 +37,10 @@ class RepertoireComplianceAnalyzer(
             for (row in rows) {
                 val fen = normalizeFen(row.fen)
                 if (seen.add(fen)) {
-                    entries.add(RepertoirePositionIndex(color = color, normalizedFen = fen, chapterId = row.chapterId, lineId = row.lineId))
+                    entries.add(RepertoirePositionIndex(color = color,
+                                                        normalizedFen = fen,
+                                                        chapterId = row.chapterId,
+                                                        lineId = row.lineId))
                     index[fen] = Pair(row.chapterId, row.lineId)
                 }
             }
@@ -47,11 +49,9 @@ class RepertoireComplianceAnalyzer(
             index
         }
 
-    fun annotate(
-        sanMoves: List<String>,
-        isPlayerWhite: Boolean,
-        index: ComplianceIndex
-    ): List<MoveAnnotation> {
+    fun annotate(sanMoves: List<String>,
+                 isPlayerWhite: Boolean,
+                 index: ComplianceIndex): List<MoveAnnotation> {
         val board = Board()
         val result = mutableListOf<MoveAnnotation>()
         var hasDeviated = false
@@ -70,15 +70,19 @@ class RepertoireComplianceAnalyzer(
             if (navInfo != null) {
                 // Position is in the repertoire — reset deviation state (transposition back counts)
                 hasDeviated = false
-                status = if (isPlayerTurn) ComplianceStatus.IN_BOOK else ComplianceStatus.OPPONENT_IN_BOOK
+                status =
+                    if (isPlayerTurn) ComplianceStatus.IN_BOOK else ComplianceStatus.OPPONENT_IN_BOOK
                 navTarget = navInfo
                 lastNavInfo = navInfo
-            } else if (!hasDeviated) {
+            }
+            else if (!hasDeviated) {
                 // First off-book move — show it as the mismatch
                 hasDeviated = true
-                status = if (isPlayerTurn) ComplianceStatus.DEVIATION else ComplianceStatus.OPPONENT_DEVIATION
+                status =
+                    if (isPlayerTurn) ComplianceStatus.DEVIATION else ComplianceStatus.OPPONENT_DEVIATION
                 navTarget = if (isPlayerTurn) lastNavInfo else null
-            } else {
+            }
+            else {
                 // Already off-book
                 status = ComplianceStatus.OUT_OF_BOOK
                 navTarget = null

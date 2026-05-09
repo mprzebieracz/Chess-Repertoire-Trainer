@@ -25,29 +25,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    viewModel: HomeViewModel,
-    onOpenAnalysis: () -> Unit,
-    onPlayDailyPuzzle: () -> Unit
-) {
+fun HomeScreen(viewModel: HomeViewModel,
+               onOpenAnalysis: () -> Unit,
+               onPlayDailyPuzzle: () -> Unit) {
     val dailyPuzzleState by viewModel.dailyPuzzleState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = { TopAppBar(title = { Text("Home") }) }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            DailyPuzzleCard(
-                state = dailyPuzzleState,
-                onPlay = onPlayDailyPuzzle,
-                onRetry = viewModel::retry
-            )
+    Scaffold(topBar = { TopAppBar(title = { Text("Home") }) }) { padding ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+               verticalArrangement = Arrangement.spacedBy(16.dp),
+               horizontalAlignment = Alignment.CenterHorizontally) {
+            DailyPuzzleCard(state = dailyPuzzleState,
+                            onPlay = onPlayDailyPuzzle,
+                            onRetry = viewModel::retry)
 
             OutlinedButton(onClick = onOpenAnalysis) {
                 Text("Open analysis board")
@@ -57,29 +49,17 @@ fun HomeScreen(
 }
 
 @Composable
-private fun DailyPuzzleCard(
-    state: DailyPuzzleState,
-    onPlay: () -> Unit,
-    onRetry: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = when (state) {
-                is DailyPuzzleState.Solved -> MaterialTheme.colorScheme.surfaceVariant
-                else -> MaterialTheme.colorScheme.surface
-            }
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Daily Puzzle",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+private fun DailyPuzzleCard(state: DailyPuzzleState, onPlay: () -> Unit, onRetry: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth(),
+         colors = CardDefaults.cardColors(containerColor = when (state) {
+             is DailyPuzzleState.Solved -> MaterialTheme.colorScheme.surfaceVariant
+             else -> MaterialTheme.colorScheme.surface
+         })) {
+        Column(modifier = Modifier.padding(16.dp),
+               verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(text = "Daily Puzzle",
+                 style = MaterialTheme.typography.titleMedium,
+                 fontWeight = FontWeight.SemiBold)
 
             when (state) {
                 DailyPuzzleState.Loading -> {
@@ -88,10 +68,8 @@ private fun DailyPuzzleCard(
 
                 DailyPuzzleState.Fetching -> {
                     CircularProgressIndicator()
-                    Text(
-                        text = "Fetching today's puzzle…",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(text = "Fetching today's puzzle…",
+                         style = MaterialTheme.typography.bodySmall)
                 }
 
                 is DailyPuzzleState.Available -> {
@@ -101,19 +79,15 @@ private fun DailyPuzzleCard(
                 }
 
                 DailyPuzzleState.Solved -> {
-                    Text(
-                        text = "✓ Completed today",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Text(text = "✓ Completed today",
+                         style = MaterialTheme.typography.bodyMedium,
+                         color = MaterialTheme.colorScheme.primary)
                 }
 
                 is DailyPuzzleState.Error -> {
-                    Text(
-                        text = state.message,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                    Text(text = state.message,
+                         style = MaterialTheme.typography.bodySmall,
+                         color = MaterialTheme.colorScheme.error)
                     OutlinedButton(onClick = onRetry) {
                         Text("Retry")
                     }

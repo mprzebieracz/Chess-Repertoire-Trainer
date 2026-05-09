@@ -9,10 +9,10 @@ import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoar
 import com.example.chessrepertoiretrainer.core.chess.domain.moveFromSan
 import com.example.chessrepertoiretrainer.core.chess.utils.PGNExtractor
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
-import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
 import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
+import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
 import com.example.chessrepertoiretrainer.feature.mygames.domain.usecase.ComplianceIndex
 import com.example.chessrepertoiretrainer.feature.mygames.domain.usecase.RepertoireComplianceAnalyzer
 import kotlinx.coroutines.Dispatchers
@@ -26,11 +26,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class GameDetailViewModel(
-    val game: SavedGame,
-    private val analyzer: RepertoireComplianceAnalyzer,
-    private val engine: StockfishEngine
-) : ViewModel() {
+class GameDetailViewModel(val game: SavedGame,
+                          private val analyzer: RepertoireComplianceAnalyzer,
+                          private val engine: StockfishEngine) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
 
@@ -46,32 +44,28 @@ class GameDetailViewModel(
 
     private var cachedIndex: ComplianceIndex? = null
 
-    val currentAnnotation: StateFlow<MoveAnnotation?> = combine(
-        _annotations, snapshotFlow { chessController.currentMoveIndex }) { annotations, idx ->
+    val currentAnnotation: StateFlow<MoveAnnotation?> = combine(_annotations,
+                                                                snapshotFlow { chessController.currentMoveIndex }) { annotations, idx ->
         annotations.getOrNull(idx)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    val isEngineEnabled: StateFlow<Boolean> = engine.isEnabled.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), false
-    )
-    val engineAnalysis: StateFlow<EngineAnalysis?> = engine.analysis.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
-    )
-    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), EngineSearchState.IDLE
-    )
-    val engineError: StateFlow<String?> = engine.engineError.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
-    )
+    val isEngineEnabled: StateFlow<Boolean> =
+        engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val engineAnalysis: StateFlow<EngineAnalysis?> =
+        engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(viewModelScope,
+                                                                                     SharingStarted.WhileSubscribed(
+                                                                                         5_000),
+                                                                                     EngineSearchState.IDLE)
+    val engineError: StateFlow<String?> =
+        engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
         loadGame()
         viewModelScope.launch {
-            snapshotFlow { chessController.boardState }
-                .distinctUntilChanged()
-                .collect { fen ->
-                    if (engine.isEnabled.value) engine.updatePosition(fen)
-                }
+            snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
+                if (engine.isEnabled.value) engine.updatePosition(fen)
+            }
         }
     }
 
@@ -142,11 +136,9 @@ class GameDetailViewModel(
         engine.disable()
     }
 
-    class Factory(
-        private val game: SavedGame,
-        private val analyzer: RepertoireComplianceAnalyzer,
-        private val engine: StockfishEngine
-    ) : ViewModelProvider.Factory {
+    class Factory(private val game: SavedGame,
+                  private val analyzer: RepertoireComplianceAnalyzer,
+                  private val engine: StockfishEngine) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             return GameDetailViewModel(game, analyzer, engine) as T

@@ -44,119 +44,94 @@ import com.example.chessrepertoiretrainer.feature.analysis.EngineToggleButton
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.ReviewChapterViewModel
 
 @Composable
-fun ReviewChapterScreen(
-    viewModel: ReviewChapterViewModel, onBackClick: () -> Unit
-) {
+fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isEngineEnabled by viewModel.isEngineEnabled.collectAsStateWithLifecycle()
     val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
-    ReviewChapterScaffold(
-        uiState = uiState,
-        chessCtrl = viewModel.chessController,
-        isEngineEnabled = isEngineEnabled,
-        engineAnalysis = engineAnalysis,
-        engineSearchState = engineSearchState,
-        engineError = engineError,
-        onBackClick = onBackClick,
-        onPreviousMove = viewModel::onPreviousMove,
-        onNextMove = viewModel::onNextMove,
-        onRestartCurrentLine = viewModel::restartCurrentLine,
-        onGoToPreviousLine = viewModel::goToPreviousLine,
-        onGoToNextLine = viewModel::goToNextLine,
-        onToggleEngine = viewModel::toggleEngine,
-        onDeeperClick = viewModel::analyzeDeeper
-    )
+    ReviewChapterScaffold(uiState = uiState,
+                          chessCtrl = viewModel.chessController,
+                          isEngineEnabled = isEngineEnabled,
+                          engineAnalysis = engineAnalysis,
+                          engineSearchState = engineSearchState,
+                          engineError = engineError,
+                          onBackClick = onBackClick,
+                          onPreviousMove = viewModel::onPreviousMove,
+                          onNextMove = viewModel::onNextMove,
+                          onRestartCurrentLine = viewModel::restartCurrentLine,
+                          onGoToPreviousLine = viewModel::goToPreviousLine,
+                          onGoToNextLine = viewModel::goToNextLine,
+                          onToggleEngine = viewModel::toggleEngine,
+                          onDeeperClick = viewModel::analyzeDeeper)
 }
 
 @Composable
-private fun ReviewChapterScaffold(
-    uiState: ReviewChapterViewModel.UiState,
-    chessCtrl: ChessBoardController,
-    isEngineEnabled: Boolean,
-    engineAnalysis: EngineAnalysis?,
-    engineSearchState: EngineSearchState,
-    engineError: String?,
-    onBackClick: () -> Unit,
-    onPreviousMove: () -> Unit,
-    onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit,
-    onGoToPreviousLine: () -> Unit,
-    onGoToNextLine: () -> Unit,
-    onToggleEngine: () -> Unit,
-    onDeeperClick: () -> Unit
-) {
-    Scaffold(
-        bottomBar = {
-            if (!uiState.isLoading && !uiState.hasNoLines) {
-                Column {
-                    engineError?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-                        )
-                    }
-                    ReviewMoveBottomBar(
-                        uiState = uiState,
-                        onPreviousMove = onPreviousMove,
-                        onNextMove = onNextMove,
-                        onRestartCurrentLine = onRestartCurrentLine
-                    )
+private fun ReviewChapterScaffold(uiState: ReviewChapterViewModel.ReviewChapterUiState,
+                                  chessCtrl: ChessBoardController,
+                                  isEngineEnabled: Boolean,
+                                  engineAnalysis: EngineAnalysis?,
+                                  engineSearchState: EngineSearchState,
+                                  engineError: String?,
+                                  onBackClick: () -> Unit,
+                                  onPreviousMove: () -> Unit,
+                                  onNextMove: () -> Unit,
+                                  onRestartCurrentLine: () -> Unit,
+                                  onGoToPreviousLine: () -> Unit,
+                                  onGoToNextLine: () -> Unit,
+                                  onToggleEngine: () -> Unit,
+                                  onDeeperClick: () -> Unit) {
+    Scaffold(bottomBar = {
+        if (!uiState.isLoading && !uiState.hasNoLines) {
+            Column {
+                engineError?.let {
+                    Text(text = it,
+                         style = MaterialTheme.typography.labelSmall,
+                         color = MaterialTheme.colorScheme.error,
+                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
                 }
+                ReviewMoveBottomBar(uiState = uiState,
+                                    onPreviousMove = onPreviousMove,
+                                    onNextMove = onNextMove,
+                                    onRestartCurrentLine = onRestartCurrentLine)
             }
         }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            ReviewChapterTopSection(
-                uiState = uiState,
-                isEngineEnabled = isEngineEnabled,
-                onBackClick = onBackClick,
-                onGoToPreviousLine = onGoToPreviousLine,
-                onGoToNextLine = onGoToNextLine,
-                onToggleEngine = onToggleEngine
-            )
+    }) { innerPadding ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)) {
+            ReviewChapterTopSection(uiState = uiState,
+                                    isEngineEnabled = isEngineEnabled,
+                                    onBackClick = onBackClick,
+                                    onGoToPreviousLine = onGoToPreviousLine,
+                                    onGoToNextLine = onGoToNextLine,
+                                    onToggleEngine = onToggleEngine)
 
             when {
                 uiState.isLoading -> ReviewChapterLoadingState()
                 uiState.hasNoLines -> ReviewChapterEmptyState(uiState = uiState)
-                else -> ReviewChapterBody(
-                    uiState = uiState,
-                    chessCtrl = chessCtrl,
-                    isEngineEnabled = isEngineEnabled,
-                    engineAnalysis = engineAnalysis,
-                    engineSearchState = engineSearchState,
-                    onDeeperClick = onDeeperClick
-                )
+                else -> ReviewChapterBody(uiState = uiState,
+                                          chessCtrl = chessCtrl,
+                                          isEngineEnabled = isEngineEnabled,
+                                          engineAnalysis = engineAnalysis,
+                                          engineSearchState = engineSearchState,
+                                          onDeeperClick = onDeeperClick)
             }
         }
     }
 }
 
 @Composable
-private fun ReviewChapterTopSection(
-    uiState: ReviewChapterViewModel.UiState,
-    isEngineEnabled: Boolean,
-    onBackClick: () -> Unit,
-    onGoToPreviousLine: () -> Unit,
-    onGoToNextLine: () -> Unit,
-    onToggleEngine: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+private fun ReviewChapterTopSection(uiState: ReviewChapterViewModel.ReviewChapterUiState,
+                                    isEngineEnabled: Boolean,
+                                    onBackClick: () -> Unit,
+                                    onGoToPreviousLine: () -> Unit,
+                                    onGoToNextLine: () -> Unit,
+                                    onToggleEngine: () -> Unit) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 4.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             // Back button
             IconButton(onClick = onBackClick) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -168,12 +143,11 @@ private fun ReviewChapterTopSection(
 
             // Line navigation
             IconButton(onClick = onGoToPreviousLine) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous line")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                     contentDescription = "Previous line")
             }
-            Text(
-                text = if (uiState.totalLines > 0) "${uiState.currentLineNumber}/${uiState.totalLines}" else "",
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text(text = if (uiState.totalLines > 0) "${uiState.currentLineNumber}/${uiState.totalLines}" else "",
+                 style = MaterialTheme.typography.bodySmall)
             IconButton(onClick = onGoToNextLine) {
                 Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next line")
             }
@@ -187,10 +161,11 @@ private fun ReviewChapterTopSection(
 }
 
 @Composable
-private fun ReviewChapterHeader(uiState: ReviewChapterViewModel.UiState) {
+private fun ReviewChapterHeader(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
     if (uiState.hasNoLines) {
         Text("No lines in this chapter yet.", style = MaterialTheme.typography.bodyMedium)
-    } else if (!uiState.isLoading) {
+    }
+    else if (!uiState.isLoading) {
         uiState.currentLineName?.let {
             Text(text = it, style = MaterialTheme.typography.bodyMedium)
         }
@@ -202,73 +177,65 @@ private fun ReviewChapterHeader(uiState: ReviewChapterViewModel.UiState) {
 
 @Composable
 private fun ReviewChapterLoadingState() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center) {
         Text("Loading chapter...", style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
-private fun ReviewChapterEmptyState(uiState: ReviewChapterViewModel.UiState) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = uiState.statusMessage ?: "No lines in this chapter. Use edit mode to add lines.",
-            style = MaterialTheme.typography.bodyMedium
-        )
+private fun ReviewChapterEmptyState(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 8.dp),
+        contentAlignment = Alignment.Center) {
+        Text(text = uiState.statusMessage
+            ?: "No lines in this chapter. Use edit mode to add lines.",
+             style = MaterialTheme.typography.bodyMedium)
     }
 }
 
 @Composable
-private fun ReviewChapterBody(
-    uiState: ReviewChapterViewModel.UiState,
-    chessCtrl: ChessBoardController,
-    isEngineEnabled: Boolean = false,
-    engineAnalysis: EngineAnalysis? = null,
-    engineSearchState: EngineSearchState = EngineSearchState.IDLE,
-    onDeeperClick: () -> Unit = {}
-) {
+private fun ReviewChapterBody(uiState: ReviewChapterViewModel.ReviewChapterUiState,
+                              chessCtrl: ChessBoardController,
+                              isEngineEnabled: Boolean = false,
+                              engineAnalysis: EngineAnalysis? = null,
+                              engineSearchState: EngineSearchState = EngineSearchState.IDLE,
+                              onDeeperClick: () -> Unit = {}) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (isEngineEnabled) {
-            EnginePanel(
-                analysis = engineAnalysis,
-                searchState = engineSearchState,
-                onDeeperClick = onDeeperClick
-            )
+            EnginePanel(analysis = engineAnalysis,
+                        searchState = engineSearchState,
+                        onDeeperClick = onDeeperClick)
         }
 
         val boardPadding = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        val barFraction = if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction ?: 0.5f) else null
+        val barFraction =
+            if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction ?: 0.5f) else null
 
         if (barFraction != null) {
             BoxWithConstraints(modifier = boardPadding.fillMaxWidth()) {
-                val boardSize = maxWidth - ChessUiConstants.ScreenChrome.EvalBar.width - ChessUiConstants.ScreenChrome.EvalBar.spacing
-                Row(
-                    modifier = Modifier.fillMaxWidth().height(boardSize),
-                    verticalAlignment = Alignment.Top
-                ) {
-                    EvaluationBar(
-                        fraction = barFraction,
-                        isFlipped = chessCtrl.isFlipped,
-                        modifier = Modifier
-                            .width(ChessUiConstants.ScreenChrome.EvalBar.width)
-                            .fillMaxHeight()
-                    )
+                val boardSize =
+                    maxWidth - ChessUiConstants.ScreenChrome.EvalBar.width - ChessUiConstants.ScreenChrome.EvalBar.spacing
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .height(boardSize),
+                    verticalAlignment = Alignment.Top) {
+                    EvaluationBar(fraction = barFraction,
+                                  isFlipped = chessCtrl.isFlipped,
+                                  modifier = Modifier
+                                      .width(ChessUiConstants.ScreenChrome.EvalBar.width)
+                                      .fillMaxHeight())
                     Spacer(Modifier.width(ChessUiConstants.ScreenChrome.EvalBar.spacing))
                     Box(modifier = Modifier.weight(1f)) {
                         ChessboardUI(state = chessCtrl)
                     }
                 }
             }
-        } else {
+        }
+        else {
             Box(modifier = boardPadding) {
                 ChessboardUI(state = chessCtrl)
             }
@@ -282,20 +249,15 @@ private fun ReviewChapterBody(
 }
 
 @Composable
-private fun ReviewMoveBottomBar(
-    uiState: ReviewChapterViewModel.UiState,
-    onPreviousMove: () -> Unit,
-    onNextMove: () -> Unit,
-    onRestartCurrentLine: () -> Unit
-) {
+private fun ReviewMoveBottomBar(uiState: ReviewChapterViewModel.ReviewChapterUiState,
+                                onPreviousMove: () -> Unit,
+                                onNextMove: () -> Unit,
+                                onRestartCurrentLine: () -> Unit) {
     val scrollState = rememberScrollState()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .horizontalScroll(scrollState),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 8.dp)
+        .horizontalScroll(scrollState), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = onPreviousMove, enabled = !uiState.isAtLineStart) { Text("Back") }
         Button(onClick = onNextMove, enabled = !uiState.isAtLineEnd) { Text("Next") }
         OutlinedButton(onClick = onRestartCurrentLine) { Text("Restart") }
@@ -303,31 +265,26 @@ private fun ReviewMoveBottomBar(
 }
 
 @Composable
-private fun ReviewChapterCommentCard(uiState: ReviewChapterViewModel.UiState) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
+private fun ReviewChapterCommentCard(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
+    Card(modifier = Modifier.fillMaxWidth(),
+         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(modifier = Modifier
             .fillMaxSize()
             .padding(12.dp)) {
             uiState.statusMessage?.let { message ->
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Text(text = message,
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.height(4.dp))
             }
 
             val comment = uiState.currentMoveComment
             if (comment.isNullOrBlank()) {
-                Text(
-                    text = "No comment for this move.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
+                Text(text = "No comment for this move.",
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            else {
                 Text(text = comment, style = MaterialTheme.typography.bodyMedium)
             }
         }

@@ -34,130 +34,102 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyGamesScreen(
-    viewModel: MyGamesViewModel,
-    onOpenLichess: (username: String) -> Unit,
-    onOpenChessCom: (username: String) -> Unit,
-    onOpenGamesList: () -> Unit
-) {
+fun MyGamesScreen(viewModel: MyGamesViewModel,
+                  onOpenLichess: (username: String) -> Unit,
+                  onOpenChessCom: (username: String) -> Unit,
+                  onOpenGamesList: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("My Games") },
-                actions = {
-                    if (uiState.isSyncing) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 4.dp))
-                    }
-                    else {
-                        IconButton(onClick = viewModel::sync) {
-                            Icon(Icons.Filled.Refresh, contentDescription = "Sync")
-                        }
-                    }
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("My Games") }, actions = {
+            if (uiState.isSyncing) {
+                CircularProgressIndicator(modifier = Modifier
+                    .size(24.dp)
+                    .padding(end = 4.dp))
+            }
+            else {
+                IconButton(onClick = viewModel::sync) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Sync")
                 }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val hasAnyAccount = uiState.lichessUsername.isNotBlank() || uiState.chessComUsername.isNotBlank()
+            }
+        })
+    }) { padding ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+            .padding(horizontal = 24.dp),
+               verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+               horizontalAlignment = Alignment.CenterHorizontally) {
+            val hasAnyAccount =
+                uiState.lichessUsername.isNotBlank() || uiState.chessComUsername.isNotBlank()
 
             if (!hasAnyAccount) {
-                Text(
-                    text = "Add usernames in Settings to view your stats",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text(text = "Add usernames in Settings to view your stats",
+                     style = MaterialTheme.typography.bodyMedium)
             }
 
             if (uiState.lichessUsername.isNotBlank()) {
-                AccountButton(
-                    platform = "Lichess",
-                    username = uiState.lichessUsername,
-                    gameCount = uiState.lichessGameCount,
-                    lastSyncAt = uiState.lichessLastSyncAt,
-                    onClick = { onOpenLichess(uiState.lichessUsername) }
-                )
+                AccountButton(platform = "Lichess",
+                              username = uiState.lichessUsername,
+                              gameCount = uiState.lichessGameCount,
+                              lastSyncAt = uiState.lichessLastSyncAt,
+                              onClick = { onOpenLichess(uiState.lichessUsername) })
             }
 
             if (uiState.chessComUsername.isNotBlank()) {
-                AccountButton(
-                    platform = "Chess.com",
-                    username = uiState.chessComUsername,
-                    gameCount = uiState.chessComGameCount,
-                    lastSyncAt = uiState.chessComLastSyncAt,
-                    onClick = { onOpenChessCom(uiState.chessComUsername) }
-                )
+                AccountButton(platform = "Chess.com",
+                              username = uiState.chessComUsername,
+                              gameCount = uiState.chessComGameCount,
+                              lastSyncAt = uiState.chessComLastSyncAt,
+                              onClick = { onOpenChessCom(uiState.chessComUsername) })
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedButton(
-                onClick = onOpenGamesList,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            OutlinedButton(onClick = onOpenGamesList, modifier = Modifier.fillMaxWidth()) {
                 Text("Browse games")
             }
 
 
             uiState.syncProgress?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary)
+                Text(it,
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.primary)
             }
             uiState.syncError?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error)
+                Text(it,
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.error)
             }
         }
     }
 }
 
 @Composable
-private fun AccountButton(
-    platform: String,
-    username: String,
-    gameCount: Int,
-    lastSyncAt: Long,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth()
-    ) {
+private fun AccountButton(platform: String,
+                          username: String,
+                          gameCount: Int,
+                          lastSyncAt: Long,
+                          onClick: () -> Unit) {
+    Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+            Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                verticalAlignment = Alignment.CenterVertically) {
                 Text(text = platform, style = MaterialTheme.typography.labelMedium)
-                Text(
-                    text = username,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Text(text = username,
+                     style = MaterialTheme.typography.bodyMedium,
+                     fontWeight = FontWeight.SemiBold)
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+            Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = if (gameCount > 0) "$gameCount games" else "No games synced",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
-                )
-                Text(
-                    text = formatLastSync(lastSyncAt),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
-                )
+                verticalAlignment = Alignment.CenterVertically) {
+                Text(text = if (gameCount > 0) "$gameCount games" else "No games synced",
+                     style = MaterialTheme.typography.labelSmall,
+                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f))
+                Text(text = formatLastSync(lastSyncAt),
+                     style = MaterialTheme.typography.labelSmall,
+                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f))
             }
         }
     }

@@ -20,26 +20,22 @@ class AnalysisViewModel(private val engine: StockfishEngine) : ViewModel() {
 
     val chessController: ChessBoardController = DefaultChessBoardController()
 
-    val isEngineEnabled: StateFlow<Boolean> = engine.isEnabled.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), false
-    )
-    val engineAnalysis: StateFlow<EngineAnalysis?> = engine.analysis.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
-    )
-    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), EngineSearchState.IDLE
-    )
-    val engineError: StateFlow<String?> = engine.engineError.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
-    )
+    val isEngineEnabled: StateFlow<Boolean> =
+        engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val engineAnalysis: StateFlow<EngineAnalysis?> =
+        engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(viewModelScope,
+                                                                                     SharingStarted.WhileSubscribed(
+                                                                                         5_000),
+                                                                                     EngineSearchState.IDLE)
+    val engineError: StateFlow<String?> =
+        engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
         viewModelScope.launch {
-            snapshotFlow { chessController.boardState }
-                .distinctUntilChanged()
-                .collect { fen ->
-                    if (engine.isEnabled.value) engine.updatePosition(fen)
-                }
+            snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
+                if (engine.isEnabled.value) engine.updatePosition(fen)
+            }
         }
     }
 

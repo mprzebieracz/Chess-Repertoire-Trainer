@@ -5,14 +5,11 @@ import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
 import java.time.LocalDate
 
-class DefaultPuzzleRepository(
-    private val puzzleDao: PuzzleDao
-) : PuzzleRepository {
+class DefaultPuzzleRepository(private val puzzleDao: PuzzleDao) : PuzzleRepository {
 
     private fun today(): String = LocalDate.now().toString()
 
-    override suspend fun getTodaysPuzzle(): Puzzle? =
-        puzzleDao.getPuzzleByDate(today())
+    override suspend fun getTodaysPuzzle(): Puzzle? = puzzleDao.getPuzzleByDate(today())
 
     override suspend fun fetchAndSaveDailyPuzzle(): Puzzle? {
         val puzzle = LichessPuzzleService.fetchDailyPuzzle(sourceDate = today()) ?: return null

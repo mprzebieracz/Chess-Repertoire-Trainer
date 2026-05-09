@@ -13,11 +13,9 @@ import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
 import kotlinx.coroutines.flow.Flow
 
-data class LineFenRow(
-    @ColumnInfo(name = "fen") val fen: String,
-    @ColumnInfo(name = "chapterId") val chapterId: Int,
-    @ColumnInfo(name = "lineId") val lineId: Int
-)
+data class LineFenRow(@ColumnInfo(name = "fen") val fen: String,
+                      @ColumnInfo(name = "chapterId") val chapterId: Int,
+                      @ColumnInfo(name = "lineId") val lineId: Int)
 
 @Dao
 interface RepertoireDao {
@@ -66,6 +64,9 @@ interface RepertoireDao {
     @Query("SELECT * FROM lines WHERE id = :id")
     suspend fun getLineById(id: Int): Line?
 
+    @Query("SELECT * FROM lines WHERE chapterId IN (:chapterIds)")
+    suspend fun getLinesForChapters(chapterIds: List<Int>): List<Line>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLine(line: Line): Long
 
@@ -79,14 +80,10 @@ interface RepertoireDao {
     fun getLinesToReview(currentTime: Long): Flow<List<Line>>
 
     // Aggregated counts for course-level progress.
-    @Query(
-        "SELECT COUNT(*) FROM lines WHERE chapterId IN (SELECT id FROM chapters WHERE repertoireId = :repertoireId)"
-    )
+    @Query("SELECT COUNT(*) FROM lines WHERE chapterId IN (SELECT id FROM chapters WHERE repertoireId = :repertoireId)")
     suspend fun getLineCountForRepertoire(repertoireId: Int): Int
 
-    @Query(
-        "SELECT COUNT(*) FROM lines WHERE isLearned = 1 AND chapterId IN (SELECT id FROM chapters WHERE repertoireId = :repertoireId)"
-    )
+    @Query("SELECT COUNT(*) FROM lines WHERE isLearned = 1 AND chapterId IN (SELECT id FROM chapters WHERE repertoireId = :repertoireId)")
     suspend fun getLearnedLineCountForRepertoire(repertoireId: Int): Int
 
     // LineMove

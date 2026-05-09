@@ -2,6 +2,7 @@ package com.example.chessrepertoiretrainer.core.chess.domain
 
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
+import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 
@@ -111,3 +112,25 @@ fun Board.moveFromSan(san: String): Move? {
     }
 }
 
+fun String.toSide(): Side = if (this.equals("White", ignoreCase = true)) Side.WHITE else Side.BLACK
+
+fun uciToMove(uci: String, board: Board): Move? {
+    if (uci.length !in 4..5) return null
+    return try {
+        val from = Square.fromValue(uci.substring(0, 2).uppercase())
+        val to = Square.fromValue(uci.substring(2, 4).uppercase())
+        val promotionChar = if (uci.length == 5) uci[4].lowercaseChar() else null
+        val promotionPiece: Piece = when (promotionChar) {
+            'q' -> if (board.sideToMove == Side.WHITE) Piece.WHITE_QUEEN else Piece.BLACK_QUEEN
+            'r' -> if (board.sideToMove == Side.WHITE) Piece.WHITE_ROOK else Piece.BLACK_ROOK
+            'b' -> if (board.sideToMove == Side.WHITE) Piece.WHITE_BISHOP else Piece.BLACK_BISHOP
+            'n' -> if (board.sideToMove == Side.WHITE) Piece.WHITE_KNIGHT else Piece.BLACK_KNIGHT
+            null -> Piece.NONE
+            else -> return null
+        }
+        if (promotionPiece == Piece.NONE) Move(from, to) else Move(from, to, promotionPiece)
+    }
+    catch (_: Exception) {
+        null
+    }
+}

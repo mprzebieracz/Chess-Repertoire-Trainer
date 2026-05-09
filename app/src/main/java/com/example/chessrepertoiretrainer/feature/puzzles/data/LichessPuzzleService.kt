@@ -40,15 +40,15 @@ object LichessPuzzleService {
         val lichessId = puzzleJson.optString("id", "")
         if (lichessId.isBlank()) return null
 
-        val fen = listOf(
-            puzzleJson.optString("fen", ""),
-            root.optString("fen", ""),
-            root.optJSONObject("game")?.optString("fen", "") ?: ""
-        ).firstOrNull { it.isNotBlank() } ?: return null
+        val fen = listOf(puzzleJson.optString("fen", ""),
+                         root.optString("fen", ""),
+                         root.optJSONObject("game")?.optString("fen", "")
+                             ?: "").firstOrNull { it.isNotBlank() } ?: return null
 
         val solutionArray = puzzleJson.optJSONArray("solution") ?: return null
         if (solutionArray.length() == 0) return null
-        val moves = (0 until solutionArray.length()).joinToString(" ") { solutionArray.getString(it) }
+        val moves =
+            (0 until solutionArray.length()).joinToString(" ") { solutionArray.getString(it) }
 
         val themesArray = puzzleJson.optJSONArray("themes")
         val themes = if (themesArray != null) {
@@ -58,15 +58,13 @@ object LichessPuzzleService {
             ""
         }
 
-        return Puzzle(
-            id = "${lichessId}_$sourceDate",
-            fen = fen,
-            moves = moves,
-            rating = puzzleJson.optInt("rating", 1500),
-            themes = themes,
-            isSolved = false,
-            attempts = 0,
-            sourceDate = sourceDate
-        )
+        return Puzzle(id = "${lichessId}_$sourceDate",
+                      fen = fen,
+                      moves = moves,
+                      rating = puzzleJson.optInt("rating", 1500),
+                      themes = themes,
+                      isSolved = false,
+                      attempts = 0,
+                      sourceDate = sourceDate)
     }
 }

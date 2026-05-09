@@ -41,4 +41,5 @@ interface ChessBoardController {
     fun loadPositionFromFen(fen: String)
     fun resetBoard()
     fun flipBoard()
+    fun orientForSide(side: Side)
 }

@@ -1,31 +1,27 @@
 package com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher
 
-data class FetchedGame(
-    val platformGameId: String,
-    val opponentName: String,
-    val isUserWhite: Boolean,
-    val result: String,
-    val timeControl: String?,
-    val timeCategory: String?,
-    val opening: String?,
-    val playerRating: Int?,
-    val opponentRating: Int?,
-    val rated: Boolean,
-    val playedAt: Long,
-    val pgn: String
-)
+data class FetchedGame(val platformGameId: String,
+                       val opponentName: String,
+                       val isUserWhite: Boolean,
+                       val result: String,
+                       val timeControl: String?,
+                       val timeCategory: String?,
+                       val opening: String?,
+                       val playerRating: Int?,
+                       val opponentRating: Int?,
+                       val rated: Boolean,
+                       val playedAt: Long,
+                       val pgn: String)
 
 interface GameFetcher {
     val platformKey: String
 
-    suspend fun fetchGamesForUser(
-        username: String,
-        maxGames: Int? = null,
-        colorFilter: String = "both",
-        timeControlFilter: String = "",
-        since: Long? = null,
-        onProgress: ((fetched: Int) -> Unit)? = null
-    ): List<FetchedGame>
+    suspend fun fetchGamesForUser(username: String,
+                                  maxGames: Int? = null,
+                                  colorFilter: String = "both",
+                                  timeControlFilter: String = "",
+                                  since: Long? = null,
+                                  onProgress: ((fetched: Int) -> Unit)? = null): List<FetchedGame>
 }
 
 class GameFetcherRegistry(fetchers: List<GameFetcher>) {

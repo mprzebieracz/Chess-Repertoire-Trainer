@@ -16,11 +16,13 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrainingSelectionViewModel(private val repertoireRepository: RepertoireRepository) : ViewModel() {
+class TrainingSelectionViewModel(private val repertoireRepository: RepertoireRepository) :
+    ViewModel() {
 
     val repertoires: StateFlow<List<Repertoire>> = repertoireRepository.getAllRepertoires().stateIn(
-        scope = viewModelScope, started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
-    )
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList())
 
     private val _selectedRepertoireId = MutableStateFlow<Int?>(null)
     val selectedRepertoireId: StateFlow<Int?> = _selectedRepertoireId.asStateFlow()
@@ -32,15 +34,16 @@ class TrainingSelectionViewModel(private val repertoireRepository: RepertoireRep
         else {
             repertoireRepository.getChaptersForRepertoire(id)
         }
-    }.stateIn(
-        scope = viewModelScope, started = SharingStarted.Companion.WhileSubscribed(5000), initialValue = emptyList()
-    )
+    }.stateIn(scope = viewModelScope,
+              started = SharingStarted.WhileSubscribed(5000),
+              initialValue = emptyList())
 
     fun selectRepertoire(id: Int) {
         _selectedRepertoireId.value = id
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return TrainingSelectionViewModel(repertoireRepository) as T

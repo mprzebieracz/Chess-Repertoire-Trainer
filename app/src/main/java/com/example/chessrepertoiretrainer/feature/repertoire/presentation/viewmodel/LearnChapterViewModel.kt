@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.chess.domain.toSide
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
@@ -20,30 +21,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-class LearnChapterViewModel(
-    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
-) : ViewModel() {
+class LearnChapterViewModel(private val repertoireRepository: RepertoireRepository,
+                            savedStateHandle: SavedStateHandle) : ViewModel() {
 
     enum class LearnPhase {
         STUDYING_LINE, LINE_COMPLETE, CHAPTER_COMPLETE
     }
 
-    data class LearnChapterUiState(
-        val isLoading: Boolean = true,
-        val hasNoLines: Boolean = false,
-        val chapterId: Int = 0,
-        val chapterName: String = "",
-        val currentLineId: Int? = null,
-        val currentLineName: String? = null,
-        val currentLineNumber: Int = 0,
-        val totalLines: Int = 0,
-        val myColor: String? = null,
-        val phase: LearnPhase = LearnPhase.STUDYING_LINE,
-        val isAtLineStart: Boolean = true,
-        val isAtLineEnd: Boolean = false,
-        val statusMessage: String? = null,
-        val currentMoveComment: String? = null
-    )
+    data class LearnChapterUiState(val isLoading: Boolean = true,
+                                   val hasNoLines: Boolean = false,
+                                   val chapterId: Int = 0,
+                                   val chapterName: String = "",
+                                   val currentLineId: Int? = null,
+                                   val currentLineName: String? = null,
+                                   val currentLineNumber: Int = 0,
+                                   val totalLines: Int = 0,
+                                   val myColor: String? = null,
+                                   val phase: LearnPhase = LearnPhase.STUDYING_LINE,
+                                   val isAtLineStart: Boolean = true,
+                                   val isAtLineEnd: Boolean = false,
+                                   val statusMessage: String? = null,
+                                   val currentMoveComment: String? = null)
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
 
@@ -74,33 +72,21 @@ class LearnChapterViewModel(
         val repertoire = chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
         val colorString = repertoire?.color ?: "White"
 
-        mySide = if (colorString.equals("White", ignoreCase = true)) {
-            Side.WHITE
-        }
-        else {
-            Side.BLACK
-        }
+        mySide = colorString.toSide()
 
         // Orient the board from the player's perspective once per session.
-        if (mySide == Side.BLACK && !chessController.isFlipped) {
-            chessController.flipBoard()
-        }
-        else if (mySide == Side.WHITE && chessController.isFlipped) {
-            chessController.flipBoard()
-        }
+        chessController.orientForSide(mySide)
 
         val loadedLines = repertoireRepository.getLinesForChapter(chapterId).first()
         lines = loadedLines
 
         if (loadedLines.isEmpty()) {
             _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    hasNoLines = true,
-                    chapterName = chapterName,
-                    totalLines = 0,
-                    statusMessage = "No lines in this chapter yet. Use edit mode to add lines."
-                )
+                it.copy(isLoading = false,
+                        hasNoLines = true,
+                        chapterName = chapterName,
+                        totalLines = 0,
+                        statusMessage = "No lines in this chapter yet. Use edit mode to add lines.")
             }
             return
         }
@@ -108,14 +94,12 @@ class LearnChapterViewModel(
         val firstUnlearnedIndex = loadedLines.indexOfFirst { !it.isLearned }
         if (firstUnlearnedIndex == -1) {
             _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    hasNoLines = false,
-                    chapterName = chapterName,
-                    totalLines = loadedLines.size,
-                    phase = LearnPhase.CHAPTER_COMPLETE,
-                    statusMessage = "All lines in this chapter are already learned."
-                )
+                it.copy(isLoading = false,
+                        hasNoLines = false,
+                        chapterName = chapterName,
+                        totalLines = loadedLines.size,
+                        phase = LearnPhase.CHAPTER_COMPLETE,
+                        statusMessage = "All lines in this chapter are already learned.")
             }
             return
         }
@@ -123,16 +107,14 @@ class LearnChapterViewModel(
         startLine(firstUnlearnedIndex, chapterName = chapterName, colorString = colorString)
     }
 
-    private suspend fun startLine(
-        index: Int, chapterName: String? = null, colorString: String? = null
-    ) {
+    private suspend fun startLine(index: Int,
+                                  chapterName: String? = null,
+                                  colorString: String? = null) {
         if (index !in lines.indices) {
             _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    phase = LearnPhase.CHAPTER_COMPLETE,
-                    statusMessage = "You have gone through all lines in this chapter."
-                )
+                it.copy(isLoading = false,
+                        phase = LearnPhase.CHAPTER_COMPLETE,
+                        statusMessage = "You have gone through all lines in this chapter.")
             }
             return
         }
@@ -146,21 +128,19 @@ class LearnChapterViewModel(
         chessController.resetBoard()
 
         _uiState.update {
-            it.copy(
-                isLoading = false,
-                hasNoLines = false,
-                chapterName = chapterName ?: it.chapterName,
-                currentLineId = line.id,
-                currentLineName = line.name,
-                currentLineNumber = index + 1,
-                totalLines = lines.size,
-                myColor = colorString ?: it.myColor,
-                phase = if (currentLineMoves.isEmpty()) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
-                isAtLineStart = true,
-                isAtLineEnd = currentLineMoves.isEmpty(),
-                statusMessage = if (currentLineMoves.isEmpty()) "This line has no moves." else null,
-                currentMoveComment = null
-            )
+            it.copy(isLoading = false,
+                    hasNoLines = false,
+                    chapterName = chapterName ?: it.chapterName,
+                    currentLineId = line.id,
+                    currentLineName = line.name,
+                    currentLineNumber = index + 1,
+                    totalLines = lines.size,
+                    myColor = colorString ?: it.myColor,
+                    phase = if (currentLineMoves.isEmpty()) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                    isAtLineStart = true,
+                    isAtLineEnd = currentLineMoves.isEmpty(),
+                    statusMessage = if (currentLineMoves.isEmpty()) "This line has no moves." else null,
+                    currentMoveComment = null)
         }
     }
 
@@ -202,13 +182,11 @@ class LearnChapterViewModel(
         val isEnd = currentMoveIndex >= moves.lastIndex
         val comment = moves.getOrNull(currentMoveIndex)?.comment?.takeIf { it.isNotBlank() }
         _uiState.update {
-            it.copy(
-                isAtLineStart = currentMoveIndex < 0,
-                isAtLineEnd = isEnd,
-                phase = if (isEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
-                statusMessage = null,
-                currentMoveComment = comment
-            )
+            it.copy(isAtLineStart = currentMoveIndex < 0,
+                    isAtLineEnd = isEnd,
+                    phase = if (isEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                    statusMessage = null,
+                    currentMoveComment = comment)
         }
     }
 
@@ -234,13 +212,11 @@ class LearnChapterViewModel(
         }
 
         _uiState.update {
-            it.copy(
-                isAtLineStart = currentMoveIndex < 0,
-                isAtLineEnd = isEnd,
-                phase = if (isEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
-                statusMessage = null,
-                currentMoveComment = comment
-            )
+            it.copy(isAtLineStart = currentMoveIndex < 0,
+                    isAtLineEnd = isEnd,
+                    phase = if (isEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                    statusMessage = null,
+                    currentMoveComment = comment)
         }
     }
 
@@ -251,13 +227,11 @@ class LearnChapterViewModel(
         currentMoveIndex = -1
 
         _uiState.update {
-            it.copy(
-                isAtLineStart = true,
-                isAtLineEnd = currentLineMoves.isEmpty(),
-                phase = if (currentLineMoves.isEmpty()) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
-                statusMessage = null,
-                currentMoveComment = null
-            )
+            it.copy(isAtLineStart = true,
+                    isAtLineEnd = currentLineMoves.isEmpty(),
+                    phase = if (currentLineMoves.isEmpty()) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                    statusMessage = null,
+                    currentMoveComment = null)
         }
     }
 
@@ -271,17 +245,13 @@ class LearnChapterViewModel(
                 val line = lines[currentLineIndex]
                 val now = System.currentTimeMillis()
                 val updated = if (!line.isLearned) {
-                    line.copy(
-                        isLearned = true,
-                        learnedAt = now,
-                        timesTrained = line.timesTrained + 1,
-                        lastTrainedAt = now
-                    )
+                    line.copy(isLearned = true,
+                              learnedAt = now,
+                              timesTrained = line.timesTrained + 1,
+                              lastTrainedAt = now)
                 }
                 else {
-                    line.copy(
-                        timesTrained = line.timesTrained + 1, lastTrainedAt = now
-                    )
+                    line.copy(timesTrained = line.timesTrained + 1, lastTrainedAt = now)
                 }
                 repertoireRepository.updateLine(updated)
                 lines = lines.toMutableList().also { list ->
@@ -300,11 +270,9 @@ class LearnChapterViewModel(
 
             if (nextIndex == null) {
                 _uiState.update {
-                    it.copy(
-                        phase = LearnPhase.CHAPTER_COMPLETE,
-                        isAtLineEnd = true,
-                        statusMessage = "You have gone through all lines in this chapter."
-                    )
+                    it.copy(phase = LearnPhase.CHAPTER_COMPLETE,
+                            isAtLineEnd = true,
+                            statusMessage = "You have gone through all lines in this chapter.")
                 }
             }
             else {

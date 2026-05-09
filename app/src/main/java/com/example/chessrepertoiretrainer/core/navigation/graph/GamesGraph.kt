@@ -13,38 +13,29 @@ import com.example.chessrepertoiretrainer.feature.openingtree.presentation.Openi
 import com.example.chessrepertoiretrainer.feature.openingtree.presentation.OpeningTreeViewModel
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
 
-fun NavGraphBuilder.gamesGraph(
-    navController: NavHostController,
-    settingsViewModel: SettingsViewModel,
-    appContainer: AppContainer
-) {
+fun NavGraphBuilder.gamesGraph(navController: NavHostController,
+                               settingsViewModel: SettingsViewModel,
+                               appContainer: AppContainer) {
     composable(Screen.OpeningTreeSearch.route) {
-        val vm: OpeningTreeSearchViewModel = viewModel(
-            factory = OpeningTreeSearchViewModel.Factory(appContainer.gameFetcherRegistry)
-        )
+        val vm: OpeningTreeSearchViewModel =
+            viewModel(factory = OpeningTreeSearchViewModel.Factory(appContainer.gameFetcherRegistry))
 
         val settings = settingsViewModel.settings.collectAsStateWithLifecycle().value
 
-        OpeningTreeSearchScreen(
-            viewModel = vm,
-            defaultLichessUsername = settings.lichessUsername,
-            defaultChessComUsername = settings.chessComUsername,
-            defaultPlatform = settings.defaultOnlinePlatform,
-            onOpenTree = { tree ->
-                appContainer.latestOpeningTree = tree
-                navController.navigate(Screen.OpeningTree.route)
-            }
-        )
+        OpeningTreeSearchScreen(viewModel = vm,
+                                defaultLichessUsername = settings.lichessUsername,
+                                defaultChessComUsername = settings.chessComUsername,
+                                defaultPlatform = settings.defaultOnlinePlatform,
+                                onOpenTree = { tree ->
+                                    appContainer.latestOpeningTree = tree
+                                    navController.navigate(Screen.OpeningTree.route)
+                                })
     }
 
     composable(Screen.OpeningTree.route) {
-        val vm: OpeningTreeViewModel = viewModel(
-            factory = OpeningTreeViewModel.Factory(appContainer.latestOpeningTree)
-        )
+        val vm: OpeningTreeViewModel =
+            viewModel(factory = OpeningTreeViewModel.Factory(appContainer.latestOpeningTree))
 
-        OpeningTreeScreen(
-            viewModel = vm,
-            onBackClick = { navController.popBackStack() }
-        )
+        OpeningTreeScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 }

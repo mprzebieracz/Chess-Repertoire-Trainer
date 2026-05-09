@@ -12,31 +12,31 @@ object LichessGameFetcher : GameFetcher {
     private const val BASE_URL = "https://lichess.org/api/games/user"
     override val platformKey: String = "lichess"
 
-    override suspend fun fetchGamesForUser(
-        username: String,
-        maxGames: Int?,
-        colorFilter: String,
-        timeControlFilter: String,
-        since: Long?,
-        onProgress: ((fetched: Int) -> Unit)?
-    ): List<FetchedGame> = withContext(Dispatchers.IO) {
-        val normalizedUser = username.trim()
-        if (normalizedUser.isBlank()) return@withContext emptyList()
+    override suspend fun fetchGamesForUser(username: String,
+                                           maxGames: Int?,
+                                           colorFilter: String,
+                                           timeControlFilter: String,
+                                           since: Long?,
+                                           onProgress: ((fetched: Int) -> Unit)?): List<FetchedGame> =
+        withContext(Dispatchers.IO) {
+            val normalizedUser = username.trim()
+            if (normalizedUser.isBlank()) return@withContext emptyList()
 
-        val urlString = buildRequestUrl(normalizedUser, maxGames, colorFilter, timeControlFilter, since)
-        return@withContext streamGames(urlString, normalizedUser, onProgress)
-    }
+            val urlString =
+                buildRequestUrl(normalizedUser, maxGames, colorFilter, timeControlFilter, since)
+            return@withContext streamGames(urlString, normalizedUser, onProgress)
+        }
 
-    private fun buildRequestUrl(
-        username: String,
-        maxGames: Int?,
-        colorFilter: String,
-        timeControlFilter: String,
-        since: Long?
-    ): String {
-        val params = mutableListOf(
-            "pgnInJson=true", "clocks=false", "evals=false", "accuracy=false", "opening=true"
-        )
+    private fun buildRequestUrl(username: String,
+                                maxGames: Int?,
+                                colorFilter: String,
+                                timeControlFilter: String,
+                                since: Long?): String {
+        val params = mutableListOf("pgnInJson=true",
+                                   "clocks=false",
+                                   "evals=false",
+                                   "accuracy=false",
+                                   "opening=true")
         if (maxGames != null && maxGames > 0) params += "max=$maxGames"
         if (since != null) params += "since=$since"
 
@@ -55,11 +55,9 @@ object LichessGameFetcher : GameFetcher {
         return "$BASE_URL/$username?${params.joinToString("&")}"
     }
 
-    private fun streamGames(
-        urlString: String,
-        username: String,
-        onProgress: ((Int) -> Unit)?
-    ): List<FetchedGame> {
+    private fun streamGames(urlString: String,
+                            username: String,
+                            onProgress: ((Int) -> Unit)?): List<FetchedGame> {
         val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = 15_000
@@ -114,24 +112,25 @@ object LichessGameFetcher : GameFetcher {
             val gameId = obj.optString("id").takeIf { it.isNotBlank() }
                 ?: "${username}_${playedAt}_${resultTag}"
 
-            val opening = obj.optJSONObject("opening")?.optString("name")?.takeIf { it.isNotBlank() }
-            val whiteRating = players?.optJSONObject("white")?.optInt("rating", -1)?.takeIf { it > 0 }
-            val blackRating = players?.optJSONObject("black")?.optInt("rating", -1)?.takeIf { it > 0 }
+            val opening =
+                obj.optJSONObject("opening")?.optString("name")?.takeIf { it.isNotBlank() }
+            val whiteRating =
+                players?.optJSONObject("white")?.optInt("rating", -1)?.takeIf { it > 0 }
+            val blackRating =
+                players?.optJSONObject("black")?.optInt("rating", -1)?.takeIf { it > 0 }
 
-            FetchedGame(
-                platformGameId = gameId,
-                opponentName = if (isUserWhite) blackUser else whiteUser,
-                isUserWhite = isUserWhite,
-                result = resultTag,
-                timeControl = headers["TimeControl"] ?: tcFromClock,
-                timeCategory = mapSpeedToCategory(obj.optString("speed", "")),
-                opening = opening,
-                playerRating = if (isUserWhite) whiteRating else blackRating,
-                opponentRating = if (isUserWhite) blackRating else whiteRating,
-                rated = obj.optBoolean("rated", false),
-                playedAt = playedAt,
-                pgn = pgn
-            )
+            FetchedGame(platformGameId = gameId,
+                        opponentName = if (isUserWhite) blackUser else whiteUser,
+                        isUserWhite = isUserWhite,
+                        result = resultTag,
+                        timeControl = headers["TimeControl"] ?: tcFromClock,
+                        timeCategory = mapSpeedToCategory(obj.optString("speed", "")),
+                        opening = opening,
+                        playerRating = if (isUserWhite) whiteRating else blackRating,
+                        opponentRating = if (isUserWhite) blackRating else whiteRating,
+                        rated = obj.optBoolean("rated", false),
+                        playedAt = playedAt,
+                        pgn = pgn)
         }.getOrNull()
     }
 

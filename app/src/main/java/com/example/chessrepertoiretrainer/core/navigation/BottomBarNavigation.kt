@@ -16,37 +16,34 @@ fun AppBottomBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val items = listOf(
-        Screen.Home,
-        Screen.RepertoireMain,
-        Screen.MyGames,
-        Screen.OpeningTreeSearch,
-        Screen.Settings
-    )
+    val items = listOf(Screen.Home,
+                       Screen.RepertoireMain,
+                       Screen.MyGames,
+                       Screen.OpeningTreeSearch,
+                       Screen.Settings)
 
     NavigationBar {
         items.forEach { screen ->
             val isRepertoireFlow =
                 screen == Screen.RepertoireMain && currentDestination?.hierarchy?.any {
-                    it.route?.contains("chapters") == true || it.route?.contains(
-                        "lines"
-                    ) == true
+                    it.route?.contains("chapters") == true || it.route?.contains("lines") == true
                 } == true
 
             val selected =
                 currentDestination?.hierarchy?.any { it.route == screen.route } == true || isRepertoireFlow
 
-            NavigationBarItem(
-                icon = { Icon(screen.icon, contentDescription = screen.title) },
-                label = { Text(screen.title) },
-                selected = selected,
-                onClick = {
-                    navController.navigate(screen.route) {
-                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                })
+            NavigationBarItem(icon = { Icon(screen.icon, contentDescription = screen.title) },
+                              label = { Text(screen.title) },
+                              selected = selected,
+                              onClick = {
+                                  navController.navigate(screen.route) {
+                                      popUpTo(navController.graph.findStartDestination().id) {
+                                          saveState = true
+                                      }
+                                      launchSingleTop = true
+                                      restoreState = true
+                                  }
+                              })
         }
     }
 }

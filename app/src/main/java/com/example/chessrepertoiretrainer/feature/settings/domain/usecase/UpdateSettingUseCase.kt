@@ -4,9 +4,7 @@ import com.example.chessrepertoiretrainer.feature.settings.data.AppThemeMode
 import com.example.chessrepertoiretrainer.feature.settings.data.BoardTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 
-class UpdateSettingUseCase(
-    private val repository: UserSettingsRepository
-) {
+class UpdateSettingUseCase(private val repository: UserSettingsRepository) {
     suspend fun lichessUsername(username: String): Result<Unit> = runCatching {
         repository.updateLichessUsername(username)
     }
@@ -31,4 +29,3 @@ class UpdateSettingUseCase(
         repository.updateDefaultOnlinePlatform(platform)
     }
 }
-

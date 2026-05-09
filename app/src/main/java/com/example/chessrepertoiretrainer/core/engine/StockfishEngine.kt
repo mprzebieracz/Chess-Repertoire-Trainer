@@ -3,12 +3,10 @@ package com.example.chessrepertoiretrainer.core.engine
 import android.content.Context
 import android.util.Log
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.chess.domain.uciToMove
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 import com.github.bhlangonijr.chesslib.Board
-import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
-import com.github.bhlangonijr.chesslib.Square
-import com.github.bhlangonijr.chesslib.move.Move
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,10 +28,8 @@ import java.io.OutputStreamWriter
 
 private const val TAG = "StockfishEngine"
 
-class StockfishEngine(
-    private val context: Context,
-    private val settingsRepository: UserSettingsRepository
-) {
+class StockfishEngine(private val context: Context,
+                      private val settingsRepository: UserSettingsRepository) {
     private val engineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val _isEnabled = MutableStateFlow(false)
@@ -53,10 +49,17 @@ class StockfishEngine(
     private var reader: BufferedReader? = null
     private var readingJob: Job? = null
 
-    @Volatile private var currentFen: String? = null
-    @Volatile private var lastSearchDepth: Int = 0
-    @Volatile private var pendingForcedStop = false
-    @Volatile private var pendingNewSearch: (() -> Unit)? = null
+    @Volatile
+    private var currentFen: String? = null
+
+    @Volatile
+    private var lastSearchDepth: Int = 0
+
+    @Volatile
+    private var pendingForcedStop = false
+
+    @Volatile
+    private var pendingNewSearch: (() -> Unit)? = null
 
     val binaryPath: String
         get() = File(context.applicationInfo.nativeLibraryDir, "libstockfish.so").absolutePath
@@ -114,16 +117,18 @@ class StockfishEngine(
         else if (board.isKingAttacked) {
             // Side to move is mated
             val whiteMated = board.sideToMove == Side.WHITE
-            EngineAnalysis(
-                centipawns = null,
-                mateIn = if (whiteMated) -1 else 1,
-                depth = 0,
-                line = if (whiteMated) "Checkmate – Black wins" else "Checkmate – White wins"
-            )
-        } else {
+            EngineAnalysis(centipawns = null,
+                           mateIn = if (whiteMated) -1 else 1,
+                           depth = 0,
+                           line = if (whiteMated) "Checkmate – Black wins" else "Checkmate – White wins")
+        }
+        else {
             EngineAnalysis(centipawns = 0, mateIn = null, depth = 0, line = "Stalemate – Draw")
         }
-    } catch (_: Exception) { null }
+    }
+    catch (_: Exception) {
+        null
+    }
 
     fun analyzeDeeper() {
         val fen = currentFen ?: return
@@ -149,7 +154,8 @@ class StockfishEngine(
             pendingForcedStop = true
             pendingNewSearch = action
             sendCommand("stop")
-        } else {
+        }
+        else {
             action()
         }
     }
@@ -171,7 +177,8 @@ class StockfishEngine(
             val w = writer ?: return
             w.write("$cmd\n")
             w.flush()
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "sendCommand failed for '$cmd': ${e.message}")
         }
     }
@@ -188,20 +195,27 @@ class StockfishEngine(
         }
         if (!binary.canExecute()) {
             Log.w(TAG, "Binary not executable, attempting chmod: ${binary.absolutePath}")
-            try { Runtime.getRuntime().exec("chmod 755 ${binary.absolutePath}").waitFor() } catch (_: Exception) {}
+            try {
+                Runtime.getRuntime().exec("chmod 755 ${binary.absolutePath}").waitFor()
+            }
+            catch (_: Exception) {
+            }
         }
 
         return try {
             Log.d(TAG, "Launching: ${binary.absolutePath}")
-            val p = ProcessBuilder(binary.absolutePath)
-                .redirectErrorStream(true)
-                .start()
+            val p = ProcessBuilder(binary.absolutePath).redirectErrorStream(true).start()
 
             // Give the process a moment to crash if it's going to (wrong CPU variant, etc.)
             delay(300L)
             if (!p.isAlive) {
                 val exitCode = p.exitValue()
-                val output = try { p.inputStream.bufferedReader().readText().take(300) } catch (_: Exception) { "" }
+                val output = try {
+                    p.inputStream.bufferedReader().readText().take(300)
+                }
+                catch (_: Exception) {
+                    ""
+                }
                 val hint = when (exitCode) {
                     132 -> " (SIGILL — binary uses CPU instructions not supported by this device; try a different build)"
                     139 -> " (SIGSEGV — binary crashed)"
@@ -224,7 +238,12 @@ class StockfishEngine(
                 val r = reader ?: return@launch
                 var initialized = false
                 while (isActive) {
-                    val line = try { r.readLine() } catch (_: Exception) { break } ?: break
+                    val line = try {
+                        r.readLine()
+                    }
+                    catch (_: Exception) {
+                        break
+                    } ?: break
                     Log.v(TAG, "< $line")
                     if (!initialized) {
                         if (line.trim() == "readyok") {
@@ -232,7 +251,8 @@ class StockfishEngine(
                             Log.d(TAG, "Engine ready")
                             ready.complete(Unit)
                         }
-                    } else {
+                    }
+                    else {
                         handleOutputLine(line)
                     }
                 }
@@ -254,7 +274,8 @@ class StockfishEngine(
                 return false
             }
             true
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             val msg = "Failed to start engine: ${e.message}"
             Log.e(TAG, msg, e)
             _engineError.value = msg
@@ -270,7 +291,8 @@ class StockfishEngine(
                     pendingForcedStop = false
                     pendingNewSearch?.invoke()
                     pendingNewSearch = null
-                } else {
+                }
+                else {
                     _searchState.value = EngineSearchState.COMPLETE
                 }
             }
@@ -288,9 +310,15 @@ class StockfishEngine(
             when (tokens[i]) {
                 "depth" -> depth = tokens.getOrNull(i + 1)?.toIntOrNull() ?: 0
                 "score" -> when (tokens.getOrNull(i + 1)) {
-                    "cp" -> { cp = tokens.getOrNull(i + 2)?.toIntOrNull(); mateIn = null }
-                    "mate" -> { mateIn = tokens.getOrNull(i + 2)?.toIntOrNull(); cp = null }
+                    "cp" -> {
+                        cp = tokens.getOrNull(i + 2)?.toIntOrNull(); mateIn = null
+                    }
+
+                    "mate" -> {
+                        mateIn = tokens.getOrNull(i + 2)?.toIntOrNull(); cp = null
+                    }
                 }
+
                 "pv" -> {
                     var j = i + 1
                     while (j < tokens.size && tokens[j].length in 4..5 && tokens[j][0].isLetter()) {
@@ -298,6 +326,7 @@ class StockfishEngine(
                     }
                     break
                 }
+
                 "upperbound", "lowerbound" -> return
             }
             i++
@@ -312,7 +341,10 @@ class StockfishEngine(
             val whiteCp = if (isBlackToMove && cp != null) -cp else cp
             val whiteMate = if (isBlackToMove && mateIn != null) -mateIn else mateIn
             val pvSan = convertPvToSan(fen, pvMoves)
-            _analysis.value = EngineAnalysis(centipawns = whiteCp, mateIn = whiteMate, depth = depth, line = pvSan)
+            _analysis.value = EngineAnalysis(centipawns = whiteCp,
+                                             mateIn = whiteMate,
+                                             depth = depth,
+                                             line = pvSan)
         }
     }
 
@@ -326,31 +358,19 @@ class StockfishEngine(
             val sb = StringBuilder()
 
             uciMoves.take(8).forEachIndexed { index, uciMove ->
-                if (uciMove.length < 4) return@forEachIndexed
                 val isWhiteMove = board.sideToMove == Side.WHITE
                 if (isWhiteMove) sb.append("$moveNum. ")
                 else if (index == 0 && firstMoveIsBlack) sb.append("$moveNum... ")
 
-                val from = Square.fromValue(uciMove.substring(0, 2).uppercase())
-                val to = Square.fromValue(uciMove.substring(2, 4).uppercase())
-                val promoChar = if (uciMove.length == 5) uciMove[4].lowercaseChar() else null
-                val promoPiece = if (promoChar != null) {
-                    if (isWhiteMove) when (promoChar) {
-                        'q' -> Piece.WHITE_QUEEN; 'r' -> Piece.WHITE_ROOK
-                        'b' -> Piece.WHITE_BISHOP; else -> Piece.WHITE_KNIGHT
-                    } else when (promoChar) {
-                        'q' -> Piece.BLACK_QUEEN; 'r' -> Piece.BLACK_ROOK
-                        'b' -> Piece.BLACK_BISHOP; else -> Piece.BLACK_KNIGHT
-                    }
-                } else Piece.NONE
-                val move = if (promoPiece != Piece.NONE) Move(from, to, promoPiece) else Move(from, to)
+                val move = uciToMove(uciMove, board) ?: return@forEachIndexed
                 val san = board.toSan(move)
                 board.doMove(move)
                 sb.append("$san ")
                 if (board.sideToMove == Side.WHITE) moveNum++
             }
             sb.toString().trim()
-        } catch (_: Exception) {
+        }
+        catch (_: Exception) {
             uciMoves.take(5).joinToString(" ")
         }
     }

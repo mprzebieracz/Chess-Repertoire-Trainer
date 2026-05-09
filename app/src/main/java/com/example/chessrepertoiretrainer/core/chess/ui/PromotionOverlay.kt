@@ -15,41 +15,29 @@ import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
 
 @Composable
-internal fun PromotionOverlay(
-    state: ChessBoardController, board: Board
-) {
+internal fun PromotionOverlay(state: ChessBoardController, board: Board) {
     val promotion = state.pendingPromotion ?: return
     val side = board.getPiece(promotion.from).pieceSide
     val options = if (side == Side.WHITE) {
-        listOf(
-            Piece.WHITE_QUEEN, Piece.WHITE_ROOK, Piece.WHITE_BISHOP, Piece.WHITE_KNIGHT
-        )
+        listOf(Piece.WHITE_QUEEN, Piece.WHITE_ROOK, Piece.WHITE_BISHOP, Piece.WHITE_KNIGHT)
     }
     else {
-        listOf(
-            Piece.BLACK_QUEEN, Piece.BLACK_ROOK, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT
-        )
+        listOf(Piece.BLACK_QUEEN, Piece.BLACK_ROOK, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT)
     }
- 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ChessUiConstants.PromotionOverlay.scrimColor),
-        contentAlignment = Alignment.Center
-    ) {
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(ChessUiConstants.PromotionOverlay.scrimColor),
+        contentAlignment = Alignment.Center) {
         Row {
             options.forEach { promo ->
-                Box(
-                    modifier = Modifier
-                        .size(ChessUiConstants.PromotionOverlay.pieceSize)
-                        .clickable { state.promotePendingMove(promo) },
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier
+                    .size(ChessUiConstants.PromotionOverlay.pieceSize)
+                    .clickable { state.promotePendingMove(promo) },
+                    contentAlignment = Alignment.Center) {
                     PieceDisplay(promo, modifier = Modifier.fillMaxSize())
                 }
             }
         }
     }
 }
-
-

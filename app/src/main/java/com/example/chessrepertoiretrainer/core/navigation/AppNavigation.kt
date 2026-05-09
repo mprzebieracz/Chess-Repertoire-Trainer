@@ -26,26 +26,23 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = shouldShowBottomBar(navBackStackEntry?.destination)
- 
-    Scaffold(
-        bottomBar = {
-            if (showBottomBar) AppBottomBar(navController)
-        }) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
+
+    Scaffold(bottomBar = {
+        if (showBottomBar) AppBottomBar(navController)
+    }) { innerPadding ->
+        NavHost(navController = navController,
+                startDestination = Screen.Home.route,
+                modifier = Modifier.padding(innerPadding)) {
             homeGraph(navController, settingsViewModel, appContainer.puzzleRepository, appContainer)
             trainingGraph(navController, repertoireRepository)
-            gamesGraph(
-                navController = navController,
-                settingsViewModel = settingsViewModel,
-                appContainer = appContainer
-            )
+            gamesGraph(navController = navController,
+                       settingsViewModel = settingsViewModel,
+                       appContainer = appContainer)
             myGamesGraph(navController, appContainer)
-            repertoireGraph(navController, repertoireRepository, appContainer.repertoireComplianceAnalyzer, appContainer)
+            repertoireGraph(navController,
+                            repertoireRepository,
+                            appContainer.repertoireComplianceAnalyzer,
+                            appContainer)
         }
     }
 }
-

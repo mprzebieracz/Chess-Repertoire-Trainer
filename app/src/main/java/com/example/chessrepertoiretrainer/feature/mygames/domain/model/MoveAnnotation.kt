@@ -8,10 +8,8 @@ enum class ComplianceStatus {
     OPPONENT_DEVIATION, // opponent move, first off-book
 }
 
-data class MoveAnnotation(
-    val moveIndex: Int,
-    val status: ComplianceStatus,
-    val playedSan: String,
-    val chapterIdForNavigation: Int?,
-    val lineIdForNavigation: Int?
-)
+data class MoveAnnotation(val moveIndex: Int,
+                          val status: ComplianceStatus,
+                          val playedSan: String,
+                          val chapterIdForNavigation: Int?,
+                          val lineIdForNavigation: Int?)

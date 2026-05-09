@@ -16,10 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class EditCourseViewModel(
-    private val repertoireRepository: RepertoireRepository,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
+class EditCourseViewModel(private val repertoireRepository: RepertoireRepository,
+                          savedStateHandle: SavedStateHandle) : ViewModel() {
 
     val repertoireId: Int = checkNotNull(savedStateHandle["repertoireId"])
 
@@ -59,9 +57,9 @@ class EditCourseViewModel(
     fun addChapter(name: String) {
         viewModelScope.launch {
             val sortOrder = (chapters.value.maxByOrNull { it.sortOrder }?.sortOrder ?: -1) + 1
-            repertoireRepository.insertChapter(
-                Chapter(repertoireId = repertoireId, name = name, sortOrder = sortOrder)
-            )
+            repertoireRepository.insertChapter(Chapter(repertoireId = repertoireId,
+                                                       name = name,
+                                                       sortOrder = sortOrder))
         }
     }
 

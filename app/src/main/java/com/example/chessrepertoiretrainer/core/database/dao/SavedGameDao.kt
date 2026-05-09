@@ -7,17 +7,9 @@ import androidx.room.Query
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 import kotlinx.coroutines.flow.Flow
 
-data class GameStatsRaw(
-    val played: Int,
-    val wins: Int,
-    val losses: Int,
-    val draws: Int
-)
+data class GameStatsRaw(val played: Int, val wins: Int, val losses: Int, val draws: Int)
 
-data class RatingPeakRaw(
-    val rating: Int,
-    val playedAt: Long
-)
+data class RatingPeakRaw(val rating: Int, val playedAt: Long)
 
 @Dao
 interface SavedGameDao {
@@ -38,11 +30,9 @@ interface SavedGameDao {
         AND (:isWhite IS NULL OR isPlayerWhite = :isWhite)
         ORDER BY playedAt DESC
     """)
-    fun getAllGamesFiltered(
-        platform: String?,
-        result: String?,
-        isWhite: Boolean?
-    ): Flow<List<SavedGame>>
+    fun getAllGamesFiltered(platform: String?,
+                            result: String?,
+                            isWhite: Boolean?): Flow<List<SavedGame>>
 
     @Query("""
         SELECT COUNT(*) AS played,
@@ -55,13 +45,11 @@ interface SavedGameDao {
         AND (:isWhite IS NULL OR isPlayerWhite = :isWhite)
         AND playedAt >= :since
     """)
-    suspend fun getStatsRaw(
-        username: String,
-        platform: String,
-        category: String?,
-        isWhite: Boolean?,
-        since: Long
-    ): GameStatsRaw
+    suspend fun getStatsRaw(username: String,
+                            platform: String,
+                            category: String?,
+                            isWhite: Boolean?,
+                            since: Long): GameStatsRaw
 
     @Query("""
         SELECT playerRating FROM saved_games
@@ -77,7 +65,10 @@ interface SavedGameDao {
         AND timeCategory = :category AND playerRating IS NOT NULL AND playedAt >= :since
         ORDER BY playedAt ASC LIMIT 1
     """)
-    suspend fun getRatingAtStartOfPeriod(username: String, platform: String, category: String, since: Long): Int?
+    suspend fun getRatingAtStartOfPeriod(username: String,
+                                         platform: String,
+                                         category: String,
+                                         since: Long): Int?
 
     @Query("""
         SELECT playerRating AS rating, playedAt FROM saved_games
@@ -93,7 +84,10 @@ interface SavedGameDao {
         AND (:category IS NULL OR timeCategory = :category)
         AND opponentRating IS NOT NULL AND playedAt >= :since
     """)
-    suspend fun getAvgOpponentRating(username: String, platform: String, category: String?, since: Long): Double?
+    suspend fun getAvgOpponentRating(username: String,
+                                     platform: String,
+                                     category: String?,
+                                     since: Long): Double?
 
     @Query("SELECT * FROM saved_games WHERE id = :id")
     suspend fun getGameById(id: String): SavedGame?

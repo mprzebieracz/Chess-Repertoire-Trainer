@@ -4,18 +4,16 @@ class PgnMovetextParser {
 
     data class ParsedMove(val san: String, val comment: String?)
 
-    data class ParseResult(
-        val lines: List<List<ParsedMove>>, val nextIndex: Int
-    )
+    data class ParseResult(val lines: List<List<ParsedMove>>, val nextIndex: Int)
 
     fun parseLinesFromMovetext(text: String): List<List<ParsedMove>> {
         val (lines, _) = parseMovetextRecursive(text, 0, emptyList())
         return lines
     }
 
-    fun parseMovetextRecursive(
-        text: String, startIndex: Int, parentPrefix: List<ParsedMove>
-    ): ParseResult {
+    fun parseMovetextRecursive(text: String,
+                               startIndex: Int,
+                               parentPrefix: List<ParsedMove>): ParseResult {
         val variationLines = mutableListOf<List<ParsedMove>>()
         val current = parentPrefix.map { it.copy() }.toMutableList()
         var i = startIndex
@@ -88,10 +86,8 @@ class PgnMovetextParser {
                     break
                 }
 
-                text.startsWith("1-0", i) || text.startsWith("0-1", i) || text.startsWith(
-                    "1/2-1/2",
-                    i
-                ) || c == '*' -> {
+                text.startsWith("1-0", i) || text.startsWith("0-1", i) || text.startsWith("1/2-1/2",
+                                                                                          i) || c == '*' -> {
                     i += when {
                         text.startsWith("1-0", i) -> 3
                         text.startsWith("0-1", i) -> 3
@@ -145,4 +141,3 @@ class PgnMovetextParser {
         return ParseResult(allLines, i)
     }
 }
-

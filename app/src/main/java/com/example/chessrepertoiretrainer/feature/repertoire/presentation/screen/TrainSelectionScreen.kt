@@ -31,37 +31,30 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TrainSelectionScreen(
-    viewModel: TrainingSelectionViewModel,
-    onStartTraining: (Int) -> Unit,
-    onBackClick: (() -> Unit)? = null
-) {
+fun TrainSelectionScreen(viewModel: TrainingSelectionViewModel,
+                         onStartTraining: (Int) -> Unit,
+                         onBackClick: (() -> Unit)? = null) {
     val repertoires by viewModel.repertoires.collectAsState()
     val chapters by viewModel.chapters.collectAsState()
     val selectedRepertoireId by viewModel.selectedRepertoireId.collectAsState()
 
     TrainSelectionScaffold(onBackClick = onBackClick) { padding ->
-        TrainSelectionContent(
-            padding = padding,
-            repertoires = repertoires,
-            chapters = chapters,
-            selectedRepertoireId = selectedRepertoireId,
-            onSelectRepertoire = viewModel::selectRepertoire,
-            onStartTraining = onStartTraining
-        )
+        TrainSelectionContent(padding = padding,
+                              repertoires = repertoires,
+                              chapters = chapters,
+                              selectedRepertoireId = selectedRepertoireId,
+                              onSelectRepertoire = viewModel::selectRepertoire,
+                              onStartTraining = onStartTraining)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TrainSelectionScaffold(
-    onBackClick: (() -> Unit)?,
-    content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit
-) {
-    Scaffold(
-        topBar = {
-            TrainSelectionTopBar(onBackClick = onBackClick)
-        }) { padding ->
+private fun TrainSelectionScaffold(onBackClick: (() -> Unit)?,
+                                   content: @Composable (androidx.compose.foundation.layout.PaddingValues) -> Unit) {
+    Scaffold(topBar = {
+        TrainSelectionTopBar(onBackClick = onBackClick)
+    }) { padding ->
         content(padding)
     }
 }
@@ -69,14 +62,10 @@ private fun TrainSelectionScaffold(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TrainSelectionTopBar(onBackClick: (() -> Unit)?) {
-    TopAppBar(
-        title = { Text("Training") }, navigationIcon = if (onBackClick != null) {
+    TopAppBar(title = { Text("Training") }, navigationIcon = if (onBackClick != null) {
         {
             IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
-                )
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
         }
     }
@@ -86,83 +75,66 @@ private fun TrainSelectionTopBar(onBackClick: (() -> Unit)?) {
 }
 
 @Composable
-private fun TrainSelectionContent(
-    padding: androidx.compose.foundation.layout.PaddingValues,
-    repertoires: List<Repertoire>,
-    chapters: List<Chapter>,
-    selectedRepertoireId: Int?,
-    onSelectRepertoire: (Int) -> Unit,
-    onStartTraining: (Int) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
-    ) {
+private fun TrainSelectionContent(padding: androidx.compose.foundation.layout.PaddingValues,
+                                  repertoires: List<Repertoire>,
+                                  chapters: List<Chapter>,
+                                  selectedRepertoireId: Int?,
+                                  onSelectRepertoire: (Int) -> Unit,
+                                  onStartTraining: (Int) -> Unit) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(padding)) {
         SectionHeader(text = "Choose repertoire")
 
-        TrainSelectionRepertoireList(
-            repertoires = repertoires,
-            selectedRepertoireId = selectedRepertoireId,
-            onSelectRepertoire = onSelectRepertoire,
-            modifier = Modifier.weight(1f)
-        )
+        TrainSelectionRepertoireList(repertoires = repertoires,
+                                     selectedRepertoireId = selectedRepertoireId,
+                                     onSelectRepertoire = onSelectRepertoire,
+                                     modifier = Modifier.weight(1f))
 
         SectionHeader(text = "Choose chapter to train")
 
-        TrainSelectionChapterList(
-            chapters = chapters, onStartTraining = onStartTraining, modifier = Modifier.weight(1f)
-        )
+        TrainSelectionChapterList(chapters = chapters,
+                                  onStartTraining = onStartTraining,
+                                  modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
 private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    )
+    Text(text = text,
+         style = MaterialTheme.typography.titleMedium,
+         modifier = Modifier
+             .fillMaxWidth()
+             .padding(horizontal = 16.dp, vertical = 8.dp))
 }
 
 @Composable
-private fun TrainSelectionRepertoireList(
-    repertoires: List<Repertoire>,
-    selectedRepertoireId: Int?,
-    onSelectRepertoire: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxWidth()
-    ) {
+private fun TrainSelectionRepertoireList(repertoires: List<Repertoire>,
+                                         selectedRepertoireId: Int?,
+                                         onSelectRepertoire: (Int) -> Unit,
+                                         modifier: Modifier = Modifier) {
+    LazyColumn(modifier = modifier.fillMaxWidth()) {
         items(repertoires) { repertoire ->
-            TrainSelectionRepertoireItem(
-                repertoire = repertoire,
-                selected = repertoire.id == selectedRepertoireId,
-                onClick = { onSelectRepertoire(repertoire.id) })
+            TrainSelectionRepertoireItem(repertoire = repertoire,
+                                         selected = repertoire.id == selectedRepertoireId,
+                                         onClick = { onSelectRepertoire(repertoire.id) })
         }
     }
 }
 
 @Composable
-private fun TrainSelectionRepertoireItem(
-    repertoire: Repertoire, selected: Boolean, onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+private fun TrainSelectionRepertoireItem(repertoire: Repertoire,
+                                         selected: Boolean,
+                                         onClick: () -> Unit) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .clickable(onClick = onClick)
+        .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+        horizontalArrangement = Arrangement.SpaceBetween) {
         Column {
             Text(text = repertoire.name, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                text = "Side: ${repertoire.color}", style = MaterialTheme.typography.bodySmall
-            )
+            Text(text = "Side: ${repertoire.color}", style = MaterialTheme.typography.bodySmall)
         }
 
         if (selected) {
@@ -174,40 +146,30 @@ private fun TrainSelectionRepertoireItem(
 
 @Composable
 private fun SelectedLabel() {
-    Text(
-        text = "Selected",
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.primary
-    )
+    Text(text = "Selected",
+         style = MaterialTheme.typography.labelMedium,
+         color = MaterialTheme.colorScheme.primary)
 }
 
 @Composable
-private fun TrainSelectionChapterList(
-    chapters: List<Chapter>, onStartTraining: (Int) -> Unit, modifier: Modifier = Modifier
-) {
-    LazyColumn(
-        modifier = modifier.fillMaxWidth()
-    ) {
+private fun TrainSelectionChapterList(chapters: List<Chapter>,
+                                      onStartTraining: (Int) -> Unit,
+                                      modifier: Modifier = Modifier) {
+    LazyColumn(modifier = modifier.fillMaxWidth()) {
         items(chapters) { chapter ->
-            TrainSelectionChapterItem(
-                chapter = chapter, onClick = { onStartTraining(chapter.id) })
+            TrainSelectionChapterItem(chapter = chapter, onClick = { onStartTraining(chapter.id) })
         }
     }
 }
 
 @Composable
-private fun TrainSelectionChapterItem(
-    chapter: Chapter, onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+private fun TrainSelectionChapterItem(chapter: Chapter, onClick: () -> Unit) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .clickable(onClick = onClick)
+        .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically) {
         Text(text = chapter.name, style = MaterialTheme.typography.bodyLarge)
     }
     HorizontalDivider()
 }
-

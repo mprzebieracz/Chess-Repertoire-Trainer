@@ -20,33 +20,26 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CourseOverviewViewModel(
-    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
-) : ViewModel() {
+class CourseOverviewViewModel(private val repertoireRepository: RepertoireRepository,
+                              savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val repertoireId: Int = checkNotNull(savedStateHandle["repertoireId"])
 
     private val _repertoire = MutableStateFlow<Repertoire?>(null)
     val repertoire: StateFlow<Repertoire?> = _repertoire.asStateFlow()
 
-    data class ChapterWithStats(
-        val chapter: Chapter, val totalLines: Int, val learnedLines: Int
-    )
+    data class ChapterWithStats(val chapter: Chapter, val totalLines: Int, val learnedLines: Int)
 
     val chaptersWithStats: StateFlow<List<ChapterWithStats>> =
         repertoireRepository.getChaptersForRepertoire(repertoireId).mapLatest { chapters ->
             chapters.map { chapter ->
                 val total = repertoireRepository.getLineCountForChapter(chapter.id)
                 val learned = repertoireRepository.getLearnedLineCountForChapter(chapter.id)
-                ChapterWithStats(
-                    chapter = chapter, totalLines = total, learnedLines = learned
-                )
+                ChapterWithStats(chapter = chapter, totalLines = total, learnedLines = learned)
             }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Companion.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+        }.stateIn(scope = viewModelScope,
+                  started = SharingStarted.WhileSubscribed(5000),
+                  initialValue = emptyList())
 
     private val _showChapterSelection = MutableStateFlow(false)
     val showChapterSelection: StateFlow<Boolean> = _showChapterSelection.asStateFlow()

@@ -12,27 +12,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-data class OpeningTreeMoveUi(
-    val moveSan: String,
-    val toFen: String,
-    val games: Int,
-    val winPercent: Int,
-    val drawPercent: Int,
-    val lossPercent: Int
-)
+data class OpeningTreeMoveUi(val moveSan: String,
+                             val toFen: String,
+                             val games: Int,
+                             val winPercent: Int,
+                             val drawPercent: Int,
+                             val lossPercent: Int)
 
-data class OpeningTreeUiState(
-    val isLoading: Boolean = true,
-    val statusMessage: String? = null,
-    val currentFen: String? = null,
-    val pathMoves: List<String> = emptyList(),
-    val moves: List<OpeningTreeMoveUi> = emptyList(),
-    val canGoBack: Boolean = false
-)
+data class OpeningTreeUiState(val isLoading: Boolean = true,
+                              val statusMessage: String? = null,
+                              val currentFen: String? = null,
+                              val pathMoves: List<String> = emptyList(),
+                              val moves: List<OpeningTreeMoveUi> = emptyList(),
+                              val canGoBack: Boolean = false)
 
-class OpeningTreeViewModel(
-    private val tree: OpeningTree?
-) : ViewModel() {
+class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
 
@@ -80,32 +74,27 @@ class OpeningTreeViewModel(
     private fun applyFen(fen: String, tree: OpeningTree, updateBoard: Boolean) {
         val node = tree.getNode(fen)
         if (node == null) {
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                statusMessage = null,
-                currentFen = fen,
-                pathMoves = emptyList(),
-                moves = emptyList(),
-                canGoBack = fen != tree.rootFen
-            )
+            _uiState.value = _uiState.value.copy(isLoading = false,
+                                                 statusMessage = null,
+                                                 currentFen = fen,
+                                                 pathMoves = emptyList(),
+                                                 moves = emptyList(),
+                                                 canGoBack = fen != tree.rootFen)
             if (updateBoard) chessController.loadPositionFromFen(fen)
             return
         }
 
         val path = buildPathForNode(node, tree)
-        val movesUi = node.children.values.asSequence()
-            .sortedByDescending { it.games }
-            .map(::toMoveUi)
-            .toList()
+        val movesUi =
+            node.children.values.asSequence().sortedByDescending { it.games }.map(::toMoveUi)
+                .toList()
 
-        _uiState.value = _uiState.value.copy(
-            isLoading = false,
-            statusMessage = null,
-            currentFen = fen,
-            pathMoves = path,
-            moves = movesUi,
-            canGoBack = fen != tree.rootFen
-        )
+        _uiState.value = _uiState.value.copy(isLoading = false,
+                                             statusMessage = null,
+                                             currentFen = fen,
+                                             pathMoves = path,
+                                             moves = movesUi,
+                                             canGoBack = fen != tree.rootFen)
 
         if (updateBoard) chessController.loadPositionFromFen(fen)
     }
@@ -123,25 +112,21 @@ class OpeningTreeViewModel(
 
     private fun toMoveUi(aggregate: OpeningTreeMoveAggregate): OpeningTreeMoveUi {
         val totalGames = aggregate.games.takeIf { it > 0 } ?: 1
-        return OpeningTreeMoveUi(
-            moveSan = aggregate.moveSan,
-            toFen = aggregate.toFen,
-            games = aggregate.games,
-            winPercent = (aggregate.wins * 100) / totalGames,
-            drawPercent = (aggregate.draws * 100) / totalGames,
-            lossPercent = (aggregate.losses * 100) / totalGames
-        )
+        return OpeningTreeMoveUi(moveSan = aggregate.moveSan,
+                                 toFen = aggregate.toFen,
+                                 games = aggregate.games,
+                                 winPercent = (aggregate.wins * 100) / totalGames,
+                                 drawPercent = (aggregate.draws * 100) / totalGames,
+                                 lossPercent = (aggregate.losses * 100) / totalGames)
     }
 
     private fun showEmptyState(message: String) {
-        _uiState.value = OpeningTreeUiState(
-            isLoading = false,
-            statusMessage = message,
-            currentFen = null,
-            pathMoves = emptyList(),
-            moves = emptyList(),
-            canGoBack = false
-        )
+        _uiState.value = OpeningTreeUiState(isLoading = false,
+                                            statusMessage = message,
+                                            currentFen = null,
+                                            pathMoves = emptyList(),
+                                            moves = emptyList(),
+                                            canGoBack = false)
         chessController.resetBoard()
     }
 

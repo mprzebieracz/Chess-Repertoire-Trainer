@@ -7,9 +7,10 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.app.AppContainer
+import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.toSide
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
-import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,26 +20,22 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class TrainingUiState(
-    val isLoading: Boolean = true,
-    val isSessionEmpty: Boolean = false,
-    val isSessionComplete: Boolean = false,
-    val currentLineName: String? = null,
-    val currentLineNumber: Int = 0,
-    val totalLines: Int = 0,
-    val myColor: String? = null,
-    val lastMoveWasCorrect: Boolean? = null,
-    val lastUserSan: String? = null,
-    val lastExpectedSan: String? = null,
-    val isWaitingForUserMove: Boolean = false,
-    val statusMessage: String? = null
-)
+data class TrainingUiState(val isLoading: Boolean = true,
+                           val isSessionEmpty: Boolean = false,
+                           val isSessionComplete: Boolean = false,
+                           val currentLineName: String? = null,
+                           val currentLineNumber: Int = 0,
+                           val totalLines: Int = 0,
+                           val myColor: String? = null,
+                           val lastMoveWasCorrect: Boolean? = null,
+                           val lastUserSan: String? = null,
+                           val lastExpectedSan: String? = null,
+                           val isWaitingForUserMove: Boolean = false,
+                           val statusMessage: String? = null)
 
-class TrainingViewModel(
-    private val repertoireRepository: RepertoireRepository,
-    savedStateHandle: SavedStateHandle,
-    private val multiChapterIds: List<Int>? = null
-) : ViewModel() {
+class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
+                        savedStateHandle: SavedStateHandle,
+                        private val multiChapterIds: List<Int>? = null) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TrainingUiState())
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
@@ -104,7 +101,8 @@ class TrainingViewModel(
     private suspend fun observeSessionLines() {
         val flow = if (chapterId != null) {
             repertoireRepository.getLinesForChapter(chapterId)
-        } else {
+        }
+        else {
             val allLinesTime = Long.MAX_VALUE
             repertoireRepository.getLinesToReview(allLinesTime)
         }
@@ -121,7 +119,8 @@ class TrainingViewModel(
         if (isFirstSessionLoad()) {
             lines = prepareSessionLines(loadedLines)
             startLine(0)
-        } else {
+        }
+        else {
             updateLoadedSessionSize()
         }
     }
@@ -141,14 +140,12 @@ class TrainingViewModel(
 
     private fun showEmptySession(statusMessage: String = "") {
         _uiState.update {
-            it.copy(
-                isLoading = false,
-                isSessionEmpty = true,
-                isSessionComplete = false,
-                totalLines = 0,
-                currentLineName = null,
-                statusMessage = statusMessage.ifBlank { null }
-            )
+            it.copy(isLoading = false,
+                    isSessionEmpty = true,
+                    isSessionComplete = false,
+                    totalLines = 0,
+                    currentLineName = null,
+                    statusMessage = statusMessage.ifBlank { null })
         }
     }
 
@@ -156,12 +153,10 @@ class TrainingViewModel(
         when (result) {
             is MoveTrainingEngine.MoveResult.Correct -> {
                 _uiState.update {
-                    it.copy(
-                        lastMoveWasCorrect = true,
-                        lastUserSan = result.userSan,
-                        lastExpectedSan = result.expectedSan,
-                        statusMessage = null
-                    )
+                    it.copy(lastMoveWasCorrect = true,
+                            lastUserSan = result.userSan,
+                            lastExpectedSan = result.expectedSan,
+                            statusMessage = null)
                 }
 
                 viewModelScope.launch {
@@ -171,13 +166,11 @@ class TrainingViewModel(
 
             is MoveTrainingEngine.MoveResult.Incorrect -> {
                 _uiState.update {
-                    it.copy(
-                        lastMoveWasCorrect = false,
-                        lastUserSan = result.userSan,
-                        lastExpectedSan = result.expectedSan,
-                        isWaitingForUserMove = true,
-                        statusMessage = "Incorrect move"
-                    )
+                    it.copy(lastMoveWasCorrect = false,
+                            lastUserSan = result.userSan,
+                            lastExpectedSan = result.expectedSan,
+                            isWaitingForUserMove = true,
+                            statusMessage = "Incorrect move")
                 }
                 chessController.navigateBack()
             }
@@ -188,7 +181,8 @@ class TrainingViewModel(
         moveTrainer.advanceOpponentReplies()
         if (moveTrainer.isSequenceComplete()) {
             finishCurrentLine()
-        } else {
+        }
+        else {
             _uiState.update {
                 it.copy(isWaitingForUserMove = true)
             }
@@ -224,52 +218,37 @@ class TrainingViewModel(
         val chapter = repertoireRepository.getChapterById(line.chapterId)
         val repertoire = chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
         val colorString = repertoire?.color ?: "White"
-        val side = resolveSide(colorString)
+        val side = colorString.toSide()
         val moves = repertoireRepository.getMovesForLine(line.id).first()
 
         return LineContext(colorName = colorString, side = side, moves = moves)
     }
 
-    private fun resolveSide(colorString: String): Side {
-        return if (colorString.equals("White", ignoreCase = true)) Side.WHITE else Side.BLACK
-    }
-
     private fun configureMoveTrainer() {
-        moveTrainer.reset(
-            MoveTrainingEngine.Config(
-                mySide = mySide,
-                sanMoves = currentLineMoves.map { it.moveSan }
-            )
-        )
+        moveTrainer.reset(MoveTrainingEngine.Config(mySide = mySide,
+                                                    sanMoves = currentLineMoves.map { it.moveSan }))
     }
 
     private fun configureBoardForCurrentSide() {
         chessController.resetBoard()
         chessController.allowedMoveSide = mySide
-
-        if (mySide == Side.BLACK && !chessController.isFlipped) {
-            chessController.flipBoard()
-        } else if (mySide == Side.WHITE && chessController.isFlipped) {
-            chessController.flipBoard()
-        }
+        chessController.orientForSide(mySide)
     }
 
     private fun updateLineUi(line: Line, colorString: String, index: Int) {
         _uiState.update {
-            it.copy(
-                isLoading = false,
-                isSessionEmpty = false,
-                isSessionComplete = false,
-                currentLineName = line.name,
-                currentLineNumber = index + 1,
-                totalLines = lines.size,
-                myColor = colorString,
-                lastMoveWasCorrect = null,
-                lastUserSan = null,
-                lastExpectedSan = null,
-                isWaitingForUserMove = false,
-                statusMessage = null
-            )
+            it.copy(isLoading = false,
+                    isSessionEmpty = false,
+                    isSessionComplete = false,
+                    currentLineName = line.name,
+                    currentLineNumber = index + 1,
+                    totalLines = lines.size,
+                    myColor = colorString,
+                    lastMoveWasCorrect = null,
+                    lastUserSan = null,
+                    lastExpectedSan = null,
+                    isWaitingForUserMove = false,
+                    statusMessage = null)
         }
     }
 
@@ -278,7 +257,8 @@ class TrainingViewModel(
 
         if (moveTrainer.isSequenceComplete()) {
             finishCurrentLine()
-        } else {
+        }
+        else {
             _uiState.update {
                 it.copy(isWaitingForUserMove = true)
             }
@@ -287,11 +267,7 @@ class TrainingViewModel(
 
     private fun showSessionComplete() {
         _uiState.update {
-            it.copy(
-                isLoading = false,
-                isSessionComplete = true,
-                isWaitingForUserMove = false
-            )
+            it.copy(isLoading = false, isSessionComplete = true, isWaitingForUserMove = false)
         }
     }
 
@@ -300,34 +276,26 @@ class TrainingViewModel(
 
         if (nextIndex >= lines.size) {
             _uiState.update {
-                it.copy(
-                    isSessionComplete = true,
-                    isWaitingForUserMove = false,
-                    statusMessage = "Training complete"
-                )
+                it.copy(isSessionComplete = true,
+                        isWaitingForUserMove = false,
+                        statusMessage = "Training complete")
             }
-        } else {
+        }
+        else {
             startLine(nextIndex)
         }
     }
 
-    private data class LineContext(
-        val colorName: String,
-        val side: Side,
-        val moves: List<LineMove>
-    )
+    private data class LineContext(val colorName: String, val side: Side, val moves: List<LineMove>)
 
-    class Factory(
-        private val repertoireRepository: RepertoireRepository,
-        private val appContainer: AppContainer? = null
-    ) : ViewModelProvider.Factory {
+    class Factory(private val repertoireRepository: RepertoireRepository,
+                  private val appContainer: AppContainer? = null) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()
-            return TrainingViewModel(repertoireRepository, handle, appContainer?.selectedChapterIds) as T
+            return TrainingViewModel(repertoireRepository,
+                                     handle,
+                                     appContainer?.selectedChapterIds) as T
         }
     }
 }
-
-
-

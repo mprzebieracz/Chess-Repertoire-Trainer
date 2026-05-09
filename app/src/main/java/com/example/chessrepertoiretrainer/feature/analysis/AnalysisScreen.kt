@@ -32,42 +32,37 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
 
-    Scaffold(
-        bottomBar = {
-            Column {
-                engineError?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-                    )
-                }
-                BoardBottomBar(chessCtrl = viewModel.chessController)
+    Scaffold(bottomBar = {
+        Column {
+            engineError?.let {
+                Text(text = it,
+                     style = MaterialTheme.typography.labelSmall,
+                     color = MaterialTheme.colorScheme.error,
+                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
             }
+            BoardBottomBar(chessCtrl = viewModel.chessController)
         }
-    ) { padding ->
+    }) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            ChessScreenLayout(
-                title = "Analysis",
-                chessCtrl = viewModel.chessController,
-                showNavigationControls = false,
-                showBoardActionButtons = false,
-                evaluationBarFraction = if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction ?: 0.5f) else null,
-                titleEndContent = {
-                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
-                },
-                topContent = { AnalysisTopBar(onBackClick = onBackClick) },
-                midContent = {
-                    if (isEngineEnabled) {
-                        EnginePanel(
-                            analysis = engineAnalysis,
-                            searchState = engineSearchState,
-                            onDeeperClick = viewModel::analyzeDeeper
-                        )
-                    }
-                }
-            )
+            ChessScreenLayout(title = "Analysis",
+                              chessCtrl = viewModel.chessController,
+                              showNavigationControls = false,
+                              showBoardActionButtons = false,
+                              evaluationBarFraction = if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction
+                                  ?: 0.5f)
+                              else null,
+                              titleEndContent = {
+                                  EngineToggleButton(isEnabled = isEngineEnabled,
+                                                     onClick = viewModel::toggleEngine)
+                              },
+                              topContent = { AnalysisTopBar(onBackClick = onBackClick) },
+                              midContent = {
+                                  if (isEngineEnabled) {
+                                      EnginePanel(analysis = engineAnalysis,
+                                                  searchState = engineSearchState,
+                                                  onDeeperClick = viewModel::analyzeDeeper)
+                                  }
+                              })
         }
     }
 }
@@ -75,23 +70,19 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
 @Composable
 fun EngineToggleButton(isEnabled: Boolean, onClick: () -> Unit) {
     IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-        Icon(
-            imageVector = Icons.Filled.Search,
-            contentDescription = if (isEnabled) "Disable engine" else "Enable engine",
-            tint = if (isEnabled) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-        )
+        Icon(imageVector = Icons.Filled.Search,
+             contentDescription = if (isEnabled) "Disable engine" else "Enable engine",
+             tint = if (isEnabled) MaterialTheme.colorScheme.primary
+             else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
     }
 }
 
 @Composable
 private fun AnalysisTopBar(onBackClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    Row(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBackClick) {
             Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
         }
