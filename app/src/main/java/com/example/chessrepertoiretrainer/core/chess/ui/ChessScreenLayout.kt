@@ -100,16 +100,17 @@ fun ChessScreenLayout(
 
         if (evaluationBarFraction != null) {
             // BoxWithConstraints lets us compute the board's square size (= available width minus bar)
-            // so we can give the eval bar an explicit matching height.
+            // so we can give the eval bar an explicit matching height, avoiding fillMaxHeight()
+            // in an unbounded scrollable Column (which resolves to 0).
             BoxWithConstraints(modifier = boardPadding.fillMaxWidth()) {
                 val boardSize = maxWidth - barWidth - barSpacing
-                val displayFraction = if (chessCtrl.isFlipped) 1f - evaluationBarFraction else evaluationBarFraction
                 Row(
                     modifier = Modifier.fillMaxWidth().height(boardSize),
                     verticalAlignment = Alignment.Top
                 ) {
                     EvaluationBar(
-                        fraction = displayFraction,
+                        fraction = evaluationBarFraction,
+                        isFlipped = chessCtrl.isFlipped,
                         modifier = Modifier.width(barWidth).fillMaxHeight()
                     )
                     Spacer(Modifier.width(barSpacing))

@@ -246,18 +246,18 @@ private fun ReviewChapterBody(
         }
 
         val boardPadding = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        val barFraction = if (isEngineEnabled) engineAnalysis?.evaluationBarFraction else null
+        val barFraction = if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction ?: 0.5f) else null
 
         if (barFraction != null) {
             BoxWithConstraints(modifier = boardPadding.fillMaxWidth()) {
                 val boardSize = maxWidth - ChessUiConstants.ScreenChrome.EvalBar.width - ChessUiConstants.ScreenChrome.EvalBar.spacing
-                val displayFraction = if (chessCtrl.isFlipped) 1f - barFraction else barFraction
                 Row(
                     modifier = Modifier.fillMaxWidth().height(boardSize),
                     verticalAlignment = Alignment.Top
                 ) {
                     EvaluationBar(
-                        fraction = displayFraction,
+                        fraction = barFraction,
+                        isFlipped = chessCtrl.isFlipped,
                         modifier = Modifier
                             .width(ChessUiConstants.ScreenChrome.EvalBar.width)
                             .fillMaxHeight()

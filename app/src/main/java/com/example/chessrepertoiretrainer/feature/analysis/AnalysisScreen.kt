@@ -53,7 +53,7 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
                 chessCtrl = viewModel.chessController,
                 showNavigationControls = false,
                 showBoardActionButtons = false,
-                evaluationBarFraction = if (isEngineEnabled) engineAnalysis?.evaluationBarFraction else null,
+                evaluationBarFraction = if (isEngineEnabled) (engineAnalysis?.evaluationBarFraction ?: 0.5f) else null,
                 titleEndContent = {
                     EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
                 },

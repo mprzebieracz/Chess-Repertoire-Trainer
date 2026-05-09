@@ -74,10 +74,9 @@ class UserSettingsRepository(private val context: Context) {
             defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess",
             lichessLastSyncAt = prefs[Keys.LICHESS_LAST_SYNC_AT] ?: 0L,
             chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L,
-            engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 18,
+            engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 20,
             engineMovetime = prefs[Keys.ENGINE_MOVETIME] ?: 2000,
-            engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2
-        )
+            engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2)
     }
 
     suspend fun updateLichessUsername(username: String) {

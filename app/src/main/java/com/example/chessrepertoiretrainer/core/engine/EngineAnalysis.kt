@@ -7,7 +7,7 @@ data class EngineAnalysis(
     val line: String
 ) {
     val evaluationBarFraction: Float get() {
-        if (mateIn != null) return if (mateIn > 0) 0.97f else 0.03f
+        if (mateIn != null) return if (mateIn > 0) 1.0f else 0.0f
         val cp = centipawns ?: return 0.5f
         return (cp.coerceIn(-1000, 1000) + 1000f) / 2000f
     }

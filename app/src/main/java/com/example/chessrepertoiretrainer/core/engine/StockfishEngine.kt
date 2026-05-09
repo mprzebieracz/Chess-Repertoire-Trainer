@@ -88,7 +88,16 @@ class StockfishEngine(
     fun updatePosition(fen: String) {
         currentFen = fen
         if (!_isEnabled.value) return
-        _analysis.value = null
+
+        // Handle terminal positions (checkmate / stalemate) locally without the engine.
+        val terminal = checkTerminalPosition(fen)
+        if (terminal != null) {
+            _analysis.value = terminal
+            _searchState.value = EngineSearchState.COMPLETE
+            return
+        }
+
+        // Keep the previous analysis visible while the new search runs (no 0.5f flash).
         engineScope.launch {
             val settings = settingsRepository.settingsFlow.first()
             stopAndThen {
@@ -97,6 +106,24 @@ class StockfishEngine(
             }
         }
     }
+
+    private fun checkTerminalPosition(fen: String): EngineAnalysis? = try {
+        val board = Board()
+        board.loadFromFen(fen)
+        if (board.legalMoves().isNotEmpty()) null
+        else if (board.isKingAttacked) {
+            // Side to move is mated
+            val whiteMated = board.sideToMove == Side.WHITE
+            EngineAnalysis(
+                centipawns = null,
+                mateIn = if (whiteMated) -1 else 1,
+                depth = 0,
+                line = if (whiteMated) "Checkmate – Black wins" else "Checkmate – White wins"
+            )
+        } else {
+            EngineAnalysis(centipawns = 0, mateIn = null, depth = 0, line = "Stalemate – Draw")
+        }
+    } catch (_: Exception) { null }
 
     fun analyzeDeeper() {
         val fen = currentFen ?: return
