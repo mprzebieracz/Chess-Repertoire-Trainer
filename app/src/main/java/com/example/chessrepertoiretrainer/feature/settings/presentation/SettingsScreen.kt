@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -78,7 +79,10 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onThemeModeChange = viewModel::updateAppThemeMode,
             onBoardThemeChange = viewModel::updateBoardTheme,
             onPlatformChange = viewModel::updateDefaultOnlinePlatform,
-            onDynamicColorsChange = viewModel::updateUseDynamicColors
+            onDynamicColorsChange = viewModel::updateUseDynamicColors,
+            onEngineDepthChange = viewModel::updateEngineDepth,
+            onEngineMoveTimeChange = viewModel::updateEngineMovetime,
+            onEngineThreadsChange = viewModel::updateEngineThreads
         )
     }
 }
@@ -143,7 +147,10 @@ private fun SettingsContent(
     onThemeModeChange: (AppThemeMode) -> Unit,
     onBoardThemeChange: (BoardTheme) -> Unit,
     onPlatformChange: (String) -> Unit,
-    onDynamicColorsChange: (Boolean) -> Unit
+    onDynamicColorsChange: (Boolean) -> Unit,
+    onEngineDepthChange: (Int) -> Unit,
+    onEngineMoveTimeChange: (Int) -> Unit,
+    onEngineThreadsChange: (Int) -> Unit
 ) {
     AccountsSection(
         lichessInput = lichessInput,
@@ -168,6 +175,15 @@ private fun SettingsContent(
     DynamicColorsSection(
         useDynamicColors = settings.useDynamicColors,
         onDynamicColorsChange = onDynamicColorsChange
+    )
+
+    EngineSection(
+        depth = settings.engineDepth,
+        movetime = settings.engineMovetime,
+        threads = settings.engineThreads,
+        onDepthChange = onEngineDepthChange,
+        onMoveTimeChange = onEngineMoveTimeChange,
+        onThreadsChange = onEngineThreadsChange
     )
 
     AdvancedSection()
@@ -321,6 +337,58 @@ private fun DynamicColorsSection(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.primary
             )
+        )
+    }
+}
+
+@Composable
+private fun EngineSection(
+    depth: Int,
+    movetime: Int,
+    threads: Int,
+    onDepthChange: (Int) -> Unit,
+    onMoveTimeChange: (Int) -> Unit,
+    onThreadsChange: (Int) -> Unit
+) {
+    SectionHeader(text = "Engine (Stockfish)", modifier = Modifier.padding(top = 8.dp))
+    Text(
+        text = "Place libstockfish.so in jniLibs/arm64-v8a/ to enable analysis.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Depth: $depth", style = MaterialTheme.typography.bodyMedium)
+        Slider(
+            value = depth.toFloat(),
+            onValueChange = { onDepthChange(it.toInt()) },
+            valueRange = 10f..30f,
+            steps = 19
+        )
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Time per move: ${movetime / 1000}s", style = MaterialTheme.typography.bodyMedium)
+        Slider(
+            value = movetime.toFloat(),
+            onValueChange = { onMoveTimeChange(it.toInt()) },
+            valueRange = 500f..10000f,
+            steps = 19
+        )
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Threads: $threads", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = "1 = battery-friendly, 4 = strongest (heats device)",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        Slider(
+            value = threads.toFloat(),
+            onValueChange = { onThreadsChange(it.toInt()) },
+            valueRange = 1f..4f,
+            steps = 2
         )
     }
 }

@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -36,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.ui.BoardNavigationControls
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
+import com.example.chessrepertoiretrainer.core.chess.ui.EnginePanel
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.feature.analysis.EngineToggleButton
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.LineEditorViewModel
 
 @Composable
@@ -47,6 +48,10 @@ fun LineEditorScreen(
     val moves by viewModel.dbMoves.collectAsStateWithLifecycle()
     val editingComment by viewModel.editingComment.collectAsStateWithLifecycle()
     val hasChanges by viewModel.hasChanges.collectAsStateWithLifecycle()
+    val isEngineEnabled by viewModel.isEngineEnabled.collectAsStateWithLifecycle()
+    val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
+    val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
+    val engineError by viewModel.engineError.collectAsStateWithLifecycle()
 
     var showExitDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -70,10 +75,31 @@ fun LineEditorScreen(
                 chessCtrl = viewModel.chessController,
                 showNavigationControls = false,
                 showBoardActionButtons = false,
+                evaluationBarFraction = if (isEngineEnabled) engineAnalysis?.evaluationBarFraction else null,
+                titleEndContent = {
+                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                },
                 topContent = {
                     LineEditorTopContent(onBackClick = {
                         if (hasChanges) showExitDialog = true else onBackClick()
                     })
+                },
+                midContent = {
+                    if (isEngineEnabled) {
+                        EnginePanel(
+                            analysis = engineAnalysis,
+                            searchState = engineSearchState,
+                            onDeeperClick = viewModel::analyzeDeeper
+                        )
+                    }
+                    engineError?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                        )
+                    }
                 },
                 bottomContent = {
                     LineEditorCommentSection(

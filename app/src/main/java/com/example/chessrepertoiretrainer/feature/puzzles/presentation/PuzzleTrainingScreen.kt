@@ -36,6 +36,7 @@ fun PuzzleTrainingScreen(
         chessCtrl = viewModel.chessController,
         showNavigationControls = false,
         showBoardActionButtons = false,
+        allowPgnNavigation = false,
         topContent = {
             PuzzleTrainingTopContent(uiState = uiState, onBackClick = onBackClick)
         },

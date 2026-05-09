@@ -43,6 +43,7 @@ fun TrainScreen(
         chessCtrl = viewModel.chessController,
         showNavigationControls = false,
         showBoardActionButtons = false,
+        allowPgnNavigation = false,
         topContent = {
             TrainTopContent(uiState = uiState, onBackClick = onBackClick)
         },

@@ -79,6 +79,11 @@ internal object ChessUiConstants {
             val buttonSpacing = 12.dp
         }
 
+        object EvalBar {
+            val width = 14.dp
+            val spacing = 4.dp
+        }
+
         object Spacing {
             val bottomSpacerHeight = 80.dp
         }

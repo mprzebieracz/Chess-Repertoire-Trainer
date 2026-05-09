@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel
 
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -9,17 +10,23 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
+import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
+import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class LineEditorViewModel(
-    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
+    private val repertoireRepository: RepertoireRepository,
+    savedStateHandle: SavedStateHandle,
+    private val engine: StockfishEngine
 ) : ViewModel() {
 
     val lineId: Int = checkNotNull(savedStateHandle["lineId"])
@@ -37,6 +44,19 @@ class LineEditorViewModel(
             SharingStarted.WhileSubscribed(5000),
             emptyList()
         )
+
+    val isEngineEnabled: StateFlow<Boolean> = engine.isEnabled.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), false
+    )
+    val engineAnalysis: StateFlow<EngineAnalysis?> = engine.analysis.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
+    )
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), EngineSearchState.IDLE
+    )
+    val engineError: StateFlow<String?> = engine.engineError.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
+    )
 
     init {
         viewModelScope.launch {
@@ -75,6 +95,14 @@ class LineEditorViewModel(
                         )
                     )
                 }
+            }
+
+            viewModelScope.launch {
+                snapshotFlow { chessController.boardState }
+                    .distinctUntilChanged()
+                    .collect { fen ->
+                        if (engine.isEnabled.value) engine.updatePosition(fen)
+                    }
             }
         }
     }
@@ -126,11 +154,26 @@ class LineEditorViewModel(
         _editingComment.value = null
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) : ViewModelProvider.Factory {
+    fun toggleEngine() {
+        if (engine.isEnabled.value) engine.disable()
+        else engine.enable(chessController.boardState)
+    }
+
+    fun analyzeDeeper() = engine.analyzeDeeper()
+
+    override fun onCleared() {
+        super.onCleared()
+        engine.disable()
+    }
+
+    class Factory(
+        private val repertoireRepository: RepertoireRepository,
+        private val engine: StockfishEngine
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val handle = extras.createSavedStateHandle()
-            return LineEditorViewModel(repertoireRepository, handle) as T
+            return LineEditorViewModel(repertoireRepository, handle, engine) as T
         }
     }
 }

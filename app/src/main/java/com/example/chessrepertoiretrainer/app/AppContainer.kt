@@ -13,6 +13,7 @@ import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.Liche
 import com.example.chessrepertoiretrainer.feature.puzzles.data.DefaultPuzzleRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.data.DefaultRepertoireRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
+import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 
 class AppContainer(context: Context) {
@@ -33,6 +34,8 @@ class AppContainer(context: Context) {
     val gameSyncManager = GameSyncManager(gameFetcherRegistry, savedGameRepository, userSettingsRepository)
     private val repertoirePositionIndexDao = db.repertoirePositionIndexDao()
     val repertoireComplianceAnalyzer = RepertoireComplianceAnalyzer(repertoireDao, repertoirePositionIndexDao)
+
+    val stockfishEngine = StockfishEngine(context.applicationContext, userSettingsRepository)
 
     var latestOpeningTree: OpeningTree? = null
     var latestGame: SavedGame? = null

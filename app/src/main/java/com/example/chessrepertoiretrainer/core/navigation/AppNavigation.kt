@@ -36,7 +36,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
             startDestination = Screen.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            homeGraph(navController, settingsViewModel, appContainer.puzzleRepository)
+            homeGraph(navController, settingsViewModel, appContainer.puzzleRepository, appContainer)
             trainingGraph(navController, repertoireRepository)
             gamesGraph(
                 navController = navController,

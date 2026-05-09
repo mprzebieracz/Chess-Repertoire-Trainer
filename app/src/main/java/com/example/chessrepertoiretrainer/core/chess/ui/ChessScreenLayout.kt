@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -50,7 +52,11 @@ fun ChessScreenLayout(
     title: String,
     chessCtrl: ChessBoardController,
     showPgnBar: Boolean = true,
+    allowPgnNavigation: Boolean = true,
+    evaluationBarFraction: Float? = null,
+    titleEndContent: @Composable RowScope.() -> Unit = {},
     topContent: @Composable () -> Unit = {},
+    midContent: @Composable () -> Unit = {},
     bottomContent: @Composable () -> Unit = {},
     extraButtons: @Composable RowScope.() -> Unit = {},
     showNavigationControls: Boolean = true,
@@ -71,7 +77,7 @@ fun ChessScreenLayout(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        ScreenHeader(title)
+        ScreenHeader(title, titleEndContent)
 
         topContent()
 
@@ -79,17 +85,43 @@ fun ChessScreenLayout(
             PgnViewer(
                 sanHistory = chessCtrl.sanHistory,
                 currentMoveIndex = chessCtrl.currentMoveIndex,
-                onMoveClick = { chessCtrl.navigateToMoveIndex(it) }
+                onMoveClick = if (allowPgnNavigation) ({ chessCtrl.navigateToMoveIndex(it) }) else null
             )
         }
 
-        Box(
-            modifier = Modifier.padding(
-                horizontal = ChessUiConstants.ScreenChrome.BoardContainer.horizontalPadding,
-                vertical = ChessUiConstants.ScreenChrome.BoardContainer.verticalPadding
-            )
-        ) {
-            ChessboardUI(state = chessCtrl)
+        midContent()
+
+        val boardPadding = Modifier.padding(
+            horizontal = ChessUiConstants.ScreenChrome.BoardContainer.horizontalPadding,
+            vertical = ChessUiConstants.ScreenChrome.BoardContainer.verticalPadding
+        )
+        val barWidth = ChessUiConstants.ScreenChrome.EvalBar.width
+        val barSpacing = ChessUiConstants.ScreenChrome.EvalBar.spacing
+
+        if (evaluationBarFraction != null) {
+            // BoxWithConstraints lets us compute the board's square size (= available width minus bar)
+            // so we can give the eval bar an explicit matching height.
+            BoxWithConstraints(modifier = boardPadding.fillMaxWidth()) {
+                val boardSize = maxWidth - barWidth - barSpacing
+                val displayFraction = if (chessCtrl.isFlipped) 1f - evaluationBarFraction else evaluationBarFraction
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(boardSize),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    EvaluationBar(
+                        fraction = displayFraction,
+                        modifier = Modifier.width(barWidth).fillMaxHeight()
+                    )
+                    Spacer(Modifier.width(barSpacing))
+                    Box(modifier = Modifier.weight(1f)) {
+                        ChessboardUI(state = chessCtrl)
+                    }
+                }
+            }
+        } else {
+            Box(modifier = boardPadding) {
+                ChessboardUI(state = chessCtrl)
+            }
         }
 
         bottomContent()
@@ -114,25 +146,35 @@ fun ChessScreenLayout(
 
 
 @Composable
-fun ScreenHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
+fun ScreenHeader(
+    title: String,
+    endContent: @Composable RowScope.() -> Unit = {}
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
                 horizontal = ChessUiConstants.ScreenChrome.Header.horizontalPadding,
                 vertical = ChessUiConstants.ScreenChrome.Header.verticalPadding
-            )
-    )
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f)
+        )
+        endContent()
+    }
 }
 
 @Composable
 fun PgnViewer(
     sanHistory: List<String>,
     currentMoveIndex: Int,
-    onMoveClick: (Int) -> Unit
+    onMoveClick: ((Int) -> Unit)?
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(currentMoveIndex) {
@@ -177,7 +219,10 @@ fun PgnViewer(
                                 if (isCurrent) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.surface
                             )
-                            .clickable { onMoveClick(index) }
+                            .then(
+                                if (onMoveClick != null) Modifier.clickable { onMoveClick(index) }
+                                else Modifier.alpha(0.5f)
+                            )
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(

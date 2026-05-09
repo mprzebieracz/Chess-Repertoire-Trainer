@@ -78,6 +78,18 @@ class SettingsViewModel(
         }
     }
 
+    fun updateEngineDepth(depth: Int) {
+        viewModelScope.launch { repository.updateEngineDepth(depth) }
+    }
+
+    fun updateEngineMovetime(ms: Int) {
+        viewModelScope.launch { repository.updateEngineMovetime(ms) }
+    }
+
+    fun updateEngineThreads(threads: Int) {
+        viewModelScope.launch { repository.updateEngineThreads(threads) }
+    }
+
     private fun saveUsername(
         username: String,
         onSave: suspend (String) -> Result<Unit>,

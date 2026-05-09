@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel
 
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,18 +11,26 @@ import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoar
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
+import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
+import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 class ReviewChapterViewModel(
-    private val repertoireRepository: RepertoireRepository, savedStateHandle: SavedStateHandle
+    private val repertoireRepository: RepertoireRepository,
+    savedStateHandle: SavedStateHandle,
+    private val engine: StockfishEngine
 ) : ViewModel() {
 
     data class UiState(
@@ -54,9 +63,29 @@ class ReviewChapterViewModel(
     private var currentMoveIndex: Int = -1
     private var mySide: Side = Side.WHITE
 
+    val isEngineEnabled: StateFlow<Boolean> = engine.isEnabled.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), false
+    )
+    val engineAnalysis: StateFlow<EngineAnalysis?> = engine.analysis.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
+    )
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), EngineSearchState.IDLE
+    )
+    val engineError: StateFlow<String?> = engine.engineError.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), null
+    )
+
     init {
         viewModelScope.launch {
             loadChapterAndLines()
+        }
+        viewModelScope.launch {
+            snapshotFlow { chessController.boardState }
+                .distinctUntilChanged()
+                .collect { fen ->
+                    if (engine.isEnabled.value) engine.updatePosition(fen)
+                }
         }
     }
 
@@ -245,12 +274,26 @@ class ReviewChapterViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) :
-        ViewModelProvider.Factory {
+    fun toggleEngine() {
+        if (engine.isEnabled.value) engine.disable()
+        else engine.enable(chessController.boardState)
+    }
+
+    fun analyzeDeeper() = engine.analyzeDeeper()
+
+    override fun onCleared() {
+        super.onCleared()
+        engine.disable()
+    }
+
+    class Factory(
+        private val repertoireRepository: RepertoireRepository,
+        private val engine: StockfishEngine
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()
-            return ReviewChapterViewModel(repertoireRepository, savedStateHandle) as T
+            return ReviewChapterViewModel(repertoireRepository, savedStateHandle, engine) as T
         }
     }
 }

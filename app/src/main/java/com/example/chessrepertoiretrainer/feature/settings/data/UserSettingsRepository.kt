@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -30,7 +31,10 @@ data class UserSettings(
     val useDynamicColors: Boolean = true,
     val defaultOnlinePlatform: String = "lichess",
     val lichessLastSyncAt: Long = 0L,
-    val chessComLastSyncAt: Long = 0L
+    val chessComLastSyncAt: Long = 0L,
+    val engineDepth: Int = 18,
+    val engineMovetime: Int = 2000,
+    val engineThreads: Int = 2
 )
 
 class UserSettingsRepository(private val context: Context) {
@@ -44,6 +48,9 @@ class UserSettingsRepository(private val context: Context) {
         val DEFAULT_ONLINE_PLATFORM = stringPreferencesKey("default_online_platform")
         val LICHESS_LAST_SYNC_AT = longPreferencesKey("lichess_last_sync_at")
         val CHESSCOM_LAST_SYNC_AT = longPreferencesKey("chesscom_last_sync_at")
+        val ENGINE_DEPTH = intPreferencesKey("engine_depth")
+        val ENGINE_MOVETIME = intPreferencesKey("engine_movetime")
+        val ENGINE_THREADS = intPreferencesKey("engine_threads")
     }
 
     val settingsFlow: Flow<UserSettings> = context.settingsDataStore.data.catch { exception ->
@@ -66,7 +73,10 @@ class UserSettingsRepository(private val context: Context) {
             useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
             defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess",
             lichessLastSyncAt = prefs[Keys.LICHESS_LAST_SYNC_AT] ?: 0L,
-            chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L
+            chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L,
+            engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 18,
+            engineMovetime = prefs[Keys.ENGINE_MOVETIME] ?: 2000,
+            engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2
         )
     }
 
@@ -116,6 +126,18 @@ class UserSettingsRepository(private val context: Context) {
         context.settingsDataStore.edit { prefs ->
             prefs[Keys.CHESSCOM_LAST_SYNC_AT] = timestamp
         }
+    }
+
+    suspend fun updateEngineDepth(depth: Int) {
+        context.settingsDataStore.edit { prefs -> prefs[Keys.ENGINE_DEPTH] = depth }
+    }
+
+    suspend fun updateEngineMovetime(ms: Int) {
+        context.settingsDataStore.edit { prefs -> prefs[Keys.ENGINE_MOVETIME] = ms }
+    }
+
+    suspend fun updateEngineThreads(threads: Int) {
+        context.settingsDataStore.edit { prefs -> prefs[Keys.ENGINE_THREADS] = threads }
     }
 }
 

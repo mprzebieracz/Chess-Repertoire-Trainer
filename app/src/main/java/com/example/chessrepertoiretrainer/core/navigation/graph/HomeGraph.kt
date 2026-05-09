@@ -4,6 +4,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import com.example.chessrepertoiretrainer.app.AppContainer
 import com.example.chessrepertoiretrainer.core.navigation.Screen
 import com.example.chessrepertoiretrainer.feature.analysis.AnalysisScreen
 import com.example.chessrepertoiretrainer.feature.analysis.AnalysisViewModel
@@ -18,7 +19,8 @@ import com.example.chessrepertoiretrainer.feature.settings.presentation.Settings
 fun NavGraphBuilder.homeGraph(
     navController: NavHostController,
     settingsViewModel: SettingsViewModel,
-    puzzleRepository: PuzzleRepository
+    puzzleRepository: PuzzleRepository,
+    appContainer: AppContainer
 ) {
     composable(Screen.Home.route) {
         val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory(puzzleRepository))
@@ -34,7 +36,9 @@ fun NavGraphBuilder.homeGraph(
     }
 
     composable(Screen.Analysis.route) {
-        val vm: AnalysisViewModel = viewModel()
+        val vm: AnalysisViewModel = viewModel(
+            factory = AnalysisViewModel.Factory(appContainer.stockfishEngine)
+        )
         AnalysisScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 

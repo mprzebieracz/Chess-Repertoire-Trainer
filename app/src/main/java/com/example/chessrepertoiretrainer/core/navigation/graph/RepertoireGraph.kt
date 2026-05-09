@@ -122,7 +122,7 @@ fun NavGraphBuilder.repertoireGraph(
         )
     ) {
         val vm: ReviewChapterViewModel =
-            viewModel(factory = ReviewChapterViewModel.Factory(repertoireRepository))
+            viewModel(factory = ReviewChapterViewModel.Factory(repertoireRepository, appContainer.stockfishEngine))
         ReviewChapterScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 
@@ -131,7 +131,7 @@ fun NavGraphBuilder.repertoireGraph(
         arguments = listOf(navArgument("lineId") { type = NavType.IntType })
     ) {
         val vm: LineEditorViewModel =
-            viewModel(factory = LineEditorViewModel.Factory(repertoireRepository))
+            viewModel(factory = LineEditorViewModel.Factory(repertoireRepository, appContainer.stockfishEngine))
         LineEditorScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 

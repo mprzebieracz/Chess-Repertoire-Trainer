@@ -81,7 +81,7 @@ fun NavGraphBuilder.myGamesGraph(
         val game = appContainer.latestGame
         if (game != null) {
             val vm: GameDetailViewModel = viewModel(
-                factory = GameDetailViewModel.Factory(game, appContainer.repertoireComplianceAnalyzer)
+                factory = GameDetailViewModel.Factory(game, appContainer.repertoireComplianceAnalyzer, appContainer.stockfishEngine)
             )
             GameDetailScreen(
                 viewModel = vm,

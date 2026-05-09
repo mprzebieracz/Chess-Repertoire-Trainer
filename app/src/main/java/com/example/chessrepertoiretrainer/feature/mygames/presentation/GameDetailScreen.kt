@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.ui.BoardNavigationControls
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
+import com.example.chessrepertoiretrainer.core.chess.ui.EnginePanel
+import com.example.chessrepertoiretrainer.feature.analysis.EngineToggleButton
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.ComplianceStatus
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
 import java.text.SimpleDateFormat
@@ -45,10 +47,22 @@ fun GameDetailScreen(
     val complianceEnabled by viewModel.complianceEnabled.collectAsStateWithLifecycle()
     val currentAnnotation by viewModel.currentAnnotation.collectAsStateWithLifecycle()
     val isLoadingCompliance by viewModel.isLoadingCompliance.collectAsStateWithLifecycle()
+    val isEngineEnabled by viewModel.isEngineEnabled.collectAsStateWithLifecycle()
+    val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
+    val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
+    val engineError by viewModel.engineError.collectAsStateWithLifecycle()
 
     Scaffold(
         bottomBar = {
             Column {
+                engineError?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+                    )
+                }
                 CompliancePanel(
                     enabled = complianceEnabled,
                     annotation = currentAnnotation,
@@ -68,6 +82,10 @@ fun GameDetailScreen(
                 chessCtrl = viewModel.chessController,
                 showNavigationControls = false,
                 showBoardActionButtons = false,
+                evaluationBarFraction = if (isEngineEnabled) engineAnalysis?.evaluationBarFraction else null,
+                titleEndContent = {
+                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                },
                 topContent = {
                     GameDetailHeader(
                         viewModel = viewModel,
@@ -75,6 +93,15 @@ fun GameDetailScreen(
                         onBackClick = onBackClick,
                         onToggleCompliance = viewModel::toggleCompliance
                     )
+                },
+                midContent = {
+                    if (isEngineEnabled) {
+                        EnginePanel(
+                            analysis = engineAnalysis,
+                            searchState = engineSearchState,
+                            onDeeperClick = viewModel::analyzeDeeper
+                        )
+                    }
                 }
             )
         }
