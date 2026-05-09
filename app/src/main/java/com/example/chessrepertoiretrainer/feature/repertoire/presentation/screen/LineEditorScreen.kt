@@ -32,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.chess.ui.DeeperButton
 import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
 import com.example.chessrepertoiretrainer.core.chess.ui.MoveNavControls
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
@@ -61,6 +62,12 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
                 title = "Edit Line",
                 onBackClick = { if (hasChanges) showExitDialog = true else onBackClick() },
                 actions = {
+                    engineAnalysis?.depth?.let { depth ->
+                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState, depth = depth, onClick = viewModel::analyzeDeeper)
+                    }
+                    engineAnalysis?.depth?.let { depth ->
+                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState, depth = depth, onClick = viewModel::analyzeDeeper)
+                    }
                     EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
                 },
             )

@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.analysis
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -18,9 +17,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.chess.ui.DeeperButton
 import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
 import com.example.chessrepertoiretrainer.core.chess.ui.MoveNavControls
-import com.example.chessrepertoiretrainer.core.chess.ui.PgnViewer
+import com.example.chessrepertoiretrainer.core.chess.ui.PgnTextViewer
 
 @Composable
 fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
@@ -37,6 +37,9 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
                 title = "Analysis",
                 onBackClick = onBackClick,
                 actions = {
+                    engineAnalysis?.depth?.let { depth ->
+                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState, depth = depth, onClick = viewModel::analyzeDeeper)
+                    }
                     EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
                 },
             )
@@ -60,11 +63,10 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
             }
         },
         contentBar = {
-            PgnViewer(
+            PgnTextViewer(
                 sanHistory = chessCtrl.sanHistory,
                 currentMoveIndex = chessCtrl.currentMoveIndex,
                 onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
-                modifier = Modifier.fillMaxSize(),
             )
         },
         bottomBar = {

@@ -6,14 +6,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -82,12 +79,15 @@ fun EvaluationBar(fraction: Float, isFlipped: Boolean = false, modifier: Modifie
 }
 
 /**
- * Horizontal evaluation bar shown above the board.
+ * Horizontal evaluation bar.
+ *
+ * The caller controls the size via [modifier] — typically [Modifier.weight(1f)] inside a Row.
+ * Score label is drawn on the bar itself on whichever side is winning. The label is suppressed
+ * during cross-side transitions so it never appears on the wrong colour.
  *
  * [fraction] is white's advantage 0..1 (0.5 = equal).
- * [isFlipped] reverses which side fills from the left so the bar matches the board orientation
- *   (when black is at the bottom, black's portion fills from the left).
- * [scoreLabel] is displayed to the left of the bar, e.g. "+1.2" or "+M3".
+ * [isFlipped] flips which side fills from the left to match the board orientation.
+ * [scoreLabel] e.g. "+1.2" or "+M3".
  */
 @Composable
 fun HorizontalEvaluationBar(
@@ -102,34 +102,39 @@ fun HorizontalEvaluationBar(
         label = "eval_bar_h",
     )
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(20.dp)
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = scoreLabel,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace,
-            modifier = Modifier.width(40.dp),
-        )
-        Spacer(Modifier.width(4.dp))
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp)),
-        ) {
-            val (leadingColor, trailingColor, leadingFrac) = if (!isFlipped) {
-                Triple(colorWhite, colorBlack, animatedFraction)
-            } else {
-                Triple(colorBlack, colorWhite, 1f - animatedFraction)
-            }
-            Box(Modifier.fillMaxSize().background(trailingColor))
-            Box(Modifier.fillMaxHeight().fillMaxWidth(leadingFrac.coerceIn(0f, 1f)).background(leadingColor))
+    val leadingColor = if (!isFlipped) colorWhite else colorBlack
+    val trailingColor = if (!isFlipped) colorBlack else colorWhite
+    val leadingFrac = (if (!isFlipped) animatedFraction else 1f - animatedFraction).coerceIn(0f, 1f)
+
+    // Determine which side the score sits on based on the animated position.
+    val scoreOnLeft = leadingFrac >= 0.5f
+
+    // Suppress the label while the bar is mid-transition to the opposite side.
+    // This prevents the new value appearing on the wrong colour during animation.
+    val targetLeadingFrac = (if (!isFlipped) fraction else 1f - fraction).coerceIn(0f, 1f)
+    val targetScoreOnLeft = targetLeadingFrac >= 0.5f
+    val displayLabel = if (scoreOnLeft == targetScoreOnLeft) scoreLabel else ""
+
+    val scoreBackground = if (scoreOnLeft) leadingColor else trailingColor
+    val scoreTextColor = if (scoreBackground == colorWhite) colorBlack else colorWhite
+
+    Box(modifier = modifier) {
+        // Trailing colour fills the entire bar.
+        Box(Modifier.fillMaxSize().background(trailingColor))
+        // Leading colour fills from the left.
+        Box(Modifier.fillMaxHeight().fillMaxWidth(leadingFrac).background(leadingColor))
+        // Score text overlaid on the dominant side.
+        if (displayLabel.isNotEmpty()) {
+            Text(
+                text = displayLabel,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace,
+                color = scoreTextColor,
+                modifier = Modifier
+                    .align(if (scoreOnLeft) Alignment.CenterStart else Alignment.CenterEnd)
+                    .padding(horizontal = 6.dp),
+            )
         }
     }
 }

@@ -3,6 +3,15 @@ package com.example.chessrepertoiretrainer.core.chess.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -66,12 +75,13 @@ fun ChessScreenLayout(
     Column(modifier = modifier.fillMaxSize()) {
         topBar()
         engineSection()
-        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             ChessboardUI(state = chessCtrl)
         }
         Box(modifier = Modifier
             .weight(1f)
-            .fillMaxWidth()) {
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)) {
             contentBar()
         }
         bottomBar()
@@ -147,24 +157,25 @@ fun MoveNavControls(
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         IconButton(
             onClick = onBack,
-            modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.buttonSize),
+            modifier = Modifier.size(width = 56.dp, height = 48.dp),
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Previous move",
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.iconSize),
+                modifier = Modifier.size(36.dp),
             )
         }
+        Spacer(modifier = Modifier.width(8.dp))
         IconButton(
             onClick = onForward,
-            modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.buttonSize),
+            modifier = Modifier.size(width = 56.dp, height = 48.dp),
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Next move",
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.iconSize),
+                modifier = Modifier.size(36.dp),
             )
         }
     }
@@ -242,6 +253,67 @@ fun PgnViewer(
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Flowing PGN text view — left-to-right, top-to-bottom, vertically scrollable.
+// Placeholder until a proper tree-aware PGN is implemented.
+// ---------------------------------------------------------------------------
+
+@Composable
+fun PgnTextViewer(
+    sanHistory: List<String>,
+    currentMoveIndex: Int,
+    onMoveClick: ((Int) -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val scrollState = rememberScrollState()
+    LaunchedEffect(currentMoveIndex) {
+        if (currentMoveIndex >= 0) scrollState.animateScrollTo(scrollState.maxValue)
+    }
+
+    val highlightBg = MaterialTheme.colorScheme.primaryContainer
+    val highlightFg = MaterialTheme.colorScheme.onPrimaryContainer
+    val normalFg = MaterialTheme.colorScheme.onBackground
+    val dimFg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+
+    val annotated = buildAnnotatedString {
+        if (sanHistory.isEmpty()) {
+            withStyle(SpanStyle(color = dimFg)) { append("No moves yet.") }
+        } else {
+            sanHistory.forEachIndexed { index, san ->
+                if (index > 0) append(" ")
+                if (index % 2 == 0) {
+                    withStyle(SpanStyle(color = dimFg)) { append("${index / 2 + 1}.") }
+                    append(" ")
+                }
+                val isCurrent = index == currentMoveIndex
+                val spanStyle = if (isCurrent) SpanStyle(background = highlightBg, color = highlightFg)
+                                else SpanStyle(color = normalFg)
+                if (onMoveClick != null) {
+                    val idx = index
+                    pushLink(LinkAnnotation.Clickable(
+                        tag = idx.toString(),
+                        styles = TextLinkStyles(spanStyle),
+                        linkInteractionListener = { onMoveClick(idx) },
+                    ))
+                    append(san)
+                    pop()
+                } else {
+                    withStyle(spanStyle) { append(san) }
+                }
+            }
+        }
+    }
+
+    Text(
+        text = annotated,
+        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(scrollState)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    )
 }
 
 // ---------------------------------------------------------------------------

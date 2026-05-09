@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.core.chess.ui
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,8 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onGloballyPositioned
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
@@ -37,13 +34,7 @@ fun ChessboardUI(state: ChessBoardController) {
     Box(modifier = Modifier
         .fillMaxWidth()
         .aspectRatio(1f)
-        .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }
-        .shadow(elevation = ChessUiConstants.BoardFrame.shadowElevation,
-                shape = ChessUiConstants.BoardFrame.shape)
-        .clip(ChessUiConstants.BoardFrame.shape)
-        .border(width = ChessUiConstants.BoardFrame.borderWidth,
-                color = ChessUiConstants.BoardFrame.borderColor,
-                shape = ChessUiConstants.BoardFrame.shape)) {
+        .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }) {
         val squareSizePx = if (boardSizePx > 0) boardSizePx / 8 else 0f
 
         ChessboardGrid(state = state,

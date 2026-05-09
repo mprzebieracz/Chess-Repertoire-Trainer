@@ -96,8 +96,3 @@ internal fun Modifier.chessboardFrame(onSizeChanged: (Float) -> Unit = {}): Modi
         .fillMaxWidth()
         .aspectRatio(1f)
         .onGloballyPositioned { onSizeChanged(it.size.width.toFloat()) }
-        .shadow(ChessUiConstants.BoardFrame.shadowElevation, ChessUiConstants.BoardFrame.shape)
-        .clip(ChessUiConstants.BoardFrame.shape)
-        .border(width = ChessUiConstants.BoardFrame.borderWidth,
-                color = ChessUiConstants.BoardFrame.borderColor,
-                shape = ChessUiConstants.BoardFrame.shape)
