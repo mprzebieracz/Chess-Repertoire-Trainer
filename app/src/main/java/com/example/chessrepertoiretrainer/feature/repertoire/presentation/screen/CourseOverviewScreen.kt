@@ -4,24 +4,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -62,7 +63,7 @@ fun CourseOverviewScreen(viewModel: CourseOverviewViewModel,
                     Icon(AppIcons.TrainCourse, contentDescription = "Train selection")
                 }
                 IconButton(onClick = { onEditCourse(repId) }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit course")
+                    Icon(AppIcons.EditCourse, contentDescription = "Edit course")
                 }
             }
         })
@@ -214,28 +215,20 @@ private fun CourseChapterActionsRow(chapterId: Int,
         .fillMaxWidth()
         .padding(top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        CourseActionButton(label = "Learn", modifier = Modifier.weight(1f)) {
-            onOpenChapterLearn(chapterId)
+        FilledTonalButton(onClick = { onOpenChapterLearn(chapterId) }, modifier = Modifier.weight(1f)) {
+            Icon(AppIcons.Repertoire, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Learn")
         }
-        CourseActionOutlinedButton(label = "Review", modifier = Modifier.weight(1f)) {
-            onOpenChapterReview(chapterId)
+        FilledTonalButton(onClick = { onOpenChapterReview(chapterId) }, modifier = Modifier.weight(1f)) {
+            Icon(AppIcons.Engine, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Review")
         }
-        CourseActionOutlinedButton(label = "Train", modifier = Modifier.weight(1f)) {
-            onOpenChapterTrain(chapterId)
+        Button(onClick = { onOpenChapterTrain(chapterId) }, modifier = Modifier.weight(1f)) {
+            Icon(AppIcons.Train, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(4.dp))
+            Text("Train")
         }
     }
-}
-
-@Composable
-private fun RowScope.CourseActionButton(label: String,
-                                        modifier: Modifier = Modifier,
-                                        onClick: () -> Unit) {
-    Button(onClick = onClick, modifier = modifier) { Text(label) }
-}
-
-@Composable
-private fun RowScope.CourseActionOutlinedButton(label: String,
-                                                modifier: Modifier = Modifier,
-                                                onClick: () -> Unit) {
-    OutlinedButton(onClick = onClick, modifier = modifier) { Text(label) }
 }

@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Visibility
+import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,8 +29,8 @@ fun PuzzleTrainingScreen(viewModel: PuzzleTrainingViewModel, onBackClick: () -> 
         contentBar = { PuzzleContentBar(uiState = uiState) },
         bottomBar = {
             ChessBottomBar {
-                BottomBarButton(Icons.Filled.Lightbulb, "Hint", viewModel::showHint, enabled = !uiState.isLoading && !uiState.isSessionComplete)
-                BottomBarButton(Icons.Filled.Visibility, "Solution", viewModel::showSolution, enabled = !uiState.isLoading && !uiState.isSessionComplete)
+                BottomBarButton(AppIcons.Hint, "Hint", viewModel::showHint, enabled = !uiState.isLoading && !uiState.isSessionComplete)
+                BottomBarButton(AppIcons.Solution, "Solution", viewModel::showSolution, enabled = !uiState.isLoading && !uiState.isSessionComplete)
             }
         },
     )

@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Visibility
+import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -59,8 +57,8 @@ fun TrainScreen(
         bottomBar = {
             val canAct = !uiState.isLoading && !uiState.isSessionComplete && !uiState.isSessionEmpty
             ChessBottomBar {
-                BottomBarButton(Icons.Filled.Lightbulb, "Hint", { viewModel.showHint() }, enabled = canAct && uiState.isWaitingForUserMove)
-                BottomBarButton(Icons.Filled.Visibility, "Solution", { viewModel.showSolution() }, enabled = canAct && uiState.isWaitingForUserMove)
+                BottomBarButton(AppIcons.Hint, "Hint", { viewModel.showHint() }, enabled = canAct && uiState.isWaitingForUserMove)
+                BottomBarButton(AppIcons.Solution, "Solution", { viewModel.showSolution() }, enabled = canAct && uiState.isWaitingForUserMove)
             }
         },
     )

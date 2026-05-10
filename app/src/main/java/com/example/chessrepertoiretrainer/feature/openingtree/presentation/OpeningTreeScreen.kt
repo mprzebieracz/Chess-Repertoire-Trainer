@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
+import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -52,8 +50,8 @@ fun OpeningTreeScreen(viewModel: OpeningTreeViewModel, onBackClick: () -> Unit) 
         },
         bottomBar = {
             ChessBottomBar {
-                BottomBarButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", { viewModel.onGoBack() }, enabled = uiState.canGoBack)
-                BottomBarButton(Icons.Filled.Home, "Root", { viewModel.onGoRoot() })
+                BottomBarButton(AppIcons.Back, "Back", { viewModel.onGoBack() }, enabled = uiState.canGoBack)
+                BottomBarButton(AppIcons.Home, "Root", { viewModel.onGoRoot() })
             }
         },
     )

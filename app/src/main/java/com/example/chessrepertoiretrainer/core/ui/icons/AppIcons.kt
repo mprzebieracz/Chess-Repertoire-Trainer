@@ -14,8 +14,10 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.ui.graphics.vector.ImageVector
 
 object AppIcons {
@@ -44,6 +46,8 @@ object AppIcons {
     val FlipBoard: ImageVector   = Icons.Filled.Flip
     val ResetBoard: ImageVector  = Icons.Filled.RestartAlt
     val Hint: ImageVector        = Icons.Filled.Lightbulb
+    val Solution: ImageVector    = Icons.Filled.Visibility
+    val Engine: ImageVector      = Icons.Filled.Psychology
     val SkipLine: ImageVector    = Icons.Filled.SkipNext
     val DailyPuzzle: ImageVector = Icons.Filled.Casino
 }
