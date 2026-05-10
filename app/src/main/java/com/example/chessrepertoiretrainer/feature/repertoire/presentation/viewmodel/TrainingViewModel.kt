@@ -205,7 +205,10 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
 
         configureMoveTrainer()
         configureBoardForCurrentSide()
-        updateLineUi(line = line, colorString = lineContext.colorName, index = index, chapterName = lineContext.chapterName)
+        updateLineUi(line = line,
+                     colorString = lineContext.colorName,
+                     index = index,
+                     chapterName = lineContext.chapterName)
 
         if (currentLineMoves.isEmpty()) {
             finishCurrentLine()
@@ -222,7 +225,10 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
         val side = colorString.toSide()
         val moves = repertoireRepository.getMovesForLine(line.id).first()
 
-        return LineContext(colorName = colorString, side = side, moves = moves, chapterName = chapter?.name)
+        return LineContext(colorName = colorString,
+                           side = side,
+                           moves = moves,
+                           chapterName = chapter?.name)
     }
 
     private fun configureMoveTrainer() {
@@ -297,7 +303,10 @@ class TrainingViewModel(private val repertoireRepository: RepertoireRepository,
         }
     }
 
-    private data class LineContext(val colorName: String, val side: Side, val moves: List<LineMove>, val chapterName: String?)
+    private data class LineContext(val colorName: String,
+                                   val side: Side,
+                                   val moves: List<LineMove>,
+                                   val chapterName: String?)
 
     class Factory(private val repertoireRepository: RepertoireRepository,
                   private val appContainer: AppContainer? = null) : ViewModelProvider.Factory {

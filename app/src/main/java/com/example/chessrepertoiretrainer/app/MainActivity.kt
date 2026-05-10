@@ -41,11 +41,11 @@ class MainActivity : ComponentActivity() {
             }
 
             val boardColors = when (settingsState.boardTheme) {
-                BoardTheme.CLASSIC    -> ClassicBoardThemeColors
-                BoardTheme.BLUE       -> BlueBoardThemeColors
-                BoardTheme.BROWN      -> BrownBoardThemeColors
+                BoardTheme.CLASSIC -> ClassicBoardThemeColors
+                BoardTheme.BLUE -> BlueBoardThemeColors
+                BoardTheme.BROWN -> BrownBoardThemeColors
                 BoardTheme.TOURNAMENT -> TournamentBoardThemeColors
-                BoardTheme.NIGHT      -> NightBoardThemeColors
+                BoardTheme.NIGHT -> NightBoardThemeColors
             }
 
             val useDynamic = settingsState.useDynamicColors

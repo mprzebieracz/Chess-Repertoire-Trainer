@@ -195,9 +195,10 @@ fun ChessRepertoireTrainerTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
+
         else -> when (appColorTheme) {
-            AppColorTheme.DARK_WOOD  -> if (darkTheme) DarkWoodDarkColorScheme  else DarkWoodLightColorScheme
-            AppColorTheme.LICHESS    -> if (darkTheme) LichessDarkColorScheme   else LichessLightColorScheme
+            AppColorTheme.DARK_WOOD -> if (darkTheme) DarkWoodDarkColorScheme else DarkWoodLightColorScheme
+            AppColorTheme.LICHESS -> if (darkTheme) LichessDarkColorScheme else LichessLightColorScheme
             AppColorTheme.WARM_LIGHT -> if (darkTheme) WarmLightDarkColorScheme else WarmLightLightColorScheme
         }
     }

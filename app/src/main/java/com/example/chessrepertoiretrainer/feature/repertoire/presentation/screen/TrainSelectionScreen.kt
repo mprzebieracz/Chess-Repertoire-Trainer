@@ -47,7 +47,8 @@ fun TrainSelectionScreen(viewModel: TrainingSelectionViewModel,
                     Icon(AppIcons.Back, contentDescription = "Back")
                 }
             }
-        } else {
+        }
+        else {
             {}
         })
     }) { padding ->
@@ -55,8 +56,14 @@ fun TrainSelectionScreen(viewModel: TrainingSelectionViewModel,
             .fillMaxSize()
             .padding(padding)) {
 
-            SectionBanner(text = "Choose repertoire", icon = { Icon(AppIcons.Repertoire, contentDescription = null, modifier = Modifier.padding(end = 8.dp)) })
-            LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            SectionBanner(text = "Choose repertoire", icon = {
+                Icon(AppIcons.Repertoire,
+                     contentDescription = null,
+                     modifier = Modifier.padding(end = 8.dp))
+            })
+            LazyColumn(modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()) {
                 items(repertoires) { repertoire ->
                     RepertoireItem(repertoire = repertoire,
                                    selected = repertoire.id == selectedRepertoireId,
@@ -66,8 +73,14 @@ fun TrainSelectionScreen(viewModel: TrainingSelectionViewModel,
 
             HorizontalDivider()
 
-            SectionBanner(text = "Choose chapter to train", icon = { Icon(AppIcons.Train, contentDescription = null, modifier = Modifier.padding(end = 8.dp)) })
-            LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            SectionBanner(text = "Choose chapter to train", icon = {
+                Icon(AppIcons.Train,
+                     contentDescription = null,
+                     modifier = Modifier.padding(end = 8.dp))
+            })
+            LazyColumn(modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()) {
                 items(chapters) { chapter ->
                     ChapterItem(chapter = chapter, onClick = { onStartTraining(chapter.id) })
                 }

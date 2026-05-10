@@ -47,19 +47,24 @@ fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Un
                 onBackClick = onBackClick,
                 actions = {
                     IconButton(onClick = viewModel::goToPreviousLine) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous line")
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                             contentDescription = "Previous line")
                     }
                     Text(
                         text = if (uiState.totalLines > 0) "${uiState.currentLineNumber}/${uiState.totalLines}" else "",
                         style = MaterialTheme.typography.labelMedium,
                     )
                     IconButton(onClick = viewModel::goToNextLine) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next line")
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                             contentDescription = "Next line")
                     }
                     engineAnalysis?.depth?.let { depth ->
-                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState, depth = depth, onClick = viewModel::analyzeDeeper)
+                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState,
+                                                          depth = depth,
+                                                          onClick = viewModel::analyzeDeeper)
                     }
-                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                    EngineToggleButton(isEnabled = isEngineEnabled,
+                                       onClick = viewModel::toggleEngine)
                 },
             )
         },
@@ -86,8 +91,12 @@ fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Un
             if (!uiState.isLoading && !uiState.hasNoLines) {
                 ChessBottomBar {
                     BottomBarButton(Icons.Filled.Refresh, "Restart", viewModel::restartCurrentLine)
-                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Prev", viewModel::onPreviousMove)
-                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next", viewModel::onNextMove)
+                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    "Prev",
+                                    viewModel::onPreviousMove)
+                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    "Next",
+                                    viewModel::onNextMove)
                 }
             }
         },
@@ -103,14 +112,22 @@ private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiSta
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         when {
-            uiState.isLoading -> Text("Loading chapter…", style = MaterialTheme.typography.bodyMedium)
-            uiState.hasNoLines -> Text(uiState.statusMessage ?: "No lines in this chapter yet.", style = MaterialTheme.typography.bodyMedium)
+            uiState.isLoading -> Text("Loading chapter…",
+                                      style = MaterialTheme.typography.bodyMedium)
+
+            uiState.hasNoLines -> Text(uiState.statusMessage ?: "No lines in this chapter yet.",
+                                       style = MaterialTheme.typography.bodyMedium)
+
             else -> {
                 if (uiState.totalLines > 0) {
-                    Text(uiState.currentLineName ?: "", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                    Text(uiState.currentLineName ?: "",
+                         style = MaterialTheme.typography.bodySmall,
+                         fontWeight = FontWeight.SemiBold)
                 }
                 uiState.myColor?.let {
-                    Text("You play $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    Text("You play $it",
+                         style = MaterialTheme.typography.bodySmall,
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 }
                 val comment = uiState.currentMoveComment
                 if (!comment.isNullOrBlank()) {
@@ -118,11 +135,16 @@ private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiSta
                         modifier = Modifier.padding(top = 8.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     ) {
-                        Text(text = comment, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(12.dp))
+                        Text(text = comment,
+                             style = MaterialTheme.typography.bodyMedium,
+                             modifier = Modifier.padding(12.dp))
                     }
                 }
                 uiState.statusMessage?.let {
-                    Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp))
+                    Text(text = it,
+                         style = MaterialTheme.typography.bodySmall,
+                         color = MaterialTheme.colorScheme.primary,
+                         modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -120,9 +119,14 @@ fun HorizontalEvaluationBar(
 
     Box(modifier = modifier) {
         // Trailing colour fills the entire bar.
-        Box(Modifier.fillMaxSize().background(trailingColor))
+        Box(Modifier
+                .fillMaxSize()
+                .background(trailingColor))
         // Leading colour fills from the left.
-        Box(Modifier.fillMaxHeight().fillMaxWidth(leadingFrac).background(leadingColor))
+        Box(Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(leadingFrac)
+                .background(leadingColor))
         // Score text overlaid on the dominant side.
         if (displayLabel.isNotEmpty()) {
             Text(

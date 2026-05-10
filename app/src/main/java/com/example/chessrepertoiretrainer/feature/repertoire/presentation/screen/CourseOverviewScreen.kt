@@ -3,7 +3,6 @@ package com.example.chessrepertoiretrainer.feature.repertoire.presentation.scree
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -215,12 +214,14 @@ private fun CourseChapterActionsRow(chapterId: Int,
         .fillMaxWidth()
         .padding(top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilledTonalButton(onClick = { onOpenChapterLearn(chapterId) }, modifier = Modifier.weight(1f)) {
+        FilledTonalButton(onClick = { onOpenChapterLearn(chapterId) },
+                          modifier = Modifier.weight(1f)) {
             Icon(AppIcons.Repertoire, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text("Learn")
         }
-        FilledTonalButton(onClick = { onOpenChapterReview(chapterId) }, modifier = Modifier.weight(1f)) {
+        FilledTonalButton(onClick = { onOpenChapterReview(chapterId) },
+                          modifier = Modifier.weight(1f)) {
             Icon(AppIcons.Engine, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text("Review")

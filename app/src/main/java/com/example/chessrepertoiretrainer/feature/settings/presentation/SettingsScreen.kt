@@ -346,8 +346,8 @@ private fun ColorThemeSelector(current: AppColorTheme, onChange: (AppColorTheme)
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = when (current) {
-                AppColorTheme.DARK_WOOD  -> "Dark Wood (chess.com)"
-                AppColorTheme.LICHESS    -> "Lichess Green"
+                AppColorTheme.DARK_WOOD -> "Dark Wood (chess.com)"
+                AppColorTheme.LICHESS -> "Lichess Green"
                 AppColorTheme.WARM_LIGHT -> "Warm Parchment"
             })
             IconButton(onClick = { expanded = true }) {
@@ -405,11 +405,11 @@ private fun BoardThemeSelector(current: BoardTheme, onChange: (BoardTheme) -> Un
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = when (current) {
-                BoardTheme.CLASSIC    -> "Classic green"
-                BoardTheme.BLUE       -> "Blue"
-                BoardTheme.BROWN      -> "Brown"
+                BoardTheme.CLASSIC -> "Classic green"
+                BoardTheme.BLUE -> "Blue"
+                BoardTheme.BROWN -> "Brown"
                 BoardTheme.TOURNAMENT -> "Tournament (red)"
-                BoardTheme.NIGHT      -> "Night (slate blue)"
+                BoardTheme.NIGHT -> "Night (slate blue)"
             })
             IconButton(onClick = { expanded = true }) {
                 Icon(AppIcons.TrainChapter, contentDescription = "Change board theme")

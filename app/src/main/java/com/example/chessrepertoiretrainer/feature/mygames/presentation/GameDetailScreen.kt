@@ -70,46 +70,81 @@ fun GameDetailScreen(
                 title = "${game.opponentName} — ${game.playerResult.replaceFirstChar { it.uppercase() }}",
                 onBackClick = onBackClick,
                 actions = {
-                    FilterChip(selected = complianceEnabled, onClick = viewModel::toggleCompliance, label = { Text("Repertoire") })
+                    FilterChip(selected = complianceEnabled,
+                               onClick = viewModel::toggleCompliance,
+                               label = { Text("Repertoire") })
                     engineAnalysis?.depth?.let { depth ->
-                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState, depth = depth, onClick = viewModel::analyzeDeeper)
+                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState,
+                                                          depth = depth,
+                                                          onClick = viewModel::analyzeDeeper)
                     }
-                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                    EngineToggleButton(isEnabled = isEngineEnabled,
+                                       onClick = viewModel::toggleEngine)
                 },
             )
         },
         engineSection = {
             if (!engineError.isNullOrBlank()) {
-                Text(text = engineError!!, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
+                Text(text = engineError!!,
+                     style = MaterialTheme.typography.labelSmall,
+                     color = MaterialTheme.colorScheme.error,
+                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp))
             }
             if (isEngineEnabled) {
-                EngineSection(analysis = engineAnalysis, searchState = engineSearchState, isFlipped = chessCtrl.isFlipped, onDeeperClick = viewModel::analyzeDeeper)
+                EngineSection(analysis = engineAnalysis,
+                              searchState = engineSearchState,
+                              isFlipped = chessCtrl.isFlipped,
+                              onDeeperClick = viewModel::analyzeDeeper)
             }
         },
         contentBar = {
-            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(game.opponentName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                        Text(game.playerResult.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = resultColor)
+                        Text(game.opponentName,
+                             style = MaterialTheme.typography.bodyMedium,
+                             fontWeight = FontWeight.SemiBold)
+                        Text(game.playerResult.replaceFirstChar { it.uppercase() },
+                             style = MaterialTheme.typography.bodyMedium,
+                             fontWeight = FontWeight.SemiBold,
+                             color = resultColor)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("${if (game.isPlayerWhite) "White" else "Black"} · ${game.platform.replaceFirstChar { it.uppercase() }}", style = MaterialTheme.typography.bodySmall)
-                        game.timeCategory?.let { Text("· ${it.replaceFirstChar { c -> c.uppercase() }}", style = MaterialTheme.typography.bodySmall) }
-                        Text("· ${dateFormat.format(Date(game.playedAt))}", style = MaterialTheme.typography.bodySmall)
+                        Text("${if (game.isPlayerWhite) "White" else "Black"} · ${game.platform.replaceFirstChar { it.uppercase() }}",
+                             style = MaterialTheme.typography.bodySmall)
+                        game.timeCategory?.let {
+                            Text("· ${it.replaceFirstChar { c -> c.uppercase() }}",
+                                 style = MaterialTheme.typography.bodySmall)
+                        }
+                        Text("· ${dateFormat.format(Date(game.playedAt))}",
+                             style = MaterialTheme.typography.bodySmall)
                     }
-                    game.opening?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    game.opening?.takeIf { it.isNotBlank() }
+                        ?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 }
                 if (complianceEnabled) {
-                    CompliancePanel(annotation = currentAnnotation, isLoading = isLoadingCompliance, onViewInCourse = onViewInCourse, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                    CompliancePanel(annotation = currentAnnotation,
+                                    isLoading = isLoadingCompliance,
+                                    onViewInCourse = onViewInCourse,
+                                    modifier = Modifier.padding(horizontal = 16.dp,
+                                                                vertical = 4.dp))
                 }
-                PgnViewer(sanHistory = chessCtrl.sanHistory, currentMoveIndex = chessCtrl.currentMoveIndex, onMoveClick = { chessCtrl.navigateToMoveIndex(it) }, modifier = Modifier.height(64.dp))
+                PgnViewer(sanHistory = chessCtrl.sanHistory,
+                          currentMoveIndex = chessCtrl.currentMoveIndex,
+                          onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
+                          modifier = Modifier.height(64.dp))
             }
         },
         bottomBar = {
             ChessBottomBar {
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Prev", { chessCtrl.navigateBack() })
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next", { chessCtrl.navigateForward() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                "Prev",
+                                { chessCtrl.navigateBack() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                "Next",
+                                { chessCtrl.navigateForward() })
             }
         },
     )
@@ -122,29 +157,65 @@ private fun CompliancePanel(
     onViewInCourse: (chapterId: Int, lineId: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(modifier = modifier.fillMaxWidth().height(36.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(modifier = modifier
+        .fillMaxWidth()
+        .height(36.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (isLoading) {
             CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
             Text("Building index…", style = MaterialTheme.typography.bodySmall)
             return@Row
         }
         when (annotation?.status) {
-            null -> Text("Navigate to see repertoire compliance", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+            null -> Text("Navigate to see repertoire compliance",
+                         style = MaterialTheme.typography.bodySmall,
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+
             ComplianceStatus.IN_BOOK -> {
-                Text("✓ ${annotation.playedSan} — in repertoire", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f, fill = false))
+                Text("✓ ${annotation.playedSan} — in repertoire",
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.primary,
+                     modifier = Modifier.weight(1f, fill = false))
                 if (annotation.chapterIdForNavigation != null && annotation.lineIdForNavigation != null) {
-                    TextButton(onClick = { onViewInCourse(annotation.chapterIdForNavigation, annotation.lineIdForNavigation) }, modifier = Modifier.height(28.dp)) { Text("View →", style = MaterialTheme.typography.bodySmall) }
+                    TextButton(onClick = {
+                        onViewInCourse(annotation.chapterIdForNavigation,
+                                       annotation.lineIdForNavigation)
+                    }, modifier = Modifier.height(28.dp)) {
+                        Text("View →", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
+
             ComplianceStatus.DEVIATION -> {
-                Text("✗ ${annotation.playedSan} — deviation", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f, fill = false))
+                Text("✗ ${annotation.playedSan} — deviation",
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.error,
+                     fontWeight = FontWeight.SemiBold,
+                     modifier = Modifier.weight(1f, fill = false))
                 if (annotation.chapterIdForNavigation != null && annotation.lineIdForNavigation != null) {
-                    TextButton(onClick = { onViewInCourse(annotation.chapterIdForNavigation, annotation.lineIdForNavigation) }, modifier = Modifier.height(28.dp)) { Text("View →", style = MaterialTheme.typography.bodySmall) }
+                    TextButton(onClick = {
+                        onViewInCourse(annotation.chapterIdForNavigation,
+                                       annotation.lineIdForNavigation)
+                    }, modifier = Modifier.height(28.dp)) {
+                        Text("View →", style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             }
-            ComplianceStatus.OUT_OF_BOOK -> Text("○ Out of book", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-            ComplianceStatus.OPPONENT_IN_BOOK -> Text("Opponent followed expected lines", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-            ComplianceStatus.OPPONENT_DEVIATION -> Text("Opponent deviated — ${annotation.playedSan}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+
+            ComplianceStatus.OUT_OF_BOOK -> Text("○ Out of book",
+                                                 style = MaterialTheme.typography.bodySmall,
+                                                 color = MaterialTheme.colorScheme.onSurface.copy(
+                                                     alpha = 0.4f))
+
+            ComplianceStatus.OPPONENT_IN_BOOK -> Text("Opponent followed expected lines",
+                                                      style = MaterialTheme.typography.bodySmall,
+                                                      color = MaterialTheme.colorScheme.onSurface.copy(
+                                                          alpha = 0.5f))
+
+            ComplianceStatus.OPPONENT_DEVIATION -> Text("Opponent deviated — ${annotation.playedSan}",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.tertiary)
         }
     }
 }

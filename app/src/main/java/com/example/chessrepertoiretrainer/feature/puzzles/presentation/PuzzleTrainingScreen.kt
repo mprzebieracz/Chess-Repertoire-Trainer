@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +17,7 @@ import com.example.chessrepertoiretrainer.core.chess.ui.BottomBarButton
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 
 @Composable
 fun PuzzleTrainingScreen(viewModel: PuzzleTrainingViewModel, onBackClick: () -> Unit) {
@@ -29,8 +29,14 @@ fun PuzzleTrainingScreen(viewModel: PuzzleTrainingViewModel, onBackClick: () -> 
         contentBar = { PuzzleContentBar(uiState = uiState) },
         bottomBar = {
             ChessBottomBar {
-                BottomBarButton(AppIcons.Hint, "Hint", viewModel::showHint, enabled = !uiState.isLoading && !uiState.isSessionComplete)
-                BottomBarButton(AppIcons.Solution, "Solution", viewModel::showSolution, enabled = !uiState.isLoading && !uiState.isSessionComplete)
+                BottomBarButton(AppIcons.Hint,
+                                "Hint",
+                                viewModel::showHint,
+                                enabled = !uiState.isLoading && !uiState.isSessionComplete)
+                BottomBarButton(AppIcons.Solution,
+                                "Solution",
+                                viewModel::showSolution,
+                                enabled = !uiState.isLoading && !uiState.isSessionComplete)
             }
         },
     )
@@ -45,17 +51,34 @@ private fun PuzzleContentBar(uiState: PuzzleTrainingUiState) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         when {
-            uiState.isLoading -> Text("Loading puzzle…", style = MaterialTheme.typography.bodyMedium)
+            uiState.isLoading -> Text("Loading puzzle…",
+                                      style = MaterialTheme.typography.bodyMedium)
+
             uiState.isSessionComplete -> Text(
                 text = uiState.statusMessage ?: "Daily puzzle complete!",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
             )
+
             else -> {
-                uiState.currentRating?.let { Text("Rating: $it", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold) }
-                uiState.currentThemes?.takeIf { it.isNotBlank() }?.let { Text("Themes: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp)) }
-                uiState.userSideLabel?.let { Text("$it to move", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp)) }
-                if (uiState.attemptsForCurrent > 0) Text("Attempts: ${uiState.attemptsForCurrent}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp))
+                uiState.currentRating?.let {
+                    Text("Rating: $it",
+                         style = MaterialTheme.typography.bodyMedium,
+                         fontWeight = FontWeight.SemiBold)
+                }
+                uiState.currentThemes?.takeIf { it.isNotBlank() }?.let {
+                    Text("Themes: $it",
+                         style = MaterialTheme.typography.bodySmall,
+                         modifier = Modifier.padding(top = 2.dp))
+                }
+                uiState.userSideLabel?.let {
+                    Text("$it to move",
+                         style = MaterialTheme.typography.bodySmall,
+                         modifier = Modifier.padding(top = 2.dp))
+                }
+                if (uiState.attemptsForCurrent > 0) Text("Attempts: ${uiState.attemptsForCurrent}",
+                                                         style = MaterialTheme.typography.bodySmall,
+                                                         modifier = Modifier.padding(top = 2.dp))
                 val statusText = when {
                     uiState.lastMoveWasCorrect == true -> "Correct!"
                     uiState.lastMoveWasCorrect == false -> "Incorrect, try again"

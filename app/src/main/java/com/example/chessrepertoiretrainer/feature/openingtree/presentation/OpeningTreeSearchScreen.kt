@@ -73,12 +73,16 @@ fun OpeningTreeSearchScreen(viewModel: OpeningTreeSearchViewModel,
                               singleLine = true)
 
             ChipGroupSection(label = "Platform") {
-                FilterChip(selected = formState.platform == "lichess",
-                           onClick = { formState = formState.withPlatform("lichess", defaultLichessUsername, defaultChessComUsername) },
-                           label = { Text("Lichess") })
-                FilterChip(selected = formState.platform == "chess.com",
-                           onClick = { formState = formState.withPlatform("chess.com", defaultLichessUsername, defaultChessComUsername) },
-                           label = { Text("Chess.com") })
+                FilterChip(selected = formState.platform == "lichess", onClick = {
+                    formState = formState.withPlatform("lichess",
+                                                       defaultLichessUsername,
+                                                       defaultChessComUsername)
+                }, label = { Text("Lichess") })
+                FilterChip(selected = formState.platform == "chess.com", onClick = {
+                    formState = formState.withPlatform("chess.com",
+                                                       defaultLichessUsername,
+                                                       defaultChessComUsername)
+                }, label = { Text("Chess.com") })
             }
 
             ChipGroupSection(label = "Color") {
@@ -91,23 +95,24 @@ fun OpeningTreeSearchScreen(viewModel: OpeningTreeSearchViewModel,
             }
 
             ChipGroupSection(label = "Time controls") {
-                FilterChip(selected = formState.bulletEnabled,
-                           onClick = { formState = formState.copy(bulletEnabled = !formState.bulletEnabled) },
-                           label = { Text("Bullet") })
-                FilterChip(selected = formState.blitzEnabled,
-                           onClick = { formState = formState.copy(blitzEnabled = !formState.blitzEnabled) },
-                           label = { Text("Blitz") })
-                FilterChip(selected = formState.rapidEnabled,
-                           onClick = { formState = formState.copy(rapidEnabled = !formState.rapidEnabled) },
-                           label = { Text("Rapid") })
-                FilterChip(selected = formState.classicalEnabled,
-                           onClick = { formState = formState.copy(classicalEnabled = !formState.classicalEnabled) },
-                           label = { Text("Classical") })
+                FilterChip(selected = formState.bulletEnabled, onClick = {
+                    formState = formState.copy(bulletEnabled = !formState.bulletEnabled)
+                }, label = { Text("Bullet") })
+                FilterChip(selected = formState.blitzEnabled, onClick = {
+                    formState = formState.copy(blitzEnabled = !formState.blitzEnabled)
+                }, label = { Text("Blitz") })
+                FilterChip(selected = formState.rapidEnabled, onClick = {
+                    formState = formState.copy(rapidEnabled = !formState.rapidEnabled)
+                }, label = { Text("Rapid") })
+                FilterChip(selected = formState.classicalEnabled, onClick = {
+                    formState = formState.copy(classicalEnabled = !formState.classicalEnabled)
+                }, label = { Text("Classical") })
             }
 
             OutlinedTextField(value = formState.maxGamesText,
                               onValueChange = { newValue ->
-                                  if (newValue.all { it.isDigit() }) formState = formState.copy(maxGamesText = newValue)
+                                  if (newValue.all { it.isDigit() }) formState =
+                                      formState.copy(maxGamesText = newValue)
                               },
                               label = { Text("Max games (leave empty for all)") },
                               modifier = Modifier.fillMaxWidth(),
@@ -125,7 +130,9 @@ fun OpeningTreeSearchScreen(viewModel: OpeningTreeSearchViewModel,
             },
                    enabled = formState.username.isNotBlank() && !uiState.isSyncing,
                    modifier = Modifier.fillMaxWidth()) {
-                Icon(AppIcons.OpeningTree, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(AppIcons.OpeningTree,
+                     contentDescription = null,
+                     modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Build opening tree", fontWeight = FontWeight.SemiBold)
             }
@@ -133,8 +140,8 @@ fun OpeningTreeSearchScreen(viewModel: OpeningTreeSearchViewModel,
             if (uiState.isSyncing) {
                 val statusText = when (uiState.syncPhase) {
                     SyncPhase.FetchingGames -> "Fetching games… (${uiState.fetchedGameCount} fetched)"
-                    SyncPhase.BuildingTree  -> "Building tree from ${uiState.fetchedGameCount} games…"
-                    SyncPhase.Idle          -> ""
+                    SyncPhase.BuildingTree -> "Building tree from ${uiState.fetchedGameCount} games…"
+                    SyncPhase.Idle -> ""
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(text = statusText, style = MaterialTheme.typography.bodySmall)
@@ -143,7 +150,9 @@ fun OpeningTreeSearchScreen(viewModel: OpeningTreeSearchViewModel,
             }
 
             uiState.errorMessage?.let { error ->
-                Text(text = error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(text = error,
+                     color = MaterialTheme.colorScheme.error,
+                     style = MaterialTheme.typography.bodySmall)
             }
 
             uiState.lastSyncSummary?.let { summary ->
@@ -206,7 +215,8 @@ data class OpeningTreeSearchFormState(val platform: String,
                     defaultLichessUsername: String,
                     defaultChessComUsername: String): OpeningTreeSearchFormState {
             val platform = if (defaultPlatform == "chess.com") "chess.com" else "lichess"
-            val username = if (platform == "chess.com") defaultChessComUsername else defaultLichessUsername
+            val username =
+                if (platform == "chess.com") defaultChessComUsername else defaultLichessUsername
             return OpeningTreeSearchFormState(platform = platform, username = username)
         }
     }

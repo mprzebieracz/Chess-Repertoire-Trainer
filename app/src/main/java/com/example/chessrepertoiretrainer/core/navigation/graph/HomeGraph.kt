@@ -24,7 +24,10 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController,
         val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory(puzzleRepository))
         HomeScreen(viewModel = vm,
                    onOpenAnalysis = { navController.navigate(Screen.Analysis.route) },
-                   onPlayDailyPuzzle = { navController.navigate(Screen.PuzzleTraining.route) })
+                   onPlayDailyPuzzle = {
+                       navController.navigate(Screen.PuzzleTraining.route)
+                   },
+                   onOpenRepertoire = { })
     }
 
     composable(Screen.Settings.route) {

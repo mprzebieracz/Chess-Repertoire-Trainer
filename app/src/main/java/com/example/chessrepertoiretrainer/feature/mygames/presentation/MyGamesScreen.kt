@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -52,8 +51,9 @@ fun MyGamesScreen(viewModel: MyGamesViewModel,
                 CircularProgressIndicator(modifier = Modifier
                     .size(24.dp)
                     .padding(end = 4.dp),
-                                         strokeWidth = 2.dp)
-            } else {
+                                          strokeWidth = 2.dp)
+            }
+            else {
                 IconButton(onClick = viewModel::sync) {
                     Icon(Icons.Filled.Refresh, contentDescription = "Sync")
                 }
@@ -67,7 +67,8 @@ fun MyGamesScreen(viewModel: MyGamesViewModel,
             .verticalScroll(rememberScrollState()),
                verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-            val hasAnyAccount = uiState.lichessUsername.isNotBlank() || uiState.chessComUsername.isNotBlank()
+            val hasAnyAccount =
+                uiState.lichessUsername.isNotBlank() || uiState.chessComUsername.isNotBlank()
 
             if (!hasAnyAccount) {
                 Text(text = "Add usernames in Settings to view your stats and sync games.",
@@ -94,17 +95,23 @@ fun MyGamesScreen(viewModel: MyGamesViewModel,
             if (hasAnyAccount) {
                 Spacer(Modifier.height(4.dp))
                 FilledTonalButton(onClick = onOpenGamesList, modifier = Modifier.fillMaxWidth()) {
-                    Icon(AppIcons.MyGames, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(AppIcons.MyGames,
+                         contentDescription = null,
+                         modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("Browse all games")
                 }
             }
 
             uiState.syncProgress?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                Text(it,
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.primary)
             }
             uiState.syncError?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                Text(it,
+                     style = MaterialTheme.typography.bodySmall,
+                     color = MaterialTheme.colorScheme.error)
             }
         }
     }

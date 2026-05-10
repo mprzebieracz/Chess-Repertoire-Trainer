@@ -39,7 +39,8 @@ import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 @Composable
 fun HomeScreen(viewModel: HomeViewModel,
                onOpenAnalysis: () -> Unit,
-               onPlayDailyPuzzle: () -> Unit) {
+               onPlayDailyPuzzle: () -> Unit,
+               onOpenRepertoire: () -> Unit = {}) {
     val dailyPuzzleState by viewModel.dailyPuzzleState.collectAsStateWithLifecycle()
 
     Scaffold(topBar = {
@@ -72,7 +73,7 @@ fun HomeScreen(viewModel: HomeViewModel,
                 onPlay = onPlayDailyPuzzle,
                 onRetry = viewModel::retry,
             )
-            QuickActionsRow(onOpenAnalysis = onOpenAnalysis)
+            QuickActionsRow(onOpenAnalysis = onOpenAnalysis, onOpenRepertoire = onOpenRepertoire)
         }
     }
 }
@@ -115,7 +116,8 @@ private fun DailyPuzzleCard(state: DailyPuzzleState, onPlay: () -> Unit, onRetry
             ) {
                 when (state) {
                     DailyPuzzleState.Loading -> {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp),
+                                                  strokeWidth = 2.dp)
                     }
 
                     DailyPuzzleState.Fetching -> {
@@ -123,14 +125,18 @@ private fun DailyPuzzleCard(state: DailyPuzzleState, onPlay: () -> Unit, onRetry
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                            Text("Fetching today's puzzle…", style = MaterialTheme.typography.bodySmall)
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp),
+                                                      strokeWidth = 2.dp)
+                            Text("Fetching today's puzzle…",
+                                 style = MaterialTheme.typography.bodySmall)
                         }
                     }
 
                     is DailyPuzzleState.Available -> {
                         Button(onClick = onPlay, modifier = Modifier.fillMaxWidth()) {
-                            Icon(AppIcons.Train, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(AppIcons.Train,
+                                 contentDescription = null,
+                                 modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(6.dp))
                             Text("Play Puzzle")
                         }
@@ -146,7 +152,9 @@ private fun DailyPuzzleCard(state: DailyPuzzleState, onPlay: () -> Unit, onRetry
                     }
 
                     is DailyPuzzleState.Error -> {
-                        Text(state.message, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                        Text(state.message,
+                             style = MaterialTheme.typography.bodySmall,
+                             color = MaterialTheme.colorScheme.error)
                         OutlinedButton(onClick = onRetry) { Text("Retry") }
                     }
                 }
@@ -156,7 +164,7 @@ private fun DailyPuzzleCard(state: DailyPuzzleState, onPlay: () -> Unit, onRetry
 }
 
 @Composable
-private fun QuickActionsRow(onOpenAnalysis: () -> Unit) {
+private fun QuickActionsRow(onOpenAnalysis: () -> Unit, onOpenRepertoire: () -> Unit = {}) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         QuickActionCard(
             modifier = Modifier.weight(1f),
@@ -170,7 +178,7 @@ private fun QuickActionsRow(onOpenAnalysis: () -> Unit) {
             icon = AppIcons.Repertoire,
             title = "Repertoire",
             subtitle = "Study lines",
-            onClick = {},
+            onClick = onOpenRepertoire,
         )
     }
 }
@@ -199,7 +207,9 @@ private fun QuickActionCard(
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp),
             )
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(title,
+                 style = MaterialTheme.typography.titleSmall,
+                 fontWeight = FontWeight.SemiBold)
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,

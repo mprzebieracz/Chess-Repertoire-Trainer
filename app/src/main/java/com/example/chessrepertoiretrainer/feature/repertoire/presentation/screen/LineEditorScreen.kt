@@ -67,9 +67,12 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
                 onBackClick = { if (hasChanges) showExitDialog = true else onBackClick() },
                 actions = {
                     engineAnalysis?.depth?.let { depth ->
-                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState, depth = depth, onClick = viewModel::analyzeDeeper)
+                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState,
+                                                          depth = depth,
+                                                          onClick = viewModel::analyzeDeeper)
                     }
-                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                    EngineToggleButton(isEnabled = isEngineEnabled,
+                                       onClick = viewModel::toggleEngine)
                 },
             )
         },
@@ -100,15 +103,21 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
                 onCommentTextChange = { viewModel.onCommentTextChange(it) },
                 onSave = { viewModel.saveComment(it) },
                 onCancel = { viewModel.cancelEditingComment() },
-                modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState()),
             )
         },
         bottomBar = {
             ChessBottomBar {
                 BottomBarButton(Icons.Filled.FirstPage, "Start", { viewModel.resetToStart() })
                 BottomBarButton(Icons.Filled.Delete, "Delete", { showDeleteConfirm = true })
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Prev", { chessCtrl.navigateBack() })
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next", { chessCtrl.navigateForward() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                "Prev",
+                                { chessCtrl.navigateBack() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                "Next",
+                                { chessCtrl.navigateForward() })
             }
         },
     )
@@ -119,9 +128,16 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
             title = { Text("Delete last move?") },
             text = { Text("This will permanently remove the last move from the line.") },
             confirmButton = {
-                Button(onClick = { showDeleteConfirm = false; viewModel.deleteLastMove() }, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Delete") }
+                Button(onClick = { showDeleteConfirm = false; viewModel.deleteLastMove() },
+                       colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+                    Text("Delete")
+                }
             },
-            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") } },
+            dismissButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                }) { Text("Cancel") }
+            },
         )
     }
 
@@ -130,7 +146,11 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
             onDismissRequest = { showExitDialog = false },
             title = { Text("Leave editor?") },
             text = { Text("You have made changes to this line. They are saved automatically — leave anyway?") },
-            confirmButton = { TextButton(onClick = { showExitDialog = false; onBackClick() }) { Text("Leave") } },
+            confirmButton = {
+                TextButton(onClick = {
+                    showExitDialog = false; onBackClick()
+                }) { Text("Leave") }
+            },
             dismissButton = { TextButton(onClick = { showExitDialog = false }) { Text("Stay") } },
         )
     }
@@ -150,14 +170,23 @@ private fun LineEditorCommentSection(
     val currentMove = moves.firstOrNull { it.fen == boardFen }
     Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         if (editingComment != null) {
-            Text("Comment", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 4.dp))
-            OutlinedTextField(value = editingComment, onValueChange = onCommentTextChange, modifier = Modifier.fillMaxWidth(), placeholder = { Text("Add a comment for this position…") }, maxLines = 4)
+            Text("Comment",
+                 style = MaterialTheme.typography.labelMedium,
+                 color = MaterialTheme.colorScheme.primary,
+                 modifier = Modifier.padding(bottom = 4.dp))
+            OutlinedTextField(value = editingComment,
+                              onValueChange = onCommentTextChange,
+                              modifier = Modifier.fillMaxWidth(),
+                              placeholder = { Text("Add a comment for this position…") },
+                              maxLines = 4)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = onCancel) { Text("Cancel") }
                 TextButton(onClick = { onSave(boardFen) }) { Text("Save") }
             }
-        } else {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        }
+        else {
+            Row(modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically) {
                 val comment = currentMove?.comment
                 Text(
                     text = if (!comment.isNullOrBlank()) comment else "No comment — tap to add",
@@ -165,7 +194,8 @@ private fun LineEditorCommentSection(
                     color = if (!comment.isNullOrBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(onClick = { onStartEditing(currentMove?.comment) }, enabled = currentMove != null) {
+                IconButton(onClick = { onStartEditing(currentMove?.comment) },
+                           enabled = currentMove != null) {
                     Icon(Icons.Default.Edit, contentDescription = "Edit comment")
                 }
             }

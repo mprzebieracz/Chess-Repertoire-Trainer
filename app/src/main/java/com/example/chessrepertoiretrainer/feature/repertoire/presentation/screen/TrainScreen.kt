@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +21,7 @@ import com.example.chessrepertoiretrainer.core.chess.ui.BottomBarButton
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingUiState
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
@@ -57,8 +57,14 @@ fun TrainScreen(
         bottomBar = {
             val canAct = !uiState.isLoading && !uiState.isSessionComplete && !uiState.isSessionEmpty
             ChessBottomBar {
-                BottomBarButton(AppIcons.Hint, "Hint", { viewModel.showHint() }, enabled = canAct && uiState.isWaitingForUserMove)
-                BottomBarButton(AppIcons.Solution, "Solution", { viewModel.showSolution() }, enabled = canAct && uiState.isWaitingForUserMove)
+                BottomBarButton(AppIcons.Hint,
+                                "Hint",
+                                { viewModel.showHint() },
+                                enabled = canAct && uiState.isWaitingForUserMove)
+                BottomBarButton(AppIcons.Solution,
+                                "Solution",
+                                { viewModel.showSolution() },
+                                enabled = canAct && uiState.isWaitingForUserMove)
             }
         },
     )
@@ -88,7 +94,9 @@ private fun TrainContentBar(uiState: TrainingUiState) {
         }
 
         Card(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
             colors = CardDefaults.cardColors(
                 containerColor = when (uiState.lastMoveWasCorrect) {
                     true -> MaterialTheme.colorScheme.primaryContainer
@@ -118,7 +126,9 @@ private fun TrainContentBar(uiState: TrainingUiState) {
                 )
                 if (uiState.lastMoveWasCorrect == false) {
                     uiState.lastExpectedSan?.let {
-                        Text(text = "Expected: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                        Text(text = "Expected: $it",
+                             style = MaterialTheme.typography.bodySmall,
+                             modifier = Modifier.padding(top = 4.dp))
                     }
                 }
             }

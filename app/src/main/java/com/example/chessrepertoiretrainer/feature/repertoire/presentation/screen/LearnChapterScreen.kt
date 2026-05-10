@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -73,12 +72,24 @@ fun LearnChapterScreen(
                 uiState.isLoading || uiState.hasNoLines || isChapterDone -> {}
                 isComplete -> ChessBottomBar {
                     val lineId = uiState.currentLineId
-                    BottomBarButton(Icons.Filled.FitnessCenter, "Train", { lineId?.let { onStartLineTraining(it) } }, enabled = lineId != null)
-                    BottomBarButton(Icons.Filled.SkipNext, "Skip", viewModel::skipTrainingForCurrentLine)
+                    BottomBarButton(Icons.Filled.FitnessCenter,
+                                    "Train",
+                                    { lineId?.let { onStartLineTraining(it) } },
+                                    enabled = lineId != null)
+                    BottomBarButton(Icons.Filled.SkipNext,
+                                    "Skip",
+                                    viewModel::skipTrainingForCurrentLine)
                 }
+
                 else -> ChessBottomBar {
-                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Prev", viewModel::onPreviousMove, enabled = !uiState.isAtLineStart)
-                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next", viewModel::onNextMove, enabled = !uiState.isAtLineEnd)
+                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                    "Prev",
+                                    viewModel::onPreviousMove,
+                                    enabled = !uiState.isAtLineStart)
+                    BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    "Next",
+                                    viewModel::onNextMove,
+                                    enabled = !uiState.isAtLineEnd)
                 }
             }
         },
@@ -98,21 +109,28 @@ private fun LearnContentArea(
             .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         when {
-            uiState.isLoading -> Text("Loading chapter…", style = MaterialTheme.typography.bodyMedium)
+            uiState.isLoading -> Text("Loading chapter…",
+                                      style = MaterialTheme.typography.bodyMedium)
+
             uiState.hasNoLines -> Text(
-                text = uiState.statusMessage ?: "No lines in this chapter. Use edit mode to add lines.",
+                text = uiState.statusMessage
+                    ?: "No lines in this chapter. Use edit mode to add lines.",
                 style = MaterialTheme.typography.bodyMedium,
             )
+
             uiState.phase == LearnChapterViewModel.LearnPhase.CHAPTER_COMPLETE -> {
                 Text(
-                    text = uiState.statusMessage ?: "You have gone through all lines in this chapter.",
+                    text = uiState.statusMessage
+                        ?: "You have gone through all lines in this chapter.",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(12.dp))
                 Button(onClick = { onStartChapterTraining(uiState.chapterId) }) { Text("Train Chapter") }
-                OutlinedButton(onClick = onBackClick, modifier = Modifier.padding(top = 8.dp)) { Text("Finish") }
+                OutlinedButton(onClick = onBackClick,
+                               modifier = Modifier.padding(top = 8.dp)) { Text("Finish") }
             }
+
             else -> {
                 if (uiState.totalLines > 0) {
                     Text(
@@ -122,7 +140,9 @@ private fun LearnContentArea(
                     )
                 }
                 uiState.myColor?.let {
-                    Text(text = "You play $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                    Text(text = "You play $it",
+                         style = MaterialTheme.typography.bodySmall,
+                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                 }
                 Card(
                     modifier = Modifier.padding(top = 8.dp),
@@ -130,18 +150,26 @@ private fun LearnContentArea(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         uiState.statusMessage?.let {
-                            Text(text = it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                            Text(text = it,
+                                 style = MaterialTheme.typography.bodySmall,
+                                 color = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.height(4.dp))
                         }
                         val comment = uiState.currentMoveComment
                         if (comment.isNullOrBlank()) {
-                            Text("No comment for this move.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        } else {
+                            Text("No comment for this move.",
+                                 style = MaterialTheme.typography.bodySmall,
+                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        else {
                             Text(text = comment, style = MaterialTheme.typography.bodyMedium)
                         }
                         if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
                             Spacer(Modifier.height(8.dp))
-                            Text("Line complete — train or skip below.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                            Text("Line complete — train or skip below.",
+                                 style = MaterialTheme.typography.bodySmall,
+                                 color = MaterialTheme.colorScheme.primary,
+                                 fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }

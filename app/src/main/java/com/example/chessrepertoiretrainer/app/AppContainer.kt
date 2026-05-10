@@ -49,6 +49,7 @@ class AppContainer(context: Context) {
 
     @Volatile
     var selectedChapterIds: List<Int>? = null
+
     @Volatile
     var analysisStartFen: String? = null
 }

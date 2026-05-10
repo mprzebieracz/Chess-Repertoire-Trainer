@@ -39,9 +39,12 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
                 onBackClick = onBackClick,
                 actions = {
                     engineAnalysis?.depth?.let { depth ->
-                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState, depth = depth, onClick = viewModel::analyzeDeeper)
+                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState,
+                                                          depth = depth,
+                                                          onClick = viewModel::analyzeDeeper)
                     }
-                    EngineToggleButton(isEnabled = isEngineEnabled, onClick = viewModel::toggleEngine)
+                    EngineToggleButton(isEnabled = isEngineEnabled,
+                                       onClick = viewModel::toggleEngine)
                 },
             )
         },
@@ -74,8 +77,12 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
             ChessBottomBar {
                 BottomBarButton(AppIcons.FlipBoard, "Flip", { chessCtrl.flipBoard() })
                 BottomBarButton(AppIcons.ResetBoard, "Reset", { chessCtrl.resetBoard() })
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Prev", { chessCtrl.navigateBack() })
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next", { chessCtrl.navigateForward() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                "Prev",
+                                { chessCtrl.navigateBack() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                "Next",
+                                { chessCtrl.navigateForward() })
             }
         },
     )
@@ -88,7 +95,7 @@ fun EngineToggleButton(isEnabled: Boolean, onClick: () -> Unit) {
             imageVector = AppIcons.Engine,
             contentDescription = if (isEnabled) "Disable engine" else "Enable engine",
             tint = if (isEnabled) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
         )
     }
 }
