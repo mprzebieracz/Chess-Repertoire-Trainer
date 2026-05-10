@@ -16,14 +16,15 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? = null) : ViewModel() {
+class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? = null) :
+    ViewModel() {
 
     val chessController: ChessBoardController = DefaultChessBoardController().also { ctrl ->
         if (startFen != null) ctrl.loadPositionFromFen(startFen)
     }
 
     val isEngineEnabled: StateFlow<Boolean> =
-        engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+        engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     val engineAnalysis: StateFlow<EngineAnalysis?> =
         engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(viewModelScope,
@@ -34,6 +35,7 @@ class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? =
         engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
+        engine.enable(chessController.boardState)
         viewModelScope.launch {
             snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
                 if (engine.isEnabled.value) engine.updatePosition(fen)
@@ -53,7 +55,8 @@ class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? =
         engine.disable()
     }
 
-    class Factory(private val engine: StockfishEngine, private val startFen: String? = null) : ViewModelProvider.Factory {
+    class Factory(private val engine: StockfishEngine, private val startFen: String? = null) :
+        ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
             AnalysisViewModel(engine, startFen) as T

@@ -6,20 +6,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chessrepertoiretrainer.core.chess.ui.BottomBarButton
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
@@ -50,26 +51,17 @@ fun TrainScreen(
     ChessScreenLayout(
         chessCtrl = viewModel.chessController,
         topBar = {
-            ChessTopBar(
-                title = title,
-                onBackClick = onBackClick ?: {},
-            )
+            ChessTopBar(title = title, onBackClick = onBackClick ?: {})
         },
         contentBar = {
             TrainContentBar(uiState = uiState)
         },
         bottomBar = {
-            ChessBottomBar(
-                startContent = {
-                    if (!uiState.isLoading && !uiState.isSessionComplete && !uiState.isSessionEmpty) {
-                        OutlinedButton(onClick = { viewModel.showHint() }) { Text("Hint") }
-                        Button(
-                            onClick = { viewModel.showSolution() },
-                            modifier = Modifier.padding(start = 8.dp),
-                        ) { Text("Solution") }
-                    }
-                },
-            )
+            val canAct = !uiState.isLoading && !uiState.isSessionComplete && !uiState.isSessionEmpty
+            ChessBottomBar {
+                BottomBarButton(Icons.Filled.Lightbulb, "Hint", { viewModel.showHint() }, enabled = canAct && uiState.isWaitingForUserMove)
+                BottomBarButton(Icons.Filled.Visibility, "Solution", { viewModel.showSolution() }, enabled = canAct && uiState.isWaitingForUserMove)
+            }
         },
     )
 }
@@ -98,9 +90,7 @@ private fun TrainContentBar(uiState: TrainingUiState) {
         }
 
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             colors = CardDefaults.cardColors(
                 containerColor = when (uiState.lastMoveWasCorrect) {
                     true -> MaterialTheme.colorScheme.primaryContainer
@@ -130,11 +120,7 @@ private fun TrainContentBar(uiState: TrainingUiState) {
                 )
                 if (uiState.lastMoveWasCorrect == false) {
                     uiState.lastExpectedSan?.let {
-                        Text(
-                            text = "Expected: $it",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
+                        Text(text = "Expected: $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
                     }
                 }
             }

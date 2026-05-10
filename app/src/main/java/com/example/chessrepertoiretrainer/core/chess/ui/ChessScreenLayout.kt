@@ -3,31 +3,26 @@ package com.example.chessrepertoiretrainer.core.chess.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -47,10 +42,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 
 /**
@@ -125,59 +127,59 @@ fun ChessTopBar(
 // Shared bottom-bar helper
 // ---------------------------------------------------------------------------
 
+/**
+ * Bottom action bar. Fill it with [BottomBarButton]s — each takes equal width via weight(1f).
+ */
 @Composable
 fun ChessBottomBar(
     modifier: Modifier = Modifier,
-    startContent: @Composable RowScope.() -> Unit = {},
-    endContent: @Composable RowScope.() -> Unit = {},
+    content: @Composable RowScope.() -> Unit,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .padding(horizontal = 12.dp),
+            .height(68.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) { startContent() }
-        Row(verticalAlignment = Alignment.CenterVertically) { endContent() }
+        content()
     }
 }
 
-// ---------------------------------------------------------------------------
-// Navigation controls (compact, usable inside a Row)
-// ---------------------------------------------------------------------------
-
+/**
+ * A single icon-above-label button that fills an equal share of the bottom bar.
+ * Place it directly inside a [ChessBottomBar] lambda.
+ */
 @Composable
-fun MoveNavControls(
-    onBack: () -> Unit,
-    onForward: () -> Unit,
-    modifier: Modifier = Modifier,
+fun RowScope.BottomBarButton(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.size(width = 56.dp, height = 48.dp),
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "Previous move",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp),
-            )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        IconButton(
-            onClick = onForward,
-            modifier = Modifier.size(width = 56.dp, height = 48.dp),
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Next move",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp),
-            )
-        }
+    val contentColor = if (enabled) MaterialTheme.colorScheme.onSurface
+                       else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .clickable(enabled = enabled, onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            modifier = Modifier.size(26.dp),
+            tint = contentColor,
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontSize = 10.sp,
+            color = contentColor,
+            maxLines = 1,
+        )
     }
 }
 
@@ -216,7 +218,8 @@ fun PgnViewer(
                     modifier = Modifier.padding(horizontal = ChessUiConstants.ScreenChrome.Pgn.textHorizontalPadding),
                 )
             }
-        } else {
+        }
+        else {
             LazyRow(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
@@ -246,7 +249,7 @@ fun PgnViewer(
                             fontSize = ChessUiConstants.ScreenChrome.Pgn.textFontSize,
                             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
                             color = if (isCurrent) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -280,7 +283,8 @@ fun PgnTextViewer(
     val annotated = buildAnnotatedString {
         if (sanHistory.isEmpty()) {
             withStyle(SpanStyle(color = dimFg)) { append("No moves yet.") }
-        } else {
+        }
+        else {
             sanHistory.forEachIndexed { index, san ->
                 if (index > 0) append(" ")
                 if (index % 2 == 0) {
@@ -288,8 +292,9 @@ fun PgnTextViewer(
                     append(" ")
                 }
                 val isCurrent = index == currentMoveIndex
-                val spanStyle = if (isCurrent) SpanStyle(background = highlightBg, color = highlightFg)
-                                else SpanStyle(color = normalFg)
+                val spanStyle =
+                    if (isCurrent) SpanStyle(background = highlightBg, color = highlightFg)
+                    else SpanStyle(color = normalFg)
                 if (onMoveClick != null) {
                     val idx = index
                     pushLink(LinkAnnotation.Clickable(
@@ -299,7 +304,8 @@ fun PgnTextViewer(
                     ))
                     append(san)
                     pop()
-                } else {
+                }
+                else {
                     withStyle(spanStyle) { append(san) }
                 }
             }

@@ -3,23 +3,26 @@ package com.example.chessrepertoiretrainer.feature.analysis
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Flip
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chessrepertoiretrainer.core.chess.ui.BottomBarButton
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
 import com.example.chessrepertoiretrainer.core.chess.ui.DeeperButton
 import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
-import com.example.chessrepertoiretrainer.core.chess.ui.MoveNavControls
 import com.example.chessrepertoiretrainer.core.chess.ui.PgnTextViewer
 
 @Composable
@@ -70,21 +73,12 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
             )
         },
         bottomBar = {
-            ChessBottomBar(
-                startContent = {
-                    OutlinedButton(onClick = { chessCtrl.flipBoard() }) { Text("Flip") }
-                    OutlinedButton(
-                        onClick = { chessCtrl.resetBoard() },
-                        modifier = Modifier.padding(start = 8.dp),
-                    ) { Text("Reset") }
-                },
-                endContent = {
-                    MoveNavControls(
-                        onBack = { chessCtrl.navigateBack() },
-                        onForward = { chessCtrl.navigateForward() },
-                    )
-                },
-            )
+            ChessBottomBar {
+                BottomBarButton(Icons.Filled.Flip, "Flip", { chessCtrl.flipBoard() })
+                BottomBarButton(Icons.Filled.RestartAlt, "Reset", { chessCtrl.resetBoard() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Prev", { chessCtrl.navigateBack() })
+                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next", { chessCtrl.navigateForward() })
+            }
         },
     )
 }
