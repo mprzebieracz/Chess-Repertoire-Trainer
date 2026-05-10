@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.feature.settings.data.AppColorTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.AppThemeMode
 import com.example.chessrepertoiretrainer.feature.settings.data.BoardTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettings
@@ -51,6 +52,12 @@ class SettingsViewModel(private val repository: UserSettingsRepository,
     fun updateAppThemeMode(mode: AppThemeMode) {
         viewModelScope.launch {
             repository.updateAppThemeMode(mode)
+        }
+    }
+
+    fun updateAppColorTheme(theme: AppColorTheme) {
+        viewModelScope.launch {
+            repository.updateAppColorTheme(theme)
         }
     }
 

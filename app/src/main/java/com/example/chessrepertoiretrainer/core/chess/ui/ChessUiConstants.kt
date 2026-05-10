@@ -5,22 +5,30 @@ package com.example.chessrepertoiretrainer.core.chess.ui
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 internal object ChessUiConstants {
     object BoardFrame {
-        val shape = RoundedCornerShape(4.dp)
+        val shape = RectangleShape
         val shadowElevation = 8.dp
-        val borderWidth = 2.dp
+        val borderWidth = 0.dp
         val borderColor = Color(0xFF312E2B)
+    }
+
+    object ChessTopBar {
+        val height = 64.dp
+    }
+
+    object ChessBottomBar {
+        val height = 72.dp
     }
 
     object BoardHighlights {

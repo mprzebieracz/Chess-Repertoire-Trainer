@@ -13,6 +13,8 @@ import com.example.chessrepertoiretrainer.core.chess.ui.BlueBoardThemeColors
 import com.example.chessrepertoiretrainer.core.chess.ui.BrownBoardThemeColors
 import com.example.chessrepertoiretrainer.core.chess.ui.ClassicBoardThemeColors
 import com.example.chessrepertoiretrainer.core.chess.ui.LocalBoardThemeColors
+import com.example.chessrepertoiretrainer.core.chess.ui.NightBoardThemeColors
+import com.example.chessrepertoiretrainer.core.chess.ui.TournamentBoardThemeColors
 import com.example.chessrepertoiretrainer.core.navigation.AppNavigation
 import com.example.chessrepertoiretrainer.core.ui.theme.ChessRepertoireTrainerTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.AppThemeMode
@@ -39,15 +41,18 @@ class MainActivity : ComponentActivity() {
             }
 
             val boardColors = when (settingsState.boardTheme) {
-                BoardTheme.CLASSIC -> ClassicBoardThemeColors
-                BoardTheme.BLUE -> BlueBoardThemeColors
-                BoardTheme.BROWN -> BrownBoardThemeColors
+                BoardTheme.CLASSIC    -> ClassicBoardThemeColors
+                BoardTheme.BLUE       -> BlueBoardThemeColors
+                BoardTheme.BROWN      -> BrownBoardThemeColors
+                BoardTheme.TOURNAMENT -> TournamentBoardThemeColors
+                BoardTheme.NIGHT      -> NightBoardThemeColors
             }
 
             val useDynamic = settingsState.useDynamicColors
 
             ChessRepertoireTrainerTheme(darkTheme = darkTheme ?: isSystemInDarkTheme(),
-                                        dynamicColor = useDynamic) {
+                                        dynamicColor = useDynamic,
+                                        appColorTheme = settingsState.appColorTheme) {
                 CompositionLocalProvider(LocalBoardThemeColors provides boardColors) {
                     AppNavigation(settingsViewModel)
                 }

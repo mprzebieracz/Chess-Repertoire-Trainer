@@ -19,11 +19,14 @@ private val Context.settingsDataStore by preferencesDataStore(name = SETTINGS_DA
 
 enum class AppThemeMode { SYSTEM, LIGHT, DARK }
 
-enum class BoardTheme { CLASSIC, BLUE, BROWN }
+enum class AppColorTheme { DARK_WOOD, LICHESS, WARM_LIGHT }
+
+enum class BoardTheme { CLASSIC, BLUE, BROWN, TOURNAMENT, NIGHT }
 
 data class UserSettings(val lichessUsername: String = "",
                         val chessComUsername: String = "",
                         val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
+                        val appColorTheme: AppColorTheme = AppColorTheme.DARK_WOOD,
                         val boardTheme: BoardTheme = BoardTheme.CLASSIC,
                         val useDynamicColors: Boolean = true,
                         val defaultOnlinePlatform: String = "lichess",
@@ -39,6 +42,7 @@ class UserSettingsRepository(private val context: Context) {
         val LICHESS_USERNAME = stringPreferencesKey("lichess_username")
         val CHESSCOM_USERNAME = stringPreferencesKey("chesscom_username")
         val APP_THEME_MODE = stringPreferencesKey("app_theme_mode")
+        val APP_COLOR_THEME = stringPreferencesKey("app_color_theme")
         val BOARD_THEME = stringPreferencesKey("board_theme")
         val USE_DYNAMIC_COLORS = booleanPreferencesKey("use_dynamic_colors")
         val DEFAULT_ONLINE_PLATFORM = stringPreferencesKey("default_online_platform")
@@ -62,6 +66,9 @@ class UserSettingsRepository(private val context: Context) {
                      appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
                          runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
                      } ?: AppThemeMode.SYSTEM,
+                     appColorTheme = prefs[Keys.APP_COLOR_THEME]?.let { stored ->
+                         runCatching { AppColorTheme.valueOf(stored) }.getOrDefault(AppColorTheme.DARK_WOOD)
+                     } ?: AppColorTheme.DARK_WOOD,
                      boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
                          runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
                      } ?: BoardTheme.CLASSIC,
@@ -89,6 +96,12 @@ class UserSettingsRepository(private val context: Context) {
     suspend fun updateAppThemeMode(mode: AppThemeMode) {
         context.settingsDataStore.edit { prefs ->
             prefs[Keys.APP_THEME_MODE] = mode.name
+        }
+    }
+
+    suspend fun updateAppColorTheme(theme: AppColorTheme) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[Keys.APP_COLOR_THEME] = theme.name
         }
     }
 

@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
+import com.example.chessrepertoiretrainer.feature.settings.data.AppColorTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.AppThemeMode
 import com.example.chessrepertoiretrainer.feature.settings.data.BoardTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettings
@@ -72,6 +73,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                             viewModel.updateChessComUsername(chessComInput)
                         },
                         onThemeModeChange = viewModel::updateAppThemeMode,
+                        onColorThemeChange = viewModel::updateAppColorTheme,
                         onBoardThemeChange = viewModel::updateBoardTheme,
                         onPlatformChange = viewModel::updateDefaultOnlinePlatform,
                         onDynamicColorsChange = viewModel::updateUseDynamicColors,
@@ -130,6 +132,7 @@ private fun SettingsContent(settings: UserSettings,
                             onChessComInputChange: (String) -> Unit,
                             onSaveUsernames: () -> Unit,
                             onThemeModeChange: (AppThemeMode) -> Unit,
+                            onColorThemeChange: (AppColorTheme) -> Unit,
                             onBoardThemeChange: (BoardTheme) -> Unit,
                             onPlatformChange: (String) -> Unit,
                             onDynamicColorsChange: (Boolean) -> Unit,
@@ -145,6 +148,7 @@ private fun SettingsContent(settings: UserSettings,
 
     AppearanceSection(settings = settings,
                       onThemeModeChange = onThemeModeChange,
+                      onColorThemeChange = onColorThemeChange,
                       onBoardThemeChange = onBoardThemeChange)
 
     DefaultPlatformSection(selectedPlatform = settings.defaultOnlinePlatform,
@@ -233,10 +237,12 @@ private fun SaveStatusMessage(screenState: SettingsUiState) {
 @Composable
 private fun AppearanceSection(settings: UserSettings,
                               onThemeModeChange: (AppThemeMode) -> Unit,
+                              onColorThemeChange: (AppColorTheme) -> Unit,
                               onBoardThemeChange: (BoardTheme) -> Unit) {
     SectionHeader(text = "Appearance", modifier = Modifier.padding(top = 8.dp))
 
     ThemeModeSelector(current = settings.appThemeMode, onChange = onThemeModeChange)
+    ColorThemeSelector(current = settings.appColorTheme, onChange = onColorThemeChange)
     BoardThemeSelector(current = settings.boardTheme, onChange = onBoardThemeChange)
 }
 
@@ -265,7 +271,7 @@ private fun DynamicColorsSection(useDynamicColors: Boolean,
         verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Dynamic Material colors")
-            Text(text = "Use system-derived colors on Android 12+",
+            Text(text = "Use system-derived colors on Android 12+ (overrides Color theme above)",
                  style = MaterialTheme.typography.bodySmall)
         }
         Switch(checked = useDynamicColors,
@@ -331,6 +337,42 @@ private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun ColorThemeSelector(current: AppColorTheme, onChange: (AppColorTheme) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Color theme")
+        Row(modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(text = when (current) {
+                AppColorTheme.DARK_WOOD  -> "Dark Wood (chess.com)"
+                AppColorTheme.LICHESS    -> "Lichess Green"
+                AppColorTheme.WARM_LIGHT -> "Warm Parchment"
+            })
+            IconButton(onClick = { expanded = true }) {
+                Icon(AppIcons.Settings, contentDescription = "Change color theme")
+            }
+        }
+
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(text = { Text("Dark Wood (chess.com)") }, onClick = {
+                onChange(AppColorTheme.DARK_WOOD)
+                expanded = false
+            })
+            DropdownMenuItem(text = { Text("Lichess Green") }, onClick = {
+                onChange(AppColorTheme.LICHESS)
+                expanded = false
+            })
+            DropdownMenuItem(text = { Text("Warm Parchment") }, onClick = {
+                onChange(AppColorTheme.WARM_LIGHT)
+                expanded = false
+            })
+        }
+    }
+}
+
+@Composable
 private fun ThemeModeSelector(current: AppThemeMode, onChange: (AppThemeMode) -> Unit) {
     val systemIsDark = isSystemInDarkTheme()
     val isDarkChecked = when (current) {
@@ -363,9 +405,11 @@ private fun BoardThemeSelector(current: BoardTheme, onChange: (BoardTheme) -> Un
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = when (current) {
-                BoardTheme.CLASSIC -> "Classic green"
-                BoardTheme.BLUE -> "Blue"
-                BoardTheme.BROWN -> "Brown"
+                BoardTheme.CLASSIC    -> "Classic green"
+                BoardTheme.BLUE       -> "Blue"
+                BoardTheme.BROWN      -> "Brown"
+                BoardTheme.TOURNAMENT -> "Tournament (red)"
+                BoardTheme.NIGHT      -> "Night (slate blue)"
             })
             IconButton(onClick = { expanded = true }) {
                 Icon(AppIcons.TrainChapter, contentDescription = "Change board theme")
@@ -383,6 +427,14 @@ private fun BoardThemeSelector(current: BoardTheme, onChange: (BoardTheme) -> Un
             })
             DropdownMenuItem(text = { Text("Brown") }, onClick = {
                 onChange(BoardTheme.BROWN)
+                expanded = false
+            })
+            DropdownMenuItem(text = { Text("Tournament (red)") }, onClick = {
+                onChange(BoardTheme.TOURNAMENT)
+                expanded = false
+            })
+            DropdownMenuItem(text = { Text("Night (slate blue)") }, onClick = {
+                onChange(BoardTheme.NIGHT)
                 expanded = false
             })
         }

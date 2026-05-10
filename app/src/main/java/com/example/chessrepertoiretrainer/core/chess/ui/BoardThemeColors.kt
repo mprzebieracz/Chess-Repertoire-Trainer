@@ -14,4 +14,10 @@ val BlueBoardThemeColors =
 val BrownBoardThemeColors =
     BoardThemeColors(lightSquare = Color(0xFFF0E0D0), darkSquare = Color(0xFFB58863))
 
+val TournamentBoardThemeColors =
+    BoardThemeColors(lightSquare = Color(0xFFF0D9B5), darkSquare = Color(0xFFB04040))
+
+val NightBoardThemeColors =
+    BoardThemeColors(lightSquare = Color(0xFF9EAEC0), darkSquare = Color(0xFF314962))
+
 val LocalBoardThemeColors = staticCompositionLocalOf { ClassicBoardThemeColors }
