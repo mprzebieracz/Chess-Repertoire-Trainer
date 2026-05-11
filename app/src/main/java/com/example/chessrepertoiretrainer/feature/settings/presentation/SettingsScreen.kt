@@ -346,9 +346,10 @@ private fun ColorThemeSelector(current: AppColorTheme, onChange: (AppColorTheme)
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
             Text(text = when (current) {
-                AppColorTheme.DARK_WOOD -> "Dark Wood (chess.com)"
-                AppColorTheme.LICHESS -> "Lichess Green"
-                AppColorTheme.WARM_LIGHT -> "Warm Parchment"
+                AppColorTheme.WARM_BROWN -> "Warm Brown"
+                AppColorTheme.FOREST_GREEN -> "Forest Green"
+                AppColorTheme.WARM_CREAM -> "Warm Cream"
+                AppColorTheme.VELVET_PINK -> "Velvet Pink"
             })
             IconButton(onClick = { expanded = true }) {
                 Icon(AppIcons.Settings, contentDescription = "Change color theme")
@@ -356,16 +357,20 @@ private fun ColorThemeSelector(current: AppColorTheme, onChange: (AppColorTheme)
         }
 
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("Dark Wood (chess.com)") }, onClick = {
-                onChange(AppColorTheme.DARK_WOOD)
+            DropdownMenuItem(text = { Text("Warm Brown") }, onClick = {
+                onChange(AppColorTheme.WARM_BROWN)
                 expanded = false
             })
-            DropdownMenuItem(text = { Text("Lichess Green") }, onClick = {
-                onChange(AppColorTheme.LICHESS)
+            DropdownMenuItem(text = { Text("Forest Green") }, onClick = {
+                onChange(AppColorTheme.FOREST_GREEN)
                 expanded = false
             })
-            DropdownMenuItem(text = { Text("Warm Parchment") }, onClick = {
-                onChange(AppColorTheme.WARM_LIGHT)
+            DropdownMenuItem(text = { Text("Warm Cream") }, onClick = {
+                onChange(AppColorTheme.WARM_CREAM)
+                expanded = false
+            })
+            DropdownMenuItem(text = { Text("Velvet Pink") }, onClick = {
+                onChange(AppColorTheme.VELVET_PINK)
                 expanded = false
             })
         }
@@ -408,7 +413,7 @@ private fun BoardThemeSelector(current: BoardTheme, onChange: (BoardTheme) -> Un
                 BoardTheme.CLASSIC -> "Classic green"
                 BoardTheme.BLUE -> "Blue"
                 BoardTheme.BROWN -> "Brown"
-                BoardTheme.TOURNAMENT -> "Tournament (red)"
+                BoardTheme.RED -> "Tournament (red)"
                 BoardTheme.NIGHT -> "Night (slate blue)"
             })
             IconButton(onClick = { expanded = true }) {
@@ -430,7 +435,7 @@ private fun BoardThemeSelector(current: BoardTheme, onChange: (BoardTheme) -> Un
                 expanded = false
             })
             DropdownMenuItem(text = { Text("Tournament (red)") }, onClick = {
-                onChange(BoardTheme.TOURNAMENT)
+                onChange(BoardTheme.RED)
                 expanded = false
             })
             DropdownMenuItem(text = { Text("Night (slate blue)") }, onClick = {

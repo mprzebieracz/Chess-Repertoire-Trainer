@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
                 BoardTheme.CLASSIC -> ClassicBoardThemeColors
                 BoardTheme.BLUE -> BlueBoardThemeColors
                 BoardTheme.BROWN -> BrownBoardThemeColors
-                BoardTheme.TOURNAMENT -> TournamentBoardThemeColors
+                BoardTheme.RED -> TournamentBoardThemeColors
                 BoardTheme.NIGHT -> NightBoardThemeColors
             }
 

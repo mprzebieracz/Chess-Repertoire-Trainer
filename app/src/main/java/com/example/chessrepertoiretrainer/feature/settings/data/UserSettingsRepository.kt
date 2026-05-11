@@ -19,14 +19,14 @@ private val Context.settingsDataStore by preferencesDataStore(name = SETTINGS_DA
 
 enum class AppThemeMode { SYSTEM, LIGHT, DARK }
 
-enum class AppColorTheme { DARK_WOOD, LICHESS, WARM_LIGHT }
+enum class AppColorTheme { WARM_BROWN, FOREST_GREEN, WARM_CREAM, VELVET_PINK }
 
-enum class BoardTheme { CLASSIC, BLUE, BROWN, TOURNAMENT, NIGHT }
+enum class BoardTheme { CLASSIC, BLUE, BROWN, RED, NIGHT }
 
 data class UserSettings(val lichessUsername: String = "",
                         val chessComUsername: String = "",
                         val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
-                        val appColorTheme: AppColorTheme = AppColorTheme.DARK_WOOD,
+                        val appColorTheme: AppColorTheme = AppColorTheme.WARM_BROWN,
                         val boardTheme: BoardTheme = BoardTheme.CLASSIC,
                         val useDynamicColors: Boolean = true,
                         val defaultOnlinePlatform: String = "lichess",
@@ -61,14 +61,21 @@ class UserSettingsRepository(private val context: Context) {
             throw exception
         }
     }.map { prefs ->
+        fun parseAppColorTheme(stored: String?): AppColorTheme = when (stored) {
+            "DARK_WOOD", "WARM_BROWN" -> AppColorTheme.WARM_BROWN
+            "VERDANT", "FOREST_GREEN", "GREEN" -> AppColorTheme.FOREST_GREEN
+            "WARM_LIGHT", "WARM_CREAM" -> AppColorTheme.WARM_CREAM
+            "CHESSLY_PINK", "VELVET_PINK" -> AppColorTheme.VELVET_PINK
+            null -> AppColorTheme.WARM_BROWN
+            else -> runCatching { AppColorTheme.valueOf(stored) }.getOrDefault(AppColorTheme.WARM_BROWN)
+        }
+
         UserSettings(lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
                      chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
                      appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
                          runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
                      } ?: AppThemeMode.SYSTEM,
-                     appColorTheme = prefs[Keys.APP_COLOR_THEME]?.let { stored ->
-                         runCatching { AppColorTheme.valueOf(stored) }.getOrDefault(AppColorTheme.DARK_WOOD)
-                     } ?: AppColorTheme.DARK_WOOD,
+                     appColorTheme = parseAppColorTheme(prefs[Keys.APP_COLOR_THEME]),
                      boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
                          runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
                      } ?: BoardTheme.CLASSIC,

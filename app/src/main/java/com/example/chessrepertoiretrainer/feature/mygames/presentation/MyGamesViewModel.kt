@@ -32,21 +32,22 @@ class MyGamesViewModel(private val syncManager: GameSyncManager,
 
     init {
         viewModelScope.launch {
-            val settings = settingsRepository.settingsFlow.first()
-            val lichessCount =
-                if (settings.lichessUsername.isNotBlank()) savedGameRepository.countGames("lichess",
-                                                                                          settings.lichessUsername)
-                else 0
-            val chessComCount =
-                if (settings.chessComUsername.isNotBlank()) savedGameRepository.countGames("chess.com",
-                                                                                           settings.chessComUsername)
-                else 0
-            _uiState.value = _uiState.value.copy(lichessUsername = settings.lichessUsername,
-                                                 chessComUsername = settings.chessComUsername,
-                                                 lichessGameCount = lichessCount,
-                                                 chessComGameCount = chessComCount,
-                                                 lichessLastSyncAt = settings.lichessLastSyncAt,
-                                                 chessComLastSyncAt = settings.chessComLastSyncAt)
+            settingsRepository.settingsFlow.collect { settings ->
+                val lichessCount =
+                    if (settings.lichessUsername.isNotBlank()) savedGameRepository.countGames("lichess",
+                                                                                              settings.lichessUsername)
+                    else 0
+                val chessComCount =
+                    if (settings.chessComUsername.isNotBlank()) savedGameRepository.countGames("chess.com",
+                                                                                               settings.chessComUsername)
+                    else 0
+                _uiState.value = _uiState.value.copy(lichessUsername = settings.lichessUsername,
+                                                     chessComUsername = settings.chessComUsername,
+                                                     lichessGameCount = lichessCount,
+                                                     chessComGameCount = chessComCount,
+                                                     lichessLastSyncAt = settings.lichessLastSyncAt,
+                                                     chessComLastSyncAt = settings.chessComLastSyncAt)
+            }
         }
     }
 
