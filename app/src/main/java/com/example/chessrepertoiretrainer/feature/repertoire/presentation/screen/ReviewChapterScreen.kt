@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -123,20 +124,17 @@ private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiSta
                          style = MaterialTheme.typography.bodySmall,
                          fontWeight = FontWeight.SemiBold)
                 }
-                uiState.myColor?.let {
-                    Text("You play $it",
-                         style = MaterialTheme.typography.bodySmall,
-                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                }
                 val comment = uiState.currentMoveComment
                 if (!comment.isNullOrBlank()) {
                     Card(
                         modifier = Modifier.padding(top = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                        shape = RectangleShape,
                     ) {
-                        Text(text = comment,
-                             style = MaterialTheme.typography.bodyMedium,
-                             modifier = Modifier.padding(12.dp))
+                        Text(
+                            text = comment,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                 }
                 uiState.statusMessage?.let {

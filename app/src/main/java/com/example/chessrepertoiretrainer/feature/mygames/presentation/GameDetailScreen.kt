@@ -31,7 +31,7 @@ import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
 import com.example.chessrepertoiretrainer.core.chess.ui.DeeperButton
 import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
-import com.example.chessrepertoiretrainer.core.chess.ui.PgnViewer
+import com.example.chessrepertoiretrainer.core.chess.ui.PgnTextViewer
 import com.example.chessrepertoiretrainer.feature.analysis.EngineToggleButton
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.ComplianceStatus
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
@@ -97,9 +97,7 @@ fun GameDetailScreen(
             }
         },
         contentBar = {
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())) {
+            Column(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(game.opponentName,
@@ -130,10 +128,10 @@ fun GameDetailScreen(
                                     modifier = Modifier.padding(horizontal = 16.dp,
                                                                 vertical = 4.dp))
                 }
-                PgnViewer(sanHistory = chessCtrl.sanHistory,
-                          currentMoveIndex = chessCtrl.currentMoveIndex,
-                          onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
-                          modifier = Modifier.height(64.dp))
+                PgnTextViewer(sanHistory = chessCtrl.sanHistory,
+                              currentMoveIndex = chessCtrl.currentMoveIndex,
+                              onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
+                              modifier = Modifier.weight(1f))
             }
         },
         bottomBar = {

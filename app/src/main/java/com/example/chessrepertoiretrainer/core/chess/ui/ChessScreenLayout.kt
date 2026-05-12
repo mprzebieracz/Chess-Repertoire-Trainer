@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -16,19 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,9 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -205,81 +195,6 @@ fun RowScope.BottomBarButton(
 }
 
 // ---------------------------------------------------------------------------
-// PGN viewer
-// ---------------------------------------------------------------------------
-
-@Composable
-fun PgnViewer(
-    sanHistory: List<String>,
-    currentMoveIndex: Int,
-    onMoveClick: ((Int) -> Unit)?,
-    modifier: Modifier = Modifier,
-) {
-    val listState = rememberLazyListState()
-    LaunchedEffect(currentMoveIndex) {
-        if (currentMoveIndex >= 0) listState.animateScrollToItem(currentMoveIndex)
-    }
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = ChessUiConstants.ScreenChrome.Pgn.horizontalPadding,
-                vertical = ChessUiConstants.ScreenChrome.Pgn.verticalPadding,
-            ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(ChessUiConstants.ScreenChrome.Pgn.cornerRadius),
-    ) {
-        if (sanHistory.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                Text(
-                    text = "Waiting for moves...",
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = ChessUiConstants.ScreenChrome.Pgn.textFontSize,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(horizontal = ChessUiConstants.ScreenChrome.Pgn.textHorizontalPadding),
-                )
-            }
-        }
-        else {
-            LazyRow(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.CenterVertically,
-                contentPadding = PaddingValues(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                itemsIndexed(sanHistory) { index, san ->
-                    val isCurrent = index == currentMoveIndex
-                    val label = if (index % 2 == 0) "${index / 2 + 1}. $san" else san
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(
-                                if (isCurrent) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surface,
-                            )
-                            .then(
-                                if (onMoveClick != null) Modifier.clickable { onMoveClick(index) }
-                                else Modifier.alpha(0.5f),
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                    ) {
-                        Text(
-                            text = label,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = ChessUiConstants.ScreenChrome.Pgn.textFontSize,
-                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isCurrent) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
 // Flowing PGN text view — left-to-right, top-to-bottom, vertically scrollable.
 // Placeholder until a proper tree-aware PGN is implemented.
 // ---------------------------------------------------------------------------
@@ -335,7 +250,7 @@ fun PgnTextViewer(
 
     Text(
         text = annotated,
-        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
+        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 15.sp),
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(scrollState)
