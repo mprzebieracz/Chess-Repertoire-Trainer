@@ -90,7 +90,6 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
                     analysis = engineAnalysis,
                     searchState = engineSearchState,
                     isFlipped = chessCtrl.isFlipped,
-                    onDeeperClick = viewModel::analyzeDeeper,
                 )
             }
         },

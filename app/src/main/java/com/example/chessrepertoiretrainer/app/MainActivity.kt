@@ -14,7 +14,7 @@ import com.example.chessrepertoiretrainer.core.chess.ui.BrownBoardThemeColors
 import com.example.chessrepertoiretrainer.core.chess.ui.ClassicBoardThemeColors
 import com.example.chessrepertoiretrainer.core.chess.ui.LocalBoardThemeColors
 import com.example.chessrepertoiretrainer.core.chess.ui.NightBoardThemeColors
-import com.example.chessrepertoiretrainer.core.chess.ui.TournamentBoardThemeColors
+import com.example.chessrepertoiretrainer.core.chess.ui.RedBoardThemeColors
 import com.example.chessrepertoiretrainer.core.navigation.AppNavigation
 import com.example.chessrepertoiretrainer.core.ui.theme.ChessRepertoireTrainerTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.AppThemeMode
@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
                 BoardTheme.CLASSIC -> ClassicBoardThemeColors
                 BoardTheme.BLUE -> BlueBoardThemeColors
                 BoardTheme.BROWN -> BrownBoardThemeColors
-                BoardTheme.RED -> TournamentBoardThemeColors
+                BoardTheme.RED -> RedBoardThemeColors
                 BoardTheme.NIGHT -> NightBoardThemeColors
             }
 

@@ -222,7 +222,7 @@ private fun CourseChapterActionsRow(chapterId: Int,
         }
         FilledTonalButton(onClick = { onOpenChapterReview(chapterId) },
                           modifier = Modifier.weight(1f)) {
-            Icon(AppIcons.Engine, contentDescription = null, modifier = Modifier.size(16.dp))
+            Icon(AppIcons.Engine, contentDescription = null, modifier = Modifier.size(13.dp))
             Spacer(Modifier.width(4.dp))
             Text("Review")
         }

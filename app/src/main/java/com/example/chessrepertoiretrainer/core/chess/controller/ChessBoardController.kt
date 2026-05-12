@@ -1,6 +1,7 @@
 package com.example.chessrepertoiretrainer.core.chess.controller
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
@@ -26,7 +27,7 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
 
     override var boardState by mutableStateOf(board.fen)
         private set
-    override var currentMoveIndex by mutableStateOf(-1)
+    override var currentMoveIndex by mutableIntStateOf(-1)
         private set
     override var selectedSquare by mutableStateOf<Square?>(null)
         private set

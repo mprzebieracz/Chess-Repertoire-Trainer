@@ -39,10 +39,6 @@ fun TrainScreen(
 
     val title = buildString {
         uiState.currentLineName?.let { append(it) }
-        uiState.currentChapterName?.let { name ->
-            if (isNotEmpty()) append(" · ")
-            append(name)
-        }
         if (isEmpty()) append("Train")
     }
 

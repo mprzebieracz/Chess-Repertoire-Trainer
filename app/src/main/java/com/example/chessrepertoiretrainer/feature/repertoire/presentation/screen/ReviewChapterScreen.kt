@@ -82,7 +82,6 @@ fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Un
                     analysis = engineAnalysis,
                     searchState = engineSearchState,
                     isFlipped = chessCtrl.isFlipped,
-                    onDeeperClick = viewModel::analyzeDeeper,
                 )
             }
         },

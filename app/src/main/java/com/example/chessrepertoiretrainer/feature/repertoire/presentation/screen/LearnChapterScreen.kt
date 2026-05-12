@@ -22,6 +22,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -139,16 +140,12 @@ private fun LearnContentArea(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                 }
-                uiState.myColor?.let {
-                    Text(text = "You play $it",
-                         style = MaterialTheme.typography.bodySmall,
-                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                }
                 Card(
                     modifier = Modifier.padding(top = 8.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                    shape = RectangleShape,
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column(modifier = Modifier.padding(0.dp)) {
                         uiState.statusMessage?.let {
                             Text(text = it,
                                  style = MaterialTheme.typography.bodySmall,
@@ -156,12 +153,7 @@ private fun LearnContentArea(
                             Spacer(Modifier.height(4.dp))
                         }
                         val comment = uiState.currentMoveComment
-                        if (comment.isNullOrBlank()) {
-                            Text("No comment for this move.",
-                                 style = MaterialTheme.typography.bodySmall,
-                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        else {
+                        if (!comment.isNullOrBlank()) {
                             Text(text = comment, style = MaterialTheme.typography.bodyMedium)
                         }
                         if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {

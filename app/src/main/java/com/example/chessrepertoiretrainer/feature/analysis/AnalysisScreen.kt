@@ -62,7 +62,6 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
                     analysis = engineAnalysis,
                     searchState = engineSearchState,
                     isFlipped = chessCtrl.isFlipped,
-                    onDeeperClick = viewModel::analyzeDeeper,
                 )
             }
         },

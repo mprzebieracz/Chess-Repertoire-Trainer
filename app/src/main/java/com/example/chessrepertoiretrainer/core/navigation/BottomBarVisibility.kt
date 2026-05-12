@@ -13,12 +13,14 @@ private val hiddenRoutePrefixes = listOf(
     Screen.LineEditor,
     Screen.ChapterLearn,
     Screen.ChapterReview,
+    Screen.ChapterTraining,
     Screen.LineTraining,
     Screen.EditCourse,
     Screen.EditChapter,
     Screen.OpeningTree,
     Screen.GameDetail,
     Screen.AccountStats,
+    Screen.Train,
 ).map { it.route.substringBefore("/") }
 
 fun shouldShowBottomBar(destination: NavDestination?): Boolean {

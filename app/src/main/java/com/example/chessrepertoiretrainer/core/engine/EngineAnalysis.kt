@@ -13,7 +13,7 @@ data class EngineAnalysis(val centipawns: Int?,
 
     val scoreLabel: String
         get() {
-            if (mateIn != null) return if (mateIn > 0) "+M$mateIn" else "-M${-mateIn}"
+            if (mateIn != null) return if (mateIn > 0) "M$mateIn" else "-M${-mateIn}"
             val cp = centipawns ?: return "0.00"
             val pawns = cp / 100.0
             return if (pawns >= 0) "+%.1f".format(pawns) else "%.1f".format(pawns)

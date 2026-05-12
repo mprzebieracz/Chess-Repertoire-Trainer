@@ -107,7 +107,6 @@ fun EngineSection(
     analysis: EngineAnalysis?,
     searchState: EngineSearchState,
     isFlipped: Boolean,
-    onDeeperClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {

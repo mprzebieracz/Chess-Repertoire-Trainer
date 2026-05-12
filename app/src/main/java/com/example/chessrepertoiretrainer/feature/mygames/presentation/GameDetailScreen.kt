@@ -93,8 +93,7 @@ fun GameDetailScreen(
             if (isEngineEnabled) {
                 EngineSection(analysis = engineAnalysis,
                               searchState = engineSearchState,
-                              isFlipped = chessCtrl.isFlipped,
-                              onDeeperClick = viewModel::analyzeDeeper)
+                              isFlipped = chessCtrl.isFlipped)
             }
         },
         contentBar = {

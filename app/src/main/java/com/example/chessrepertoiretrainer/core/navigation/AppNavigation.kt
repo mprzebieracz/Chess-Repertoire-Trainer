@@ -26,7 +26,7 @@ fun AppNavigation(settingsViewModel: SettingsViewModel) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val showBottomBar = shouldShowBottomBar(navBackStackEntry?.destination)
-
+ 
     Scaffold(bottomBar = {
         if (showBottomBar) AppBottomBar(navController)
     }) { innerPadding ->

@@ -6,6 +6,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -32,18 +34,26 @@ fun AppBottomBar(navController: NavHostController) {
             val selected =
                 currentDestination?.hierarchy?.any { it.route == screen.route } == true || isRepertoireFlow
 
-            NavigationBarItem(icon = { Icon(screen.icon, contentDescription = screen.title) },
-                              label = { Text(screen.title) },
-                              selected = selected,
-                              onClick = {
-                                  navController.navigate(screen.route) {
-                                      popUpTo(navController.graph.findStartDestination().id) {
-                                          saveState = true
-                                      }
-                                      launchSingleTop = true
-                                      restoreState = true
-                                  }
-                              })
+            NavigationBarItem(icon = {
+                Icon(
+                    screen.icon,
+                    contentDescription = screen.title,
+                )
+            }, label = {
+                Text(text = screen.title,
+                     fontSize = 13.sp,
+                     maxLines = 1,
+                     softWrap = false,
+                     overflow = TextOverflow.Visible)
+            }, selected = selected, onClick = {
+                navController.navigate(screen.route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            })
         }
     }
 }
