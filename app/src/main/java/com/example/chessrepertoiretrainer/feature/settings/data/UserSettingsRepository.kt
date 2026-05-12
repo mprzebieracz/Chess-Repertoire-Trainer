@@ -23,18 +23,20 @@ enum class AppColorTheme { WARM_BROWN, FOREST_GREEN, WARM_CREAM, VELVET_PINK }
 
 enum class BoardTheme { CLASSIC, BLUE, BROWN, RED, NIGHT }
 
-data class UserSettings(val lichessUsername: String = "",
-                        val chessComUsername: String = "",
-                        val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
-                        val appColorTheme: AppColorTheme = AppColorTheme.WARM_BROWN,
-                        val boardTheme: BoardTheme = BoardTheme.CLASSIC,
-                        val useDynamicColors: Boolean = true,
-                        val defaultOnlinePlatform: String = "lichess",
-                        val lichessLastSyncAt: Long = 0L,
-                        val chessComLastSyncAt: Long = 0L,
-                        val engineDepth: Int = 18,
-                        val engineMovetime: Int = 2000,
-                        val engineThreads: Int = 2)
+data class UserSettings(
+    val lichessUsername: String = "",
+    val chessComUsername: String = "",
+    val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
+    val appColorTheme: AppColorTheme = AppColorTheme.WARM_BROWN,
+    val boardTheme: BoardTheme = BoardTheme.CLASSIC,
+    val useDynamicColors: Boolean = true,
+    val defaultOnlinePlatform: String = "lichess",
+    val lichessLastSyncAt: Long = 0L,
+    val chessComLastSyncAt: Long = 0L,
+    val engineDepth: Int = 18,
+    val engineMovetime: Int = 2000,
+    val engineThreads: Int = 2
+)
 
 class UserSettingsRepository(private val context: Context) {
 
@@ -56,8 +58,7 @@ class UserSettingsRepository(private val context: Context) {
     val settingsFlow: Flow<UserSettings> = context.settingsDataStore.data.catch { exception ->
         if (exception is IOException) {
             emit(emptyPreferences())
-        }
-        else {
+        } else {
             throw exception
         }
     }.map { prefs ->
@@ -70,22 +71,23 @@ class UserSettingsRepository(private val context: Context) {
             else -> runCatching { AppColorTheme.valueOf(stored) }.getOrDefault(AppColorTheme.WARM_BROWN)
         }
 
-        UserSettings(lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
-                     chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
-                     appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
-                         runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
-                     } ?: AppThemeMode.SYSTEM,
-                     appColorTheme = parseAppColorTheme(prefs[Keys.APP_COLOR_THEME]),
-                     boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
-                         runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
-                     } ?: BoardTheme.CLASSIC,
-                     useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
-                     defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess",
-                     lichessLastSyncAt = prefs[Keys.LICHESS_LAST_SYNC_AT] ?: 0L,
-                     chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L,
-                     engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 20,
-                     engineMovetime = prefs[Keys.ENGINE_MOVETIME] ?: 2000,
-                     engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2)
+        UserSettings(
+            lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
+            chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
+            appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
+                runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
+            } ?: AppThemeMode.SYSTEM,
+            appColorTheme = parseAppColorTheme(prefs[Keys.APP_COLOR_THEME]),
+            boardTheme = prefs[Keys.BOARD_THEME]?.let { stored ->
+                runCatching { BoardTheme.valueOf(stored) }.getOrDefault(BoardTheme.CLASSIC)
+            } ?: BoardTheme.CLASSIC,
+            useDynamicColors = prefs[Keys.USE_DYNAMIC_COLORS] ?: true,
+            defaultOnlinePlatform = prefs[Keys.DEFAULT_ONLINE_PLATFORM] ?: "lichess",
+            lichessLastSyncAt = prefs[Keys.LICHESS_LAST_SYNC_AT] ?: 0L,
+            chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L,
+            engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 20,
+            engineMovetime = prefs[Keys.ENGINE_MOVETIME] ?: 2000,
+            engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2)
     }
 
     suspend fun updateLichessUsername(username: String) {

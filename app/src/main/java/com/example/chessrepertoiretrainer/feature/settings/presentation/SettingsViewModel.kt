@@ -19,29 +19,38 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(private val repository: UserSettingsRepository,
-                        private val updateSettingUseCase: UpdateSettingUseCase) : ViewModel() {
+class SettingsViewModel(
+    private val repository: UserSettingsRepository,
+    private val updateSettingUseCase: UpdateSettingUseCase
+) : ViewModel() {
 
-    val settings: StateFlow<UserSettings> = repository.settingsFlow.stateIn(scope = viewModelScope,
-                                                                            started = SharingStarted.WhileSubscribed(
-                                                                                5_000),
-                                                                            initialValue = UserSettings())
+    val settings: StateFlow<UserSettings> = repository.settingsFlow.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(
+            5_000
+        ),
+        initialValue = UserSettings()
+    )
 
     private val _screenState = MutableStateFlow(SettingsUiState())
     val screenState: StateFlow<SettingsUiState> = _screenState.asStateFlow()
 
     fun updateLichessUsername(username: String) {
-        saveUsername(username = username,
-                     onSave = updateSettingUseCase::lichessUsername,
-                     successLogMessage = "Lichess username updated: $username",
-                     failureLogMessage = "Failed to update Lichess username")
+        saveUsername(
+            username = username,
+            onSave = updateSettingUseCase::lichessUsername,
+            successLogMessage = "Lichess username updated: $username",
+            failureLogMessage = "Failed to update Lichess username"
+        )
     }
 
     fun updateChessComUsername(username: String) {
-        saveUsername(username = username,
-                     onSave = updateSettingUseCase::chessComUsername,
-                     successLogMessage = "Chess.com username updated: $username",
-                     failureLogMessage = "Failed to update Chess.com username")
+        saveUsername(
+            username = username,
+            onSave = updateSettingUseCase::chessComUsername,
+            successLogMessage = "Chess.com username updated: $username",
+            failureLogMessage = "Failed to update Chess.com username"
+        )
     }
 
     fun clearTransientMessages() {
@@ -91,10 +100,12 @@ class SettingsViewModel(private val repository: UserSettingsRepository,
         viewModelScope.launch { repository.updateEngineThreads(threads) }
     }
 
-    private fun saveUsername(username: String,
-                             onSave: suspend (String) -> Result<Unit>,
-                             successLogMessage: String,
-                             failureLogMessage: String) {
+    private fun saveUsername(
+        username: String,
+        onSave: suspend (String) -> Result<Unit>,
+        successLogMessage: String,
+        failureLogMessage: String
+    ) {
         viewModelScope.launch {
             setSavingState()
             onSave(username).onSuccess {
@@ -102,22 +113,28 @@ class SettingsViewModel(private val repository: UserSettingsRepository,
                     _screenState.value.copy(isSaving = false, saveSuccessMessage = "Saved")
                 Log.d("SettingsViewModel", successLogMessage)
             }.onFailure { error ->
-                _screenState.value = _screenState.value.copy(isSaving = false,
-                                                             saveErrorMessage = error.message
-                                                                 ?: "Save failed")
+                _screenState.value = _screenState.value.copy(
+                    isSaving = false,
+                    saveErrorMessage = error.message
+                        ?: "Save failed"
+                )
                 Log.e("SettingsViewModel", failureLogMessage, error)
             }
         }
     }
 
     private fun setSavingState() {
-        _screenState.value = _screenState.value.copy(isSaving = true,
-                                                     saveErrorMessage = null,
-                                                     saveSuccessMessage = null)
+        _screenState.value = _screenState.value.copy(
+            isSaving = true,
+            saveErrorMessage = null,
+            saveSuccessMessage = null
+        )
     }
 
-    class Factory(private val repository: UserSettingsRepository,
-                  private val updateSettingUseCase: UpdateSettingUseCase) :
+    class Factory(
+        private val repository: UserSettingsRepository,
+        private val updateSettingUseCase: UpdateSettingUseCase
+    ) :
         ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

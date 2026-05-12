@@ -29,14 +29,18 @@ fun PuzzleTrainingScreen(viewModel: PuzzleTrainingViewModel, onBackClick: () -> 
         contentBar = { PuzzleContentBar(uiState = uiState) },
         bottomBar = {
             ChessBottomBar {
-                BottomBarButton(AppIcons.Hint,
-                                "Hint",
-                                viewModel::showHint,
-                                enabled = !uiState.isLoading && !uiState.isSessionComplete)
-                BottomBarButton(AppIcons.Solution,
-                                "Solution",
-                                viewModel::showSolution,
-                                enabled = !uiState.isLoading && !uiState.isSessionComplete)
+                BottomBarButton(
+                    AppIcons.Hint,
+                    "Hint",
+                    viewModel::showHint,
+                    enabled = !uiState.isLoading && !uiState.isSessionComplete
+                )
+                BottomBarButton(
+                    AppIcons.Solution,
+                    "Solution",
+                    viewModel::showSolution,
+                    enabled = !uiState.isLoading && !uiState.isSessionComplete
+                )
             }
         },
     )
@@ -51,8 +55,10 @@ private fun PuzzleContentBar(uiState: PuzzleTrainingUiState) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         when {
-            uiState.isLoading -> Text("Loading puzzle…",
-                                      style = MaterialTheme.typography.bodyMedium)
+            uiState.isLoading -> Text(
+                "Loading puzzle…",
+                style = MaterialTheme.typography.bodyMedium
+            )
 
             uiState.isSessionComplete -> Text(
                 text = uiState.statusMessage ?: "Daily puzzle complete!",
@@ -62,23 +68,31 @@ private fun PuzzleContentBar(uiState: PuzzleTrainingUiState) {
 
             else -> {
                 uiState.currentRating?.let {
-                    Text("Rating: $it",
-                         style = MaterialTheme.typography.bodyMedium,
-                         fontWeight = FontWeight.SemiBold)
+                    Text(
+                        "Rating: $it",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
                 uiState.currentThemes?.takeIf { it.isNotBlank() }?.let {
-                    Text("Themes: $it",
-                         style = MaterialTheme.typography.bodySmall,
-                         modifier = Modifier.padding(top = 2.dp))
+                    Text(
+                        "Themes: $it",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
                 uiState.userSideLabel?.let {
-                    Text("$it to move",
-                         style = MaterialTheme.typography.bodySmall,
-                         modifier = Modifier.padding(top = 2.dp))
+                    Text(
+                        "$it to move",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
-                if (uiState.attemptsForCurrent > 0) Text("Attempts: ${uiState.attemptsForCurrent}",
-                                                         style = MaterialTheme.typography.bodySmall,
-                                                         modifier = Modifier.padding(top = 2.dp))
+                if (uiState.attemptsForCurrent > 0) Text(
+                    "Attempts: ${uiState.attemptsForCurrent}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
                 val statusText = when {
                     uiState.lastMoveWasCorrect == true -> "Correct!"
                     uiState.lastMoveWasCorrect == false -> "Incorrect, try again"

@@ -18,11 +18,13 @@ fun AppBottomBar(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val items = listOf(Screen.Home,
-                       Screen.RepertoireMain,
-                       Screen.MyGames,
-                       Screen.OpeningTreeSearch,
-                       Screen.Settings)
+    val items = listOf(
+        Screen.Home,
+        Screen.RepertoireMain,
+        Screen.MyGames,
+        Screen.OpeningTreeSearch,
+        Screen.Settings
+    )
 
     NavigationBar {
         items.forEach { screen ->
@@ -40,11 +42,13 @@ fun AppBottomBar(navController: NavHostController) {
                     contentDescription = screen.title,
                 )
             }, label = {
-                Text(text = screen.title,
-                     fontSize = 13.sp,
-                     maxLines = 1,
-                     softWrap = false,
-                     overflow = TextOverflow.Visible)
+                Text(
+                    text = screen.title,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Visible
+                )
             }, selected = selected, onClick = {
                 navController.navigate(screen.route) {
                     popUpTo(navController.graph.findStartDestination().id) {

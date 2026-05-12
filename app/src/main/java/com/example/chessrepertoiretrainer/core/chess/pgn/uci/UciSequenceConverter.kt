@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.feature.puzzles.data
+package com.example.chessrepertoiretrainer.core.chess.pgn.uci
 
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.example.chessrepertoiretrainer.core.chess.domain.uciToMove

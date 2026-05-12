@@ -37,8 +37,7 @@ class HomeViewModel(private val puzzleRepository: PuzzleRepository) : ViewModel(
 
             val existing = try {
                 puzzleRepository.getTodaysPuzzle()
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 _dailyPuzzleState.value = DailyPuzzleState.Error(e.message ?: "Unknown error")
                 return@launch
             }
@@ -46,8 +45,7 @@ class HomeViewModel(private val puzzleRepository: PuzzleRepository) : ViewModel(
             if (existing != null) {
                 _dailyPuzzleState.value = if (existing.isSolved) {
                     DailyPuzzleState.Solved
-                }
-                else {
+                } else {
                     DailyPuzzleState.Available(existing.rating, existing.themes)
                 }
                 return@launch
@@ -57,16 +55,14 @@ class HomeViewModel(private val puzzleRepository: PuzzleRepository) : ViewModel(
 
             val fetched = try {
                 puzzleRepository.fetchAndSaveDailyPuzzle()
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 _dailyPuzzleState.value = DailyPuzzleState.Error(e.message ?: "Unknown error")
                 return@launch
             }
 
             _dailyPuzzleState.value = if (fetched != null) {
                 DailyPuzzleState.Available(fetched.rating, fetched.themes)
-            }
-            else {
+            } else {
                 DailyPuzzleState.Error("Could not fetch today's puzzle. Check your connection.")
             }
         }

@@ -50,9 +50,11 @@ class MainActivity : ComponentActivity() {
 
             val useDynamic = settingsState.useDynamicColors
 
-            ChessRepertoireTrainerTheme(darkTheme = darkTheme ?: isSystemInDarkTheme(),
-                                        dynamicColor = useDynamic,
-                                        appColorTheme = settingsState.appColorTheme) {
+            ChessRepertoireTrainerTheme(
+                darkTheme = darkTheme ?: isSystemInDarkTheme(),
+                dynamicColor = useDynamic,
+                appColorTheme = settingsState.appColorTheme
+            ) {
                 CompositionLocalProvider(LocalBoardThemeColors provides boardColors) {
                     AppNavigation(settingsViewModel)
                 }

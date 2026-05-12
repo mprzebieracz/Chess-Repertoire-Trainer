@@ -8,10 +8,10 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
-import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
+import com.example.chessrepertoiretrainer.core.chess.pgn.LinearPgnLineSource
 import com.example.chessrepertoiretrainer.core.database.entity.Line
-import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
 import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
@@ -28,23 +28,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-class ReviewChapterViewModel(private val repertoireRepository: RepertoireRepository,
-                             savedStateHandle: SavedStateHandle,
-                             private val engine: StockfishEngine) : ViewModel() {
+class ReviewChapterViewModel(
+    private val repertoireRepository: RepertoireRepository,
+    savedStateHandle: SavedStateHandle,
+    private val engine: StockfishEngine
+) : ViewModel() {
 
-    data class ReviewChapterUiState(val isLoading: Boolean = true,
-                                    val hasNoLines: Boolean = false,
-                                    val chapterId: Int = 0,
-                                    val chapterName: String = "",
-                                    val currentLineId: Int? = null,
-                                    val currentLineName: String? = null,
-                                    val currentLineNumber: Int = 0,
-                                    val totalLines: Int = 0,
-                                    val myColor: String? = null,
-                                    val isAtLineStart: Boolean = true,
-                                    val isAtLineEnd: Boolean = false,
-                                    val statusMessage: String? = null,
-                                    val currentMoveComment: String? = null)
+    data class ReviewChapterUiState(
+        val isLoading: Boolean = true,
+        val hasNoLines: Boolean = false,
+        val chapterId: Int = 0,
+        val chapterName: String = "",
+        val currentLineId: Int? = null,
+        val currentLineName: String? = null,
+        val currentLineNumber: Int = 0,
+        val totalLines: Int = 0,
+        val myColor: String? = null,
+        val isAtLineStart: Boolean = true,
+        val isAtLineEnd: Boolean = false,
+        val statusMessage: String? = null,
+        val currentMoveComment: String? = null
+    )
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
     private val startLineId: Int? = savedStateHandle.get<Int>("startLineId")?.takeIf { it != -1 }
@@ -55,19 +59,21 @@ class ReviewChapterViewModel(private val repertoireRepository: RepertoireReposit
     val chessController = DefaultChessBoardController(onMoveListener = null)
 
     private var lines: List<Line> = emptyList()
-    private var currentLineMoves: List<LineMove> = emptyList()
+    private var lineSource: LinearPgnLineSource = LinearPgnLineSource(emptyList())
     private var currentLineIndex: Int = -1
-    private var currentMoveIndex: Int = -1
     private var mySide: Side = Side.WHITE
 
     val isEngineEnabled: StateFlow<Boolean> =
         engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     val engineAnalysis: StateFlow<EngineAnalysis?> =
         engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(viewModelScope,
-                                                                                     SharingStarted.WhileSubscribed(
-                                                                                         5_000),
-                                                                                     EngineSearchState.IDLE)
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(
+            5_000
+        ),
+        EngineSearchState.IDLE
+    )
     val engineError: StateFlow<String?> =
         engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -100,11 +106,13 @@ class ReviewChapterViewModel(private val repertoireRepository: RepertoireReposit
 
         if (loadedLines.isEmpty()) {
             _uiState.update {
-                it.copy(isLoading = false,
-                        hasNoLines = true,
-                        chapterName = chapterName,
-                        totalLines = 0,
-                        statusMessage = "No lines in this chapter yet. Use edit mode to add lines.")
+                it.copy(
+                    isLoading = false,
+                    hasNoLines = true,
+                    chapterName = chapterName,
+                    totalLines = 0,
+                    statusMessage = "No lines in this chapter yet. Use edit mode to add lines."
+                )
             }
             return
         }
@@ -115,9 +123,11 @@ class ReviewChapterViewModel(private val repertoireRepository: RepertoireReposit
         startLine(initialIndex, chapterName = chapterName, colorString = colorString)
     }
 
-    private suspend fun startLine(index: Int,
-                                  chapterName: String? = null,
-                                  colorString: String? = null) {
+    private suspend fun startLine(
+        index: Int,
+        chapterName: String? = null,
+        colorString: String? = null
+    ) {
         if (index !in lines.indices) {
             // Out of range – nothing to show.
             _uiState.update {
@@ -129,87 +139,71 @@ class ReviewChapterViewModel(private val repertoireRepository: RepertoireReposit
         currentLineIndex = index
         val line = lines[index]
 
-        currentLineMoves = repertoireRepository.getMovesForLine(line.id).first()
-        currentMoveIndex = -1
+        val loadedMoves = repertoireRepository.getMovesForLine(line.id).first()
+        lineSource = LinearPgnLineSource(loadedMoves)
 
         chessController.resetBoard()
 
         _uiState.update {
-            it.copy(isLoading = false,
-                    hasNoLines = false,
-                    chapterName = chapterName ?: it.chapterName,
-                    currentLineId = line.id,
-                    currentLineName = line.name,
-                    currentLineNumber = index + 1,
-                    totalLines = lines.size,
-                    myColor = colorString ?: it.myColor,
-                    isAtLineStart = true,
-                    isAtLineEnd = currentLineMoves.isEmpty(),
-                    statusMessage = if (currentLineMoves.isEmpty()) "This line has no moves." else null,
-                    currentMoveComment = null)
+            it.copy(
+                isLoading = false,
+                hasNoLines = false,
+                chapterName = chapterName ?: it.chapterName,
+                currentLineId = line.id,
+                currentLineName = line.name,
+                currentLineNumber = index + 1,
+                totalLines = lines.size,
+                myColor = colorString ?: it.myColor,
+                isAtLineStart = true,
+                isAtLineEnd = lineSource.isEmpty,
+                statusMessage = if (lineSource.isEmpty) "This line has no moves." else null,
+                currentMoveComment = null
+            )
         }
     }
 
     fun onNextMove() {
-        val moves = currentLineMoves
-        if (moves.isEmpty()) {
+        if (lineSource.isEmpty) {
             _uiState.update { it.copy(isAtLineEnd = true) }
             return
         }
 
-        val nextIndex = currentMoveIndex + 1
-        if (nextIndex !in moves.indices) {
+        val moveData = lineSource.next() ?: run {
             _uiState.update { it.copy(isAtLineEnd = true) }
             return
         }
 
-        val targetSan = moves[nextIndex].moveSan
-        val board = chessController.getBoard()
-        val legalMove = board.legalMoves().firstOrNull { move ->
-            board.toSan(move) == targetSan
-        }
-
+        val legalMove = chessController.getBoard().findLegalMoveBySan(moveData.san)
         if (legalMove == null) {
-            _uiState.update {
-                it.copy(statusMessage = "Cannot play move: $targetSan")
-            }
+            lineSource.previous()
+            _uiState.update { it.copy(statusMessage = "Cannot play move: ${moveData.san}") }
             return
         }
 
         chessController.onMove(legalMove)
-        currentMoveIndex = nextIndex
-
-        val isEnd = currentMoveIndex >= moves.lastIndex
-        val comment = moves.getOrNull(currentMoveIndex)?.comment?.takeIf { it.isNotBlank() }
         _uiState.update {
-            it.copy(isAtLineStart = currentMoveIndex < 0,
-                    isAtLineEnd = isEnd,
-                    statusMessage = null,
-                    currentMoveComment = comment)
+            it.copy(
+                isAtLineStart = lineSource.isAtStart,
+                isAtLineEnd = lineSource.isAtEnd,
+                statusMessage = null,
+                currentMoveComment = lineSource.currentComment
+            )
         }
     }
 
     fun onPreviousMove() {
-        val moves = currentLineMoves
-        if (moves.isEmpty()) return
-        if (currentMoveIndex < 0) return
+        if (lineSource.isAtStart) return
 
+        lineSource.previous()
         chessController.navigateBack()
-        currentMoveIndex--
-
-        val isEnd = currentMoveIndex >= moves.lastIndex
-        val comment = if (currentMoveIndex in moves.indices) {
-            moves[currentMoveIndex].comment?.takeIf { it.isNotBlank() }
-        }
-        else {
-            null
-        }
 
         _uiState.update {
-            it.copy(isAtLineStart = currentMoveIndex < 0,
-                    isAtLineEnd = isEnd,
-                    statusMessage = null,
-                    currentMoveComment = comment)
+            it.copy(
+                isAtLineStart = lineSource.isAtStart,
+                isAtLineEnd = lineSource.isAtEnd,
+                statusMessage = null,
+                currentMoveComment = lineSource.currentComment
+            )
         }
     }
 
@@ -217,13 +211,15 @@ class ReviewChapterViewModel(private val repertoireRepository: RepertoireReposit
         if (currentLineIndex !in lines.indices) return
 
         chessController.resetBoard()
-        currentMoveIndex = -1
+        lineSource.reset()
 
         _uiState.update {
-            it.copy(isAtLineStart = true,
-                    isAtLineEnd = currentLineMoves.isEmpty(),
-                    statusMessage = null,
-                    currentMoveComment = null)
+            it.copy(
+                isAtLineStart = true,
+                isAtLineEnd = lineSource.isEmpty,
+                statusMessage = null,
+                currentMoveComment = null
+            )
         }
     }
 
@@ -257,8 +253,10 @@ class ReviewChapterViewModel(private val repertoireRepository: RepertoireReposit
         engine.disable()
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository,
-                  private val engine: StockfishEngine) : ViewModelProvider.Factory {
+    class Factory(
+        private val repertoireRepository: RepertoireRepository,
+        private val engine: StockfishEngine
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()

@@ -1,11 +1,8 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +18,8 @@ import com.example.chessrepertoiretrainer.core.chess.ui.BottomBarButton
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessBottomBar
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
+import com.example.chessrepertoiretrainer.core.chess.ui.ContentBarScaffold
+import com.example.chessrepertoiretrainer.core.chess.ui.LineProgressHeader
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingUiState
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
@@ -53,14 +52,18 @@ fun TrainScreen(
         bottomBar = {
             val canAct = !uiState.isLoading && !uiState.isSessionComplete && !uiState.isSessionEmpty
             ChessBottomBar {
-                BottomBarButton(AppIcons.Hint,
-                                "Hint",
-                                { viewModel.showHint() },
-                                enabled = canAct && uiState.isWaitingForUserMove)
-                BottomBarButton(AppIcons.Solution,
-                                "Solution",
-                                { viewModel.showSolution() },
-                                enabled = canAct && uiState.isWaitingForUserMove)
+                BottomBarButton(
+                    AppIcons.Hint,
+                    "Hint",
+                    { viewModel.showHint() },
+                    enabled = canAct && uiState.isWaitingForUserMove
+                )
+                BottomBarButton(
+                    AppIcons.Solution,
+                    "Solution",
+                    { viewModel.showSolution() },
+                    enabled = canAct && uiState.isWaitingForUserMove
+                )
             }
         },
     )
@@ -68,19 +71,11 @@ fun TrainScreen(
 
 @Composable
 private fun TrainContentBar(uiState: TrainingUiState) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-    ) {
-        if (uiState.totalLines > 0) {
-            Text(
-                text = "Line ${uiState.currentLineNumber} of ${uiState.totalLines}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            )
-        }
+    ContentBarScaffold {
+        LineProgressHeader(
+            currentLineNumber = uiState.currentLineNumber,
+            totalLines = uiState.totalLines
+        )
         uiState.myColor?.let {
             Text(
                 text = "You play $it",
@@ -122,9 +117,11 @@ private fun TrainContentBar(uiState: TrainingUiState) {
                 )
                 if (uiState.lastMoveWasCorrect == false) {
                     uiState.lastExpectedSan?.let {
-                        Text(text = "Expected: $it",
-                             style = MaterialTheme.typography.bodySmall,
-                             modifier = Modifier.padding(top = 4.dp))
+                        Text(
+                            text = "Expected: $it",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
             }

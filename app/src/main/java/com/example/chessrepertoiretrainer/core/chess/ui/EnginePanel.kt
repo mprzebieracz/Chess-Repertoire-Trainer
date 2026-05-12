@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
+import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 
 /**
  * Engine analysis panel: score label and principal variation on the same row.
@@ -143,5 +146,17 @@ fun DeeperButton(
         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
     ) {
         Text("d$depth", fontSize = 11.sp)
+    }
+}
+
+@Composable
+fun EngineToggleButton(isEnabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    IconButton(onClick = onClick, modifier = modifier.size(40.dp)) {
+        Icon(
+            imageVector = AppIcons.Engine,
+            contentDescription = if (isEnabled) "Disable engine" else "Enable engine",
+            tint = if (isEnabled) MaterialTheme.colorScheme.primary
+            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+        )
     }
 }

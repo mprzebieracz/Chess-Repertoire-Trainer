@@ -23,16 +23,21 @@ interface SavedGameDao {
     @Query("SELECT COUNT(*) FROM saved_games WHERE platform = :platform AND playerUsername = :username")
     suspend fun countGames(platform: String, username: String): Int
 
-    @Query("""
+    @Query(
+        """
         SELECT * FROM saved_games
         WHERE (:platform IS NULL OR platform = :platform)
         AND (:isWhite IS NULL OR isPlayerWhite = :isWhite)
         ORDER BY playedAt DESC
-    """)
-    fun getAllGamesFiltered(platform: String?,
-                            isWhite: Boolean?): Flow<List<SavedGame>>
+    """
+    )
+    fun getAllGamesFiltered(
+        platform: String?,
+        isWhite: Boolean?
+    ): Flow<List<SavedGame>>
 
-    @Query("""
+    @Query(
+        """
         SELECT COUNT(*) AS played,
         SUM(CASE WHEN playerResult = 'win'  THEN 1 ELSE 0 END) AS wins,
         SUM(CASE WHEN playerResult = 'loss' THEN 1 ELSE 0 END) AS losses,
@@ -42,50 +47,65 @@ interface SavedGameDao {
         AND (:category IS NULL OR timeCategory = :category)
         AND (:isWhite IS NULL OR isPlayerWhite = :isWhite)
         AND playedAt >= :since
-    """)
-    suspend fun getStatsRaw(username: String,
-                            platform: String,
-                            category: String?,
-                            isWhite: Boolean?,
-                            since: Long): GameStatsRaw
+    """
+    )
+    suspend fun getStatsRaw(
+        username: String,
+        platform: String,
+        category: String?,
+        isWhite: Boolean?,
+        since: Long
+    ): GameStatsRaw
 
-    @Query("""
+    @Query(
+        """
         SELECT playerRating FROM saved_games
         WHERE playerUsername = :username AND platform = :platform
         AND timeCategory = :category AND playerRating IS NOT NULL
         ORDER BY playedAt DESC LIMIT 1
-    """)
+    """
+    )
     suspend fun getCurrentRating(username: String, platform: String, category: String): Int?
 
-    @Query("""
+    @Query(
+        """
         SELECT playerRating FROM saved_games
         WHERE playerUsername = :username AND platform = :platform
         AND timeCategory = :category AND playerRating IS NOT NULL AND playedAt >= :since
         ORDER BY playedAt ASC LIMIT 1
-    """)
-    suspend fun getRatingAtStartOfPeriod(username: String,
-                                         platform: String,
-                                         category: String,
-                                         since: Long): Int?
+    """
+    )
+    suspend fun getRatingAtStartOfPeriod(
+        username: String,
+        platform: String,
+        category: String,
+        since: Long
+    ): Int?
 
-    @Query("""
+    @Query(
+        """
         SELECT playerRating AS rating, playedAt FROM saved_games
         WHERE playerUsername = :username AND platform = :platform
         AND timeCategory = :category AND playerRating IS NOT NULL
         ORDER BY playerRating DESC LIMIT 1
-    """)
+    """
+    )
     suspend fun getPeakRating(username: String, platform: String, category: String): RatingPeakRaw?
 
-    @Query("""
+    @Query(
+        """
         SELECT AVG(opponentRating) FROM saved_games
         WHERE playerUsername = :username AND platform = :platform
         AND (:category IS NULL OR timeCategory = :category)
         AND opponentRating IS NOT NULL AND playedAt >= :since
-    """)
-    suspend fun getAvgOpponentRating(username: String,
-                                     platform: String,
-                                     category: String?,
-                                     since: Long): Double?
+    """
+    )
+    suspend fun getAvgOpponentRating(
+        username: String,
+        platform: String,
+        category: String?,
+        since: Long
+    ): Double?
 
     @Query("SELECT * FROM saved_games WHERE id = :id")
     suspend fun getGameById(id: String): SavedGame?

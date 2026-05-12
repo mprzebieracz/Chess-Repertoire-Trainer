@@ -9,8 +9,10 @@ import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRe
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen.TrainSelectionScreen
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingSelectionViewModel
 
-fun NavGraphBuilder.trainingGraph(navController: NavHostController,
-                                  repertoireRepository: RepertoireRepository) {
+fun NavGraphBuilder.trainingGraph(
+    navController: NavHostController,
+    repertoireRepository: RepertoireRepository
+) {
     composable(Screen.Train.route) {
         val vm: TrainingSelectionViewModel =
             viewModel(factory = TrainingSelectionViewModel.Factory(repertoireRepository))

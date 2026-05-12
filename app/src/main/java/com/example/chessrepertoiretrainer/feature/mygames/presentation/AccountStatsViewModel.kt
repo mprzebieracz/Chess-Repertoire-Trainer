@@ -18,14 +18,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class AccountStatsUiState(val selectedTimeRange: StatsTimeRange = StatsTimeRange.DAYS_7,
-                               val totalGames: Int = 0,
-                               val categoryStats: List<CategoryStats> = emptyList(),
-                               val isLoading: Boolean = true)
+data class AccountStatsUiState(
+    val selectedTimeRange: StatsTimeRange = StatsTimeRange.DAYS_7,
+    val totalGames: Int = 0,
+    val categoryStats: List<CategoryStats> = emptyList(),
+    val isLoading: Boolean = true
+)
 
-class AccountStatsViewModel(val platform: String,
-                            val username: String,
-                            private val repository: SavedGameRepository) : ViewModel() {
+class AccountStatsViewModel(
+    val platform: String,
+    val username: String,
+    private val repository: SavedGameRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountStatsUiState())
     val uiState: StateFlow<AccountStatsUiState> = _uiState.asStateFlow()
@@ -66,27 +70,33 @@ class AccountStatsViewModel(val platform: String,
 
                     val cur = currentRating.await()
                     val start = startRating.await()
-                    CategoryStats(category = category,
-                                  currentRating = cur,
-                                  ratingDiff = if (cur != null && start != null) cur - start else null,
-                                  peakRating = peak.await()?.rating,
-                                  peakRatingDate = peak.await()?.playedAt,
-                                  avgOpponentRating = avgOpp.await()?.toInt(),
-                                  allStats = allStats.await().toGameStats(),
-                                  whiteStats = whiteStats.await().toGameStats(),
-                                  blackStats = blackStats.await().toGameStats())
+                    CategoryStats(
+                        category = category,
+                        currentRating = cur,
+                        ratingDiff = if (cur != null && start != null) cur - start else null,
+                        peakRating = peak.await()?.rating,
+                        peakRatingDate = peak.await()?.playedAt,
+                        avgOpponentRating = avgOpp.await()?.toInt(),
+                        allStats = allStats.await().toGameStats(),
+                        whiteStats = whiteStats.await().toGameStats(),
+                        blackStats = blackStats.await().toGameStats()
+                    )
                 }
             }
         }
 
-        _uiState.value = _uiState.value.copy(totalGames = totalDeferred.await().played,
-                                             categoryStats = categoryStatsDeferred.awaitAll(),
-                                             isLoading = false)
+        _uiState.value = _uiState.value.copy(
+            totalGames = totalDeferred.await().played,
+            categoryStats = categoryStatsDeferred.awaitAll(),
+            isLoading = false
+        )
     }
 
-    class Factory(private val platform: String,
-                  private val username: String,
-                  private val repository: SavedGameRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val platform: String,
+        private val username: String,
+        private val repository: SavedGameRepository
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             return AccountStatsViewModel(platform, username, repository) as T

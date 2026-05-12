@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.feature.puzzles.data
+package com.example.chessrepertoiretrainer.core.network.puzzles
 
 import android.util.Log
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
@@ -27,8 +27,7 @@ object LichessPuzzleService {
 
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             parsePuzzle(JSONObject(body), sourceDate)
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             Log.e("LichessPuzzleService", "Error fetching daily puzzle: ${e.message}", e)
             null
         }
@@ -40,10 +39,12 @@ object LichessPuzzleService {
         val lichessId = puzzleJson.optString("id", "")
         if (lichessId.isBlank()) return null
 
-        val fen = listOf(puzzleJson.optString("fen", ""),
-                         root.optString("fen", ""),
-                         root.optJSONObject("game")?.optString("fen", "")
-                             ?: "").firstOrNull { it.isNotBlank() } ?: return null
+        val fen = listOf(
+            puzzleJson.optString("fen", ""),
+            root.optString("fen", ""),
+            root.optJSONObject("game")?.optString("fen", "")
+                ?: ""
+        ).firstOrNull { it.isNotBlank() } ?: return null
 
         val solutionArray = puzzleJson.optJSONArray("solution") ?: return null
         if (solutionArray.length() == 0) return null
@@ -53,18 +54,19 @@ object LichessPuzzleService {
         val themesArray = puzzleJson.optJSONArray("themes")
         val themes = if (themesArray != null) {
             (0 until themesArray.length()).joinToString(",") { themesArray.getString(it) }
-        }
-        else {
+        } else {
             ""
         }
 
-        return Puzzle(id = "${lichessId}_$sourceDate",
-                      fen = fen,
-                      moves = moves,
-                      rating = puzzleJson.optInt("rating", 1500),
-                      themes = themes,
-                      isSolved = false,
-                      attempts = 0,
-                      sourceDate = sourceDate)
+        return Puzzle(
+            id = "${lichessId}_$sourceDate",
+            fen = fen,
+            moves = moves,
+            rating = puzzleJson.optInt("rating", 1500),
+            themes = themes,
+            isSolved = false,
+            attempts = 0,
+            sourceDate = sourceDate
+        )
     }
 }

@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher
+package com.example.chessrepertoiretrainer.core.network.games
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,12 +13,14 @@ object ChessComGameFetcher : GameFetcher {
     private const val BASE_URL = "https://api.chess.com/pub/player"
     override val platformKey: String = "chess.com"
 
-    override suspend fun fetchGamesForUser(username: String,
-                                           maxGames: Int?,
-                                           colorFilter: String,
-                                           timeControlFilter: String,
-                                           since: Long?,
-                                           onProgress: ((fetched: Int) -> Unit)?): List<FetchedGame> =
+    override suspend fun fetchGamesForUser(
+        username: String,
+        maxGames: Int?,
+        colorFilter: String,
+        timeControlFilter: String,
+        since: Long?,
+        onProgress: ((fetched: Int) -> Unit)?
+    ): List<FetchedGame> =
         withContext(Dispatchers.IO) {
             val normalizedUser = username.trim().lowercase()
             if (normalizedUser.isBlank()) return@withContext emptyList()
@@ -107,19 +109,25 @@ object ChessComGameFetcher : GameFetcher {
         val whiteRating = gameJson.optJSONObject("white")?.optInt("rating", -1)?.takeIf { it > 0 }
         val blackRating = gameJson.optJSONObject("black")?.optInt("rating", -1)?.takeIf { it > 0 }
 
-        return FetchedGame(platformGameId = uuid ?: url ?: "${username}_${playedAt}_${resultTag}",
-                           opponentName = if (isUserWhite) blackUser else whiteUser,
-                           isUserWhite = isUserWhite,
-                           result = resultTag,
-                           timeControl = headers["TimeControl"] ?: timeControlFromJson,
-                           timeCategory = mapTimeClassToCategory(gameJson.optString("time_class",
-                                                                                    "")),
-                           opening = opening,
-                           playerRating = if (isUserWhite) whiteRating else blackRating,
-                           opponentRating = if (isUserWhite) blackRating else whiteRating,
-                           rated = gameJson.optBoolean("rated", false),
-                           playedAt = playedAt,
-                           pgn = pgn)
+        return FetchedGame(
+            platformGameId = uuid ?: url ?: "${username}_${playedAt}_${resultTag}",
+            opponentName = if (isUserWhite) blackUser else whiteUser,
+            isUserWhite = isUserWhite,
+            result = resultTag,
+            timeControl = headers["TimeControl"] ?: timeControlFromJson,
+            timeCategory = mapTimeClassToCategory(
+                gameJson.optString(
+                    "time_class",
+                    ""
+                )
+            ),
+            opening = opening,
+            playerRating = if (isUserWhite) whiteRating else blackRating,
+            opponentRating = if (isUserWhite) blackRating else whiteRating,
+            rated = gameJson.optBoolean("rated", false),
+            playedAt = playedAt,
+            pgn = pgn
+        )
     }
 
     private fun mapTimeClassToCategory(timeClass: String?): String? {
@@ -140,8 +148,7 @@ object ChessComGameFetcher : GameFetcher {
         }
         return if (connection.responseCode == HttpURLConnection.HTTP_OK) {
             connection.inputStream.bufferedReader().use { it.readText() }
-        }
-        else {
+        } else {
             null
         }
     }

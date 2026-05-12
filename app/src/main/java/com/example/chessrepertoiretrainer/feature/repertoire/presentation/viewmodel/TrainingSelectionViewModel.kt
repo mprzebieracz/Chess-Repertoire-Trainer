@@ -22,7 +22,8 @@ class TrainingSelectionViewModel(private val repertoireRepository: RepertoireRep
     val repertoires: StateFlow<List<Repertoire>> = repertoireRepository.getAllRepertoires().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList())
+        initialValue = emptyList()
+    )
 
     private val _selectedRepertoireId = MutableStateFlow<Int?>(null)
     val selectedRepertoireId: StateFlow<Int?> = _selectedRepertoireId.asStateFlow()
@@ -30,13 +31,14 @@ class TrainingSelectionViewModel(private val repertoireRepository: RepertoireRep
     val chapters: StateFlow<List<Chapter>> = _selectedRepertoireId.flatMapLatest { id ->
         if (id == null) {
             flowOf(emptyList())
-        }
-        else {
+        } else {
             repertoireRepository.getChaptersForRepertoire(id)
         }
-    }.stateIn(scope = viewModelScope,
-              started = SharingStarted.WhileSubscribed(5000),
-              initialValue = emptyList())
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     fun selectRepertoire(id: Int) {
         _selectedRepertoireId.value = id

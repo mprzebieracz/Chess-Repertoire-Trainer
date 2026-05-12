@@ -31,35 +31,39 @@ fun ChessboardUI(state: ChessBoardController) {
         } ?: emptyList()
     }
 
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .aspectRatio(1f)
-        .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .onGloballyPositioned { boardSizePx = it.size.width.toFloat() }) {
         val squareSizePx = if (boardSizePx > 0) boardSizePx / 8 else 0f
 
-        ChessboardGrid(state = state,
-                       board = board,
-                       legalMoves = legalMoves,
-                       draggingSquare = draggingSquare,
-                       squareSizePx = squareSizePx,
-                       onDragStart = { sq, offset ->
-                           draggingSquare = sq
-                           dragOffset = Offset.Zero
-                           initialTouchOffset = offset
-                       },
-                       onDragUpdate = { offset -> dragOffset += offset },
-                       onDragEnd = {
-                           draggingSquare = null
-                           dragOffset = Offset.Zero
-                       })
+        ChessboardGrid(
+            state = state,
+            board = board,
+            legalMoves = legalMoves,
+            draggingSquare = draggingSquare,
+            squareSizePx = squareSizePx,
+            onDragStart = { sq, offset ->
+                draggingSquare = sq
+                dragOffset = Offset.Zero
+                initialTouchOffset = offset
+            },
+            onDragUpdate = { offset -> dragOffset += offset },
+            onDragEnd = {
+                draggingSquare = null
+                dragOffset = Offset.Zero
+            })
 
         if (draggingSquare != null && squareSizePx > 0f) {
-            DraggedPieceLayer(piece = board.getPiece(draggingSquare!!),
-                              square = draggingSquare!!,
-                              squareSizePx = squareSizePx,
-                              isFlipped = state.isFlipped,
-                              initialTouchOffset = initialTouchOffset,
-                              dragOffset = dragOffset)
+            DraggedPieceLayer(
+                piece = board.getPiece(draggingSquare!!),
+                square = draggingSquare!!,
+                squareSizePx = squareSizePx,
+                isFlipped = state.isFlipped,
+                initialTouchOffset = initialTouchOffset,
+                dragOffset = dragOffset
+            )
         }
 
         PromotionOverlay(state = state, board = board)

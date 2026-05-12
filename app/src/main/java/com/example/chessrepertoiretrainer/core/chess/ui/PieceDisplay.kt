@@ -10,8 +10,10 @@ import com.github.bhlangonijr.chesslib.Piece
 fun PieceDisplay(piece: Piece, modifier: Modifier = Modifier) {
     val drawableRes = pieceDrawableRes(piece)
     if (drawableRes != 0) {
-        Image(painter = painterResource(id = drawableRes),
-              contentDescription = piece.name,
-              modifier = modifier)
+        Image(
+            painter = painterResource(id = drawableRes),
+            contentDescription = piece.name,
+            modifier = modifier
+        )
     }
 }

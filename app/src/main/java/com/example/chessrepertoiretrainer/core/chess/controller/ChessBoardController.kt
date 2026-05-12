@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
@@ -60,8 +61,7 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
             if (piece != Piece.NONE && piece.pieceSide == board.sideToMove) {
                 selectedSquare = square
             }
-        }
-        else {
+        } else {
             if (currentSelected == square) {
                 selectedSquare = null
                 return
@@ -95,13 +95,11 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
         val legalMoves = board.legalMoves()
         if (legalMoves.contains(move)) {
             applyMove(move)
-        }
-        else {
+        } else {
             val piece = board.getPiece(move.to)
             if (piece != Piece.NONE && piece.pieceSide == board.sideToMove) {
                 selectedSquare = move.to
-            }
-            else {
+            } else {
                 selectedSquare = null
             }
         }
@@ -204,8 +202,7 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
             val san = fullSanHistory[i]
             if (i == currentPositionIndex) {
                 sb.append("[").append(san).append("] ")
-            }
-            else {
+            } else {
                 sb.append(san).append(" ")
             }
         }
@@ -220,6 +217,20 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
     override fun orientForSide(side: Side) {
         if (side == Side.BLACK && !isFlipped) flipBoard()
         else if (side == Side.WHITE && isFlipped) flipBoard()
+    }
+
+    override fun replaySanSequence(sans: List<String>, suppressListener: Boolean) {
+        if (sans.isEmpty()) return
+        val savedListener = onMoveListener
+        if (suppressListener) onMoveListener = null
+        try {
+            for (san in sans) {
+                val move = board.findLegalMoveBySan(san) ?: break
+                applyMove(move)
+            }
+        } finally {
+            if (suppressListener) onMoveListener = savedListener
+        }
     }
 
     override fun resetBoard() {

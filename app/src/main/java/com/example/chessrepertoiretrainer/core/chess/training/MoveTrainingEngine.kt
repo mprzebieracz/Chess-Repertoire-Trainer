@@ -1,14 +1,16 @@
-package com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel
+package com.example.chessrepertoiretrainer.core.chess.training
 
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
-import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import kotlinx.coroutines.delay
 
 
-class MoveTrainingEngine(private val chessController: DefaultChessBoardController,
-                         private val normalizeSan: (String) -> String) {
+class MoveTrainingEngine(
+    private val chessController: DefaultChessBoardController,
+    private val normalizeSan: (String) -> String
+) {
 
     data class Config(val mySide: Side, val sanMoves: List<String>)
 
@@ -35,7 +37,6 @@ class MoveTrainingEngine(private val chessController: DefaultChessBoardControlle
         this.resultListener = listener
     }
 
-    /** Start a new training sequence from the beginning. */
     fun reset(newConfig: Config) {
         config = newConfig
         currentIndex = 0
@@ -56,8 +57,7 @@ class MoveTrainingEngine(private val chessController: DefaultChessBoardControlle
         return if (isCorrect) {
             currentIndex++
             MoveResult.Correct(userSan = san, expectedSan = expectedSan)
-        }
-        else {
+        } else {
             MoveResult.Incorrect(userSan = san, expectedSan = expectedSan)
         }
     }
@@ -70,9 +70,7 @@ class MoveTrainingEngine(private val chessController: DefaultChessBoardControlle
 
         while (currentIndex < cfg.sanMoves.size && board.sideToMove != cfg.mySide) {
             val targetSan = cfg.sanMoves[currentIndex]
-            val legalMove = board.legalMoves().firstOrNull { move ->
-                board.toSan(move) == targetSan
-            } ?: break
+            val legalMove = board.findLegalMoveBySan(targetSan) ?: break
 
             delay(500)
             isAutoPlaying = true
@@ -98,16 +96,11 @@ class MoveTrainingEngine(private val chessController: DefaultChessBoardControlle
         }
 
         if (board.sideToMove != cfg.mySide) {
-            // Still not our turn; nothing sensible to do.
             return isSequenceComplete()
         }
 
         val targetSan = cfg.sanMoves[currentIndex]
-        val userMove = board.legalMoves().firstOrNull { move ->
-            board.toSan(move) == targetSan
-        } ?: run {
-            return true
-        }
+        val userMove = board.findLegalMoveBySan(targetSan) ?: return true
 
         delay(300)
         isAutoPlaying = true
@@ -129,9 +122,7 @@ class MoveTrainingEngine(private val chessController: DefaultChessBoardControlle
         if (board.sideToMove != cfg.mySide) return null
 
         val targetSan = cfg.sanMoves[currentIndex]
-        val move = board.legalMoves().firstOrNull { legal ->
-            board.toSan(legal) == targetSan
-        } ?: return null
+        val move = board.findLegalMoveBySan(targetSan) ?: return null
 
         return move.from
     }

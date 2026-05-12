@@ -14,14 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -71,10 +65,12 @@ fun ChessScreenLayout(
         Box(modifier = Modifier.fillMaxWidth()) {
             ChessboardUI(state = chessCtrl)
         }
-        Box(modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
             contentBar()
         }
         bottomBar()
@@ -219,8 +215,7 @@ fun PgnTextViewer(
     val annotated = buildAnnotatedString {
         if (sanHistory.isEmpty()) {
             withStyle(SpanStyle(color = dimFg)) { append("No moves yet.") }
-        }
-        else {
+        } else {
             sanHistory.forEachIndexed { index, san ->
                 if (index > 0) append(" ")
                 if (index % 2 == 0) {
@@ -233,15 +228,16 @@ fun PgnTextViewer(
                     else SpanStyle(color = normalFg)
                 if (onMoveClick != null) {
                     val idx = index
-                    pushLink(LinkAnnotation.Clickable(
-                        tag = idx.toString(),
-                        styles = TextLinkStyles(spanStyle),
-                        linkInteractionListener = { onMoveClick(idx) },
-                    ))
+                    pushLink(
+                        LinkAnnotation.Clickable(
+                            tag = idx.toString(),
+                            styles = TextLinkStyles(spanStyle),
+                            linkInteractionListener = { onMoveClick(idx) },
+                        )
+                    )
                     append(san)
                     pop()
-                }
-                else {
+                } else {
                     withStyle(spanStyle) { append(san) }
                 }
             }
@@ -256,105 +252,4 @@ fun PgnTextViewer(
             .verticalScroll(scrollState)
             .padding(horizontal = 12.dp, vertical = 8.dp),
     )
-}
-
-// ---------------------------------------------------------------------------
-// Legacy helpers — kept so callers that reference them still compile
-// ---------------------------------------------------------------------------
-
-@Composable
-fun ScreenHeader(title: String, endContent: @Composable RowScope.() -> Unit = {}) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = ChessUiConstants.ScreenChrome.Header.horizontalPadding,
-                vertical = ChessUiConstants.ScreenChrome.Header.verticalPadding,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.weight(1f),
-        )
-        endContent()
-    }
-}
-
-@Composable
-fun BoardNavigationControls(onBack: () -> Unit, onForward: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = ChessUiConstants.ScreenChrome.Navigation.rowPaddingVertical),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.buttonSize),
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                contentDescription = "Navigate Back",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.iconSize),
-            )
-        }
-        Spacer(modifier = Modifier.width(ChessUiConstants.ScreenChrome.Navigation.spacerWidth))
-        IconButton(
-            onClick = onForward,
-            modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.buttonSize),
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "Navigate Forward",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(ChessUiConstants.ScreenChrome.Navigation.iconSize),
-            )
-        }
-    }
-}
-
-@Composable
-fun BoardActionButtons(
-    onReset: () -> Unit,
-    onFlip: () -> Unit,
-    extraButtons: @Composable RowScope.() -> Unit = {},
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ChessUiConstants.ScreenChrome.Actions.rowPadding),
-        horizontalArrangement = Arrangement.spacedBy(ChessUiConstants.ScreenChrome.Actions.buttonSpacing),
-    ) {
-        Button(
-            onClick = onReset,
-            modifier = Modifier.weight(1f),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-        ) { Text("Reset") }
-        Button(onClick = onFlip, modifier = Modifier.weight(1f)) { Text("Flip") }
-        extraButtons()
-    }
-}
-
-@Composable
-fun BoardBottomBar(
-    chessCtrl: ChessBoardController,
-    extraButtons: @Composable RowScope.() -> Unit = {},
-) {
-    Column {
-        BoardNavigationControls(
-            onBack = { chessCtrl.navigateBack() },
-            onForward = { chessCtrl.navigateForward() },
-        )
-        BoardActionButtons(
-            onReset = { chessCtrl.resetBoard() },
-            onFlip = { chessCtrl.flipBoard() },
-            extraButtons = extraButtons,
-        )
-    }
 }

@@ -1,11 +1,11 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.data
 
 import android.util.Log
+import com.example.chessrepertoiretrainer.core.chess.pgn.parse.PgnLineResolver
+import com.example.chessrepertoiretrainer.core.chess.pgn.parse.PgnMovetextParser
+import com.example.chessrepertoiretrainer.core.chess.pgn.parse.PgnTextProcessor
 import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.feature.repertoire.data.pgn.PgnImportWriter
-import com.example.chessrepertoiretrainer.feature.repertoire.data.pgn.PgnLineResolver
-import com.example.chessrepertoiretrainer.feature.repertoire.data.pgn.PgnMovetextParser
-import com.example.chessrepertoiretrainer.feature.repertoire.data.pgn.PgnTextProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,23 +44,26 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                         return@forEach
                     }
 
-                    val insertedForGame = parseSingleGameAndInsert(gameText = gameText,
-                                                                   chapterId = chapterId,
-                                                                   chapterName = chapterName,
-                                                                   startingLineNumber = nextLineNumber)
+                    val insertedForGame = parseSingleGameAndInsert(
+                        gameText = gameText,
+                        chapterId = chapterId,
+                        chapterName = chapterName,
+                        startingLineNumber = nextLineNumber
+                    )
                     nextLineNumber += insertedForGame
                 }
 
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 Log.e("PgnImporter", "PGN import error: ${e.message}", e)
             }
         }
 
-    private suspend fun parseSingleGameAndInsert(gameText: String,
-                                                 chapterId: Int,
-                                                 chapterName: String,
-                                                 startingLineNumber: Int): Int {
+    private suspend fun parseSingleGameAndInsert(
+        gameText: String,
+        chapterId: Int,
+        chapterName: String,
+        startingLineNumber: Int
+    ): Int {
         val (headerMap, body) = extractHeadersAndBody(gameText)
         if (body.isBlank()) {
             return 0
@@ -71,11 +74,6 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
             Log.e("PgnImporter", "Could not extract moves from PGN.")
             return 0
         }
-
-        val white = headerMap["White"] ?: "White"
-        val black = headerMap["Black"] ?: "Black"
-        val event = headerMap["Event"] ?: "Imported"
-        "$white - $black ($event)"
 
         var insertedLinesCount = 0
         var currentLineNumber = startingLineNumber
@@ -90,9 +88,11 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
 
             val lineName = "$chapterName #$currentLineNumber"
 
-            importWriter.insertLineWithMoves(chapterId = chapterId,
-                                             lineName = lineName,
-                                             moves = resolvedMoves)
+            importWriter.insertLineWithMoves(
+                chapterId = chapterId,
+                lineName = lineName,
+                moves = resolvedMoves
+            )
 
             insertedLinesCount++
             currentLineNumber++
@@ -120,8 +120,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                 if (match != null) {
                     headerMap[match.groupValues[1]] = match.groupValues[2]
                 }
-            }
-            else {
+            } else {
                 inHeaderSection = false
                 if (bodyBuilder.isNotEmpty()) {
                     bodyBuilder.append('\n')

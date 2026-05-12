@@ -3,9 +3,11 @@ package com.example.chessrepertoiretrainer.core.navigation
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 
-sealed class Screen(val route: String,
-                    val title: String = "",
-                    val icon: ImageVector = AppIcons.Home) {
+sealed class Screen(
+    val route: String,
+    val title: String = "",
+    val icon: ImageVector = AppIcons.Home
+) {
     // Bottom Bar Screens
     object Home : Screen("home", "Home", AppIcons.Home)
     object RepertoireMain : Screen("repertoire_main", "Repertoire", AppIcons.Repertoire)

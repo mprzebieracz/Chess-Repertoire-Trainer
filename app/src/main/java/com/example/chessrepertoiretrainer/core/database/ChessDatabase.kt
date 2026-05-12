@@ -18,15 +18,17 @@ import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
 import com.example.chessrepertoiretrainer.core.database.entity.RepertoirePositionIndex
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 
-@Database(entities = [
-    Repertoire::class,
-    Chapter::class,
-    Line::class,
-    LineMove::class,
-    Puzzle::class,
-    SavedGame::class,
-    RepertoirePositionIndex::class,
-], version = 18, exportSchema = false)
+@Database(
+    entities = [
+        Repertoire::class,
+        Chapter::class,
+        Line::class,
+        LineMove::class,
+        Puzzle::class,
+        SavedGame::class,
+        RepertoirePositionIndex::class,
+    ], version = 18, exportSchema = false
+)
 abstract class ChessDatabase : RoomDatabase() {
 
     abstract fun repertoireDao(): RepertoireDao
@@ -47,9 +49,11 @@ abstract class ChessDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): ChessDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(context.applicationContext,
-                                                    ChessDatabase::class.java,
-                                                    "chess_database")
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    ChessDatabase::class.java,
+                    "chess_database"
+                )
                     .fallbackToDestructiveMigration(false).addMigrations(MIGRATION_17_18).build()
                 INSTANCE = instance
                 return instance

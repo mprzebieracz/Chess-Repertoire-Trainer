@@ -17,8 +17,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class EditChapterViewModel(private val repertoireRepository: RepertoireRepository,
-                           savedStateHandle: SavedStateHandle) : ViewModel() {
+class EditChapterViewModel(
+    private val repertoireRepository: RepertoireRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
 
@@ -28,7 +30,8 @@ class EditChapterViewModel(private val repertoireRepository: RepertoireRepositor
     val lines: StateFlow<List<Line>> = repertoireRepository.getLinesForChapter(chapterId).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList())
+        initialValue = emptyList()
+    )
 
     fun addLine(name: String) {
         viewModelScope.launch {
@@ -37,13 +40,17 @@ class EditChapterViewModel(private val repertoireRepository: RepertoireRepositor
             val finalName = name.ifBlank {
                 "${chapter?.name ?: "Line"} #${lines.value.size + 1}"
             }
-            repertoireRepository.insertLine(Line(chapterId = chapterId,
-                                                 name = finalName,
-                                                 nextReviewDate = System.currentTimeMillis(),
-                                                 interval = 0,
-                                                 easeFactor = 2.5f,
-                                                 consecutiveCorrect = 0,
-                                                 sortOrder = sortOrder))
+            repertoireRepository.insertLine(
+                Line(
+                    chapterId = chapterId,
+                    name = finalName,
+                    nextReviewDate = System.currentTimeMillis(),
+                    interval = 0,
+                    easeFactor = 2.5f,
+                    consecutiveCorrect = 0,
+                    sortOrder = sortOrder
+                )
+            )
         }
     }
 
@@ -67,10 +74,11 @@ class EditChapterViewModel(private val repertoireRepository: RepertoireRepositor
                 val inputStream = context.contentResolver.openInputStream(uri)
                 val pgnString =
                     inputStream?.bufferedReader().use { it?.readText() } ?: return@launch
-                repertoireRepository.importPgnToChapter(pgnString = pgnString,
-                                                        chapterId = chapterId)
-            }
-            catch (e: Exception) {
+                repertoireRepository.importPgnToChapter(
+                    pgnString = pgnString,
+                    chapterId = chapterId
+                )
+            } catch (e: Exception) {
                 _importError.value = e.message ?: "Failed to import PGN"
             }
         }

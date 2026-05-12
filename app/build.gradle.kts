@@ -67,8 +67,8 @@ dependencies {
     // Drag-to-reorder
     implementation(libs.reorderable)
 
-        // Settings / preferences
-        implementation(libs.androidx.datastore.preferences)
+    // Settings / preferences
+    implementation(libs.androidx.datastore.preferences)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

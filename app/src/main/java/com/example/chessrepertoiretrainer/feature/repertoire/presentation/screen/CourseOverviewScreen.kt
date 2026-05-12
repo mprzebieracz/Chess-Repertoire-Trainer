@@ -38,13 +38,15 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CourseOverviewScreen(viewModel: CourseOverviewViewModel,
-                         onBackClick: () -> Unit,
-                         onEditCourse: (repertoireId: Int) -> Unit,
-                         onOpenChapterLearn: (chapterId: Int) -> Unit,
-                         onOpenChapterTrain: (chapterId: Int) -> Unit,
-                         onOpenChapterReview: (chapterId: Int) -> Unit,
-                         onStartMultiChapterTraining: (List<Int>) -> Unit) {
+fun CourseOverviewScreen(
+    viewModel: CourseOverviewViewModel,
+    onBackClick: () -> Unit,
+    onEditCourse: (repertoireId: Int) -> Unit,
+    onOpenChapterLearn: (chapterId: Int) -> Unit,
+    onOpenChapterTrain: (chapterId: Int) -> Unit,
+    onOpenChapterReview: (chapterId: Int) -> Unit,
+    onStartMultiChapterTraining: (List<Int>) -> Unit
+) {
     val repertoire by viewModel.repertoire.collectAsStateWithLifecycle()
     val chaptersWithStats by viewModel.chaptersWithStats.collectAsStateWithLifecycle()
     val showChapterSelection by viewModel.showChapterSelection.collectAsStateWithLifecycle()
@@ -67,54 +69,66 @@ fun CourseOverviewScreen(viewModel: CourseOverviewViewModel,
             }
         })
     }) { padding ->
-        CourseOverviewContent(padding = padding,
-                              chaptersWithStats = chaptersWithStats,
-                              onOpenChapterLearn = onOpenChapterLearn,
-                              onOpenChapterTrain = onOpenChapterTrain,
-                              onOpenChapterReview = onOpenChapterReview)
+        CourseOverviewContent(
+            padding = padding,
+            chaptersWithStats = chaptersWithStats,
+            onOpenChapterLearn = onOpenChapterLearn,
+            onOpenChapterTrain = onOpenChapterTrain,
+            onOpenChapterReview = onOpenChapterReview
+        )
     }
 
     if (showChapterSelection) {
-        ChapterSelectionBottomSheet(chaptersWithStats = chaptersWithStats,
-                                    selectedChapterIds = selectedChapterIds,
-                                    onToggle = { viewModel.toggleChapterSelection(it) },
-                                    onConfirm = {
-                                        val ids = selectedChapterIds.toList()
-                                        viewModel.dismissChapterSelection()
-                                        if (ids.isNotEmpty()) onStartMultiChapterTraining(ids)
-                                    },
-                                    onDismiss = { viewModel.dismissChapterSelection() })
+        ChapterSelectionBottomSheet(
+            chaptersWithStats = chaptersWithStats,
+            selectedChapterIds = selectedChapterIds,
+            onToggle = { viewModel.toggleChapterSelection(it) },
+            onConfirm = {
+                val ids = selectedChapterIds.toList()
+                viewModel.dismissChapterSelection()
+                if (ids.isNotEmpty()) onStartMultiChapterTraining(ids)
+            },
+            onDismiss = { viewModel.dismissChapterSelection() })
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ChapterSelectionBottomSheet(chaptersWithStats: List<CourseOverviewViewModel.ChapterWithStats>,
-                                        selectedChapterIds: Set<Int>,
-                                        onToggle: (Int) -> Unit,
-                                        onConfirm: () -> Unit,
-                                        onDismiss: () -> Unit) {
+private fun ChapterSelectionBottomSheet(
+    chaptersWithStats: List<CourseOverviewViewModel.ChapterWithStats>,
+    selectedChapterIds: Set<Int>,
+    onToggle: (Int) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Text(text = "Select chapters to train",
-             style = MaterialTheme.typography.titleMedium,
-             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        Text(
+            text = "Select chapters to train",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
         LazyColumn {
             items(chaptersWithStats) { item ->
                 ListItem(headlineContent = { Text(item.chapter.name) }, leadingContent = {
-                    Checkbox(checked = item.chapter.id in selectedChapterIds,
-                             onCheckedChange = { onToggle(item.chapter.id) })
+                    Checkbox(
+                        checked = item.chapter.id in selectedChapterIds,
+                        onCheckedChange = { onToggle(item.chapter.id) })
                 })
             }
         }
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.End) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
             TextButton(onClick = onDismiss) { Text("Cancel") }
-            Button(onClick = onConfirm,
-                   enabled = selectedChapterIds.isNotEmpty(),
-                   modifier = Modifier.padding(start = 8.dp)) {
+            Button(
+                onClick = onConfirm,
+                enabled = selectedChapterIds.isNotEmpty(),
+                modifier = Modifier.padding(start = 8.dp)
+            ) {
                 Text("Train Selected")
             }
         }
@@ -122,72 +136,93 @@ private fun ChapterSelectionBottomSheet(chaptersWithStats: List<CourseOverviewVi
 }
 
 @Composable
-private fun CourseOverviewContent(padding: androidx.compose.foundation.layout.PaddingValues,
-                                  chaptersWithStats: List<CourseOverviewViewModel.ChapterWithStats>,
-                                  onOpenChapterLearn: (Int) -> Unit,
-                                  onOpenChapterTrain: (Int) -> Unit,
-                                  onOpenChapterReview: (Int) -> Unit) {
+private fun CourseOverviewContent(
+    padding: androidx.compose.foundation.layout.PaddingValues,
+    chaptersWithStats: List<CourseOverviewViewModel.ChapterWithStats>,
+    onOpenChapterLearn: (Int) -> Unit,
+    onOpenChapterTrain: (Int) -> Unit,
+    onOpenChapterReview: (Int) -> Unit
+) {
     if (chaptersWithStats.isEmpty()) {
         CourseOverviewEmptyState(padding = padding)
-    }
-    else {
-        CourseOverviewList(padding = padding,
-                           chaptersWithStats = chaptersWithStats,
-                           onOpenChapterLearn = onOpenChapterLearn,
-                           onOpenChapterTrain = onOpenChapterTrain,
-                           onOpenChapterReview = onOpenChapterReview)
+    } else {
+        CourseOverviewList(
+            padding = padding,
+            chaptersWithStats = chaptersWithStats,
+            onOpenChapterLearn = onOpenChapterLearn,
+            onOpenChapterTrain = onOpenChapterTrain,
+            onOpenChapterReview = onOpenChapterReview
+        )
     }
 }
 
 @Composable
 private fun CourseOverviewEmptyState(padding: androidx.compose.foundation.layout.PaddingValues) {
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(padding),
-           horizontalAlignment = Alignment.CenterHorizontally,
-           verticalArrangement = Arrangement.Center) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         Text(text = "No chapters yet.", style = MaterialTheme.typography.bodyMedium)
-        Text(text = "Use the edit button to add chapters and lines.",
-             style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = "Use the edit button to add chapters and lines.",
+            style = MaterialTheme.typography.bodySmall
+        )
     }
 }
 
 @Composable
-private fun CourseOverviewList(padding: androidx.compose.foundation.layout.PaddingValues,
-                               chaptersWithStats: List<CourseOverviewViewModel.ChapterWithStats>,
-                               onOpenChapterLearn: (Int) -> Unit,
-                               onOpenChapterTrain: (Int) -> Unit,
-                               onOpenChapterReview: (Int) -> Unit) {
-    LazyColumn(modifier = Modifier
-        .fillMaxSize()
-        .padding(padding)) {
+private fun CourseOverviewList(
+    padding: androidx.compose.foundation.layout.PaddingValues,
+    chaptersWithStats: List<CourseOverviewViewModel.ChapterWithStats>,
+    onOpenChapterLearn: (Int) -> Unit,
+    onOpenChapterTrain: (Int) -> Unit,
+    onOpenChapterReview: (Int) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)
+    ) {
         items(chaptersWithStats) { item ->
-            CourseChapterCard(item = item,
-                              onOpenChapterLearn = onOpenChapterLearn,
-                              onOpenChapterTrain = onOpenChapterTrain,
-                              onOpenChapterReview = onOpenChapterReview)
+            CourseChapterCard(
+                item = item,
+                onOpenChapterLearn = onOpenChapterLearn,
+                onOpenChapterTrain = onOpenChapterTrain,
+                onOpenChapterReview = onOpenChapterReview
+            )
         }
     }
 }
 
 @Composable
-private fun CourseChapterCard(item: CourseOverviewViewModel.ChapterWithStats,
-                              onOpenChapterLearn: (Int) -> Unit,
-                              onOpenChapterTrain: (Int) -> Unit,
-                              onOpenChapterReview: (Int) -> Unit) {
+private fun CourseChapterCard(
+    item: CourseOverviewViewModel.ChapterWithStats,
+    onOpenChapterLearn: (Int) -> Unit,
+    onOpenChapterTrain: (Int) -> Unit,
+    onOpenChapterReview: (Int) -> Unit
+) {
     val chapter = item.chapter
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Column(modifier = Modifier
+    Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)) {
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
             Text(text = chapter.name, style = MaterialTheme.typography.titleMedium)
             CourseChapterProgress(totalLines = item.totalLines, learnedLines = item.learnedLines)
-            CourseChapterActionsRow(chapterId = chapter.id,
-                                    onOpenChapterLearn = onOpenChapterLearn,
-                                    onOpenChapterTrain = onOpenChapterTrain,
-                                    onOpenChapterReview = onOpenChapterReview)
+            CourseChapterActionsRow(
+                chapterId = chapter.id,
+                onOpenChapterLearn = onOpenChapterLearn,
+                onOpenChapterTrain = onOpenChapterTrain,
+                onOpenChapterReview = onOpenChapterReview
+            )
         }
     }
 }
@@ -195,33 +230,45 @@ private fun CourseChapterCard(item: CourseOverviewViewModel.ChapterWithStats,
 @Composable
 private fun CourseChapterProgress(totalLines: Int, learnedLines: Int) {
     val percent = if (totalLines == 0) 0 else (learnedLines * 100 / totalLines)
-    Text(text = if (totalLines > 0) "$learnedLines / $totalLines lines learned ($percent%)"
-    else "No lines yet", style = MaterialTheme.typography.bodySmall)
+    Text(
+        text = if (totalLines > 0) "$learnedLines / $totalLines lines learned ($percent%)"
+        else "No lines yet", style = MaterialTheme.typography.bodySmall
+    )
     if (totalLines > 0) {
-        LinearProgressIndicator(progress = { learnedLines.toFloat() / totalLines.toFloat() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp))
+        LinearProgressIndicator(
+            progress = { learnedLines.toFloat() / totalLines.toFloat() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+        )
     }
 }
 
 @Composable
-private fun CourseChapterActionsRow(chapterId: Int,
-                                    onOpenChapterLearn: (Int) -> Unit,
-                                    onOpenChapterTrain: (Int) -> Unit,
-                                    onOpenChapterReview: (Int) -> Unit) {
-    Row(modifier = Modifier
-        .fillMaxWidth()
-        .padding(top = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        FilledTonalButton(onClick = { onOpenChapterLearn(chapterId) },
-                          modifier = Modifier.weight(1f)) {
+private fun CourseChapterActionsRow(
+    chapterId: Int,
+    onOpenChapterLearn: (Int) -> Unit,
+    onOpenChapterTrain: (Int) -> Unit,
+    onOpenChapterReview: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FilledTonalButton(
+            onClick = { onOpenChapterLearn(chapterId) },
+            modifier = Modifier.weight(1f)
+        ) {
             Icon(AppIcons.Repertoire, contentDescription = null, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(4.dp))
             Text("Learn")
         }
-        FilledTonalButton(onClick = { onOpenChapterReview(chapterId) },
-                          modifier = Modifier.weight(1f)) {
+        FilledTonalButton(
+            onClick = { onOpenChapterReview(chapterId) },
+            modifier = Modifier.weight(1f)
+        ) {
             Icon(AppIcons.Engine, contentDescription = null, modifier = Modifier.size(13.dp))
             Spacer(Modifier.width(4.dp))
             Text("Review")

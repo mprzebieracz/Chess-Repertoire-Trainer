@@ -2,6 +2,7 @@ package com.example.chessrepertoiretrainer.feature.puzzles.data
 
 import com.example.chessrepertoiretrainer.core.database.dao.PuzzleDao
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
+import com.example.chessrepertoiretrainer.core.network.puzzles.LichessPuzzleService
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
 import java.time.LocalDate
 

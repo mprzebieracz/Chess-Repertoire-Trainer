@@ -12,13 +12,15 @@ data class GameStats(val played: Int, val wins: Int, val losses: Int, val draws:
 
 fun GameStatsRaw.toGameStats() = GameStats(played, wins, losses, draws)
 
-data class CategoryStats(val category: String,
-                         val currentRating: Int?,
-                         val ratingDiff: Int?,
-                         val peakRating: Int?,
-                         val peakRatingDate: Long?,
-                         val avgOpponentRating: Int?,
-                         val allStats: GameStats,
-                         val whiteStats: GameStats,
-                         val blackStats: GameStats,
-                         val isExpanded: Boolean = false)
+data class CategoryStats(
+    val category: String,
+    val currentRating: Int?,
+    val ratingDiff: Int?,
+    val peakRating: Int?,
+    val peakRatingDate: Long?,
+    val avgOpponentRating: Int?,
+    val allStats: GameStats,
+    val whiteStats: GameStats,
+    val blackStats: GameStats,
+    val isExpanded: Boolean = false
+)

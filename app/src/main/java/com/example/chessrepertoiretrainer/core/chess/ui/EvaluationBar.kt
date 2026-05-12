@@ -65,14 +65,18 @@ fun HorizontalEvaluationBar(
 
     Box(modifier = modifier) {
         // Trailing colour fills the entire bar.
-        Box(Modifier
+        Box(
+            Modifier
                 .fillMaxSize()
-                .background(trailingColor))
+                .background(trailingColor)
+        )
         // Leading colour fills from the left.
-        Box(Modifier
+        Box(
+            Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(leadingFrac)
-                .background(leadingColor))
+                .background(leadingColor)
+        )
         // Score text overlaid on the dominant side.
         if (displayLabel.isNotEmpty()) {
             Text(

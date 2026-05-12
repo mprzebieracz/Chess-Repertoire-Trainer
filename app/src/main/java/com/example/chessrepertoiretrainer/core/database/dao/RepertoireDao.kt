@@ -13,9 +13,11 @@ import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
 import kotlinx.coroutines.flow.Flow
 
-data class LineFenRow(@ColumnInfo(name = "fen") val fen: String,
-                      @ColumnInfo(name = "chapterId") val chapterId: Int,
-                      @ColumnInfo(name = "lineId") val lineId: Int)
+data class LineFenRow(
+    @ColumnInfo(name = "fen") val fen: String,
+    @ColumnInfo(name = "chapterId") val chapterId: Int,
+    @ColumnInfo(name = "lineId") val lineId: Int
+)
 
 @Dao
 interface RepertoireDao {
@@ -102,13 +104,15 @@ interface RepertoireDao {
     @Delete
     suspend fun deleteLineMove(move: LineMove)
 
-    @Query("""
+    @Query(
+        """
         SELECT lm.fen AS fen, c.id AS chapterId, l.id AS lineId
         FROM line_moves lm
         JOIN lines l ON lm.lineId = l.id
         JOIN chapters c ON l.chapterId = c.id
         JOIN repertoires r ON c.repertoireId = r.id
         WHERE r.color = :color
-    """)
+    """
+    )
     suspend fun getLineFensForColor(color: String): List<LineFenRow>
 }

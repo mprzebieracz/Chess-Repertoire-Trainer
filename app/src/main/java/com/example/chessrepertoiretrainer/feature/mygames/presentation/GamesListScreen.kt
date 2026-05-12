@@ -49,9 +49,11 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GamesListScreen(viewModel: GamesListViewModel,
-                    onOpenGame: (SavedGame) -> Unit,
-                    onBackClick: () -> Unit) {
+fun GamesListScreen(
+    viewModel: GamesListViewModel,
+    onOpenGame: (SavedGame) -> Unit,
+    onBackClick: () -> Unit
+) {
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val games by viewModel.games.collectAsStateWithLifecycle()
 
@@ -62,13 +64,17 @@ fun GamesListScreen(viewModel: GamesListViewModel,
             }
         })
     }) { padding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)) {
-            FilterPanel(filter = filter,
-                        onFilterChange = viewModel::setFilter,
-                        onToggleTimeCategory = viewModel::toggleTimeCategory,
-                        onToggleResult = viewModel::toggleResult)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            FilterPanel(
+                filter = filter,
+                onFilterChange = viewModel::setFilter,
+                onToggleTimeCategory = viewModel::toggleTimeCategory,
+                onToggleResult = viewModel::toggleResult
+            )
 
             HorizontalDivider()
 
@@ -76,8 +82,7 @@ fun GamesListScreen(viewModel: GamesListViewModel,
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No games found", style = MaterialTheme.typography.bodyMedium)
                 }
-            }
-            else {
+            } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(games) { game ->
                         GameListCard(game = game, onClick = { onOpenGame(game) })
@@ -90,10 +95,12 @@ fun GamesListScreen(viewModel: GamesListViewModel,
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FilterPanel(filter: GameFilter,
-                        onFilterChange: (GameFilter) -> Unit,
-                        onToggleTimeCategory: (String) -> Unit,
-                        onToggleResult: (String) -> Unit) {
+private fun FilterPanel(
+    filter: GameFilter,
+    onFilterChange: (GameFilter) -> Unit,
+    onToggleTimeCategory: (String) -> Unit,
+    onToggleResult: (String) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
 
     val activeSummary = buildList {
@@ -105,25 +112,32 @@ private fun FilterPanel(filter: GameFilter,
     }.joinToString(" · ")
 
     Column {
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .clickable { expanded = !expanded }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Text(text = if (activeSummary.isBlank()) "Filters" else "Filters: $activeSummary",
-                 style = MaterialTheme.typography.bodyMedium,
-                 modifier = Modifier.weight(1f),
-                 maxLines = 1,
-                 overflow = TextOverflow.Ellipsis)
-            Icon(imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                 contentDescription = null)
+            Text(
+                text = if (activeSummary.isBlank()) "Filters" else "Filters: $activeSummary",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Icon(
+                imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                contentDescription = null
+            )
         }
 
         AnimatedVisibility(visible = expanded) {
-            Column(modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-                   verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 FilterSection(label = "Platform") {
                     OptionChip("Lichess", filter.platform == "lichess") {
                         onFilterChange(filter.copy(platform = if (filter.platform == "lichess") null else "lichess"))
@@ -144,16 +158,19 @@ private fun FilterPanel(filter: GameFilter,
 
                 FilterSection(label = "Time control") {
                     listOf("bullet", "blitz", "rapid", "classical").forEach { cat ->
-                        OptionChip(label = cat.replaceFirstChar { it.uppercase() },
-                                   selected = cat in filter.timeCategories,
-                                   onClick = { onToggleTimeCategory(cat) })
+                        OptionChip(
+                            label = cat.replaceFirstChar { it.uppercase() },
+                            selected = cat in filter.timeCategories,
+                            onClick = { onToggleTimeCategory(cat) })
                     }
                 }
 
                 FilterSection(label = "Result") {
-                    listOf("win" to "Win",
-                           "loss" to "Loss",
-                           "draw" to "Draw").forEach { (key, label) ->
+                    listOf(
+                        "win" to "Win",
+                        "loss" to "Loss",
+                        "draw" to "Draw"
+                    ).forEach { (key, label) ->
                         OptionChip(label, key in filter.selectedResults) {
                             onToggleResult(key)
                         }
@@ -170,10 +187,12 @@ private fun FilterPanel(filter: GameFilter,
 @Composable
 private fun FilterSection(label: String, content: @Composable () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(text = label,
-             style = MaterialTheme.typography.labelMedium,
-             fontWeight = FontWeight.SemiBold,
-             modifier = Modifier.width(88.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.width(88.dp)
+        )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             content()
         }
@@ -194,53 +213,73 @@ private fun GameListCard(game: SavedGame, onClick: () -> Unit) {
         "loss" -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.onSurface
     }
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 3.dp)
-        .clickable(onClick = onClick),
-         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Row(modifier = Modifier
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 3.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(text = if (game.isPlayerWhite) "W" else "B",
-                         style = MaterialTheme.typography.labelSmall,
-                         fontWeight = FontWeight.Bold)
-                    Text(text = "vs ${game.opponentName}",
-                         style = MaterialTheme.typography.bodySmall,
-                         fontWeight = FontWeight.SemiBold,
-                         maxLines = 1,
-                         overflow = TextOverflow.Ellipsis)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = if (game.isPlayerWhite) "W" else "B",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "vs ${game.opponentName}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                     game.playerRating?.let {
                         Text("($it)", style = MaterialTheme.typography.labelSmall)
                     }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     if (game.timeCategory != null) {
-                        Text(text = game.timeCategory.replaceFirstChar { it.uppercase() },
-                             style = MaterialTheme.typography.labelSmall)
+                        Text(
+                            text = game.timeCategory.replaceFirstChar { it.uppercase() },
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                     if (!game.opening.isNullOrBlank()) {
-                        Text(text = "· ${game.opening}",
-                             style = MaterialTheme.typography.labelSmall,
-                             maxLines = 1,
-                             overflow = TextOverflow.Ellipsis,
-                             modifier = Modifier.weight(1f, fill = false))
+                        Text(
+                            text = "· ${game.opening}",
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
                     }
                 }
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = game.playerResult.replaceFirstChar { it.uppercase() },
-                     style = MaterialTheme.typography.bodySmall,
-                     fontWeight = FontWeight.Bold,
-                     color = resultColor)
-                Text(text = gameDateFormat.format(Date(game.playedAt)),
-                     style = MaterialTheme.typography.labelSmall)
+                Text(
+                    text = game.playerResult.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = resultColor
+                )
+                Text(
+                    text = gameDateFormat.format(Date(game.playedAt)),
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
     }

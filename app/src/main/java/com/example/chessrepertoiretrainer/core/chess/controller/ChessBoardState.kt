@@ -42,4 +42,11 @@ interface ChessBoardController {
     fun resetBoard()
     fun flipBoard()
     fun orientForSide(side: Side)
+
+    /**
+     * Replay a sequence of SAN moves from the current board position.
+     * If [suppressListener] is true (default), [onMoveListener] is silenced during replay
+     * so callers don't receive spurious move callbacks for programmatic setup moves.
+     */
+    fun replaySanSequence(sans: List<String>, suppressListener: Boolean = true)
 }

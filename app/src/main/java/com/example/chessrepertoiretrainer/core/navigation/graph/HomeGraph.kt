@@ -16,18 +16,21 @@ import com.example.chessrepertoiretrainer.feature.puzzles.presentation.PuzzleTra
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsScreen
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
 
-fun NavGraphBuilder.homeGraph(navController: NavHostController,
-                              settingsViewModel: SettingsViewModel,
-                              puzzleRepository: PuzzleRepository,
-                              appContainer: AppContainer) {
+fun NavGraphBuilder.homeGraph(
+    navController: NavHostController,
+    settingsViewModel: SettingsViewModel,
+    puzzleRepository: PuzzleRepository,
+    appContainer: AppContainer
+) {
     composable(Screen.Home.route) {
         val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory(puzzleRepository))
-        HomeScreen(viewModel = vm,
-                   onOpenAnalysis = { navController.navigate(Screen.Analysis.route) },
-                   onPlayDailyPuzzle = {
-                       navController.navigate(Screen.PuzzleTraining.route)
-                   },
-                   onOpenRepertoire = { })
+        HomeScreen(
+            viewModel = vm,
+            onOpenAnalysis = { navController.navigate(Screen.Analysis.route) },
+            onPlayDailyPuzzle = {
+                navController.navigate(Screen.PuzzleTraining.route)
+            },
+            onOpenRepertoire = { })
     }
 
     composable(Screen.Settings.route) {
@@ -35,7 +38,7 @@ fun NavGraphBuilder.homeGraph(navController: NavHostController,
     }
 
     composable(Screen.Analysis.route) {
-        val startFen = appContainer.analysisStartFen.also { appContainer.analysisStartFen = null }
+        val startFen = appContainer.navTransientStore.takeAnalysisStartFen()
         val vm: AnalysisViewModel =
             viewModel(factory = AnalysisViewModel.Factory(appContainer.stockfishEngine, startFen))
         AnalysisScreen(viewModel = vm, onBackClick = { navController.popBackStack() })

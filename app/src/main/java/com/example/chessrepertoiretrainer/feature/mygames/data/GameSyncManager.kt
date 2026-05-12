@@ -1,26 +1,30 @@
 package com.example.chessrepertoiretrainer.feature.mygames.data
 
-import com.example.chessrepertoiretrainer.feature.openingtree.data.fetcher.GameFetcherRegistry
+import com.example.chessrepertoiretrainer.core.network.games.GameFetcherRegistry
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 import kotlinx.coroutines.flow.first
 
-class GameSyncManager(private val fetcherRegistry: GameFetcherRegistry,
-                      private val repository: SavedGameRepository,
-                      private val settingsRepository: UserSettingsRepository) {
+class GameSyncManager(
+    private val fetcherRegistry: GameFetcherRegistry,
+    private val repository: SavedGameRepository,
+    private val settingsRepository: UserSettingsRepository
+) {
     suspend fun syncAll(onProgress: (platform: String, count: Int) -> Unit): Map<String, Int> {
         val settings = settingsRepository.settingsFlow.first()
         val results = mutableMapOf<String, Int>()
 
         if (settings.lichessUsername.isNotBlank()) {
-            results["lichess"] = syncAccount(username = settings.lichessUsername,
-                                             platform = "lichess",
-                                             onProgress = { onProgress("lichess", it) })
+            results["lichess"] = syncAccount(
+                username = settings.lichessUsername,
+                platform = "lichess",
+                onProgress = { onProgress("lichess", it) })
         }
 
         if (settings.chessComUsername.isNotBlank()) {
-            results["chess.com"] = syncAccount(username = settings.chessComUsername,
-                                               platform = "chess.com",
-                                               onProgress = { onProgress("chess.com", it) })
+            results["chess.com"] = syncAccount(
+                username = settings.chessComUsername,
+                platform = "chess.com",
+                onProgress = { onProgress("chess.com", it) })
         }
 
         return results

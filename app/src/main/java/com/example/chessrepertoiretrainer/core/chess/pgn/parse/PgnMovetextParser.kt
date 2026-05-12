@@ -1,4 +1,4 @@
-package com.example.chessrepertoiretrainer.feature.repertoire.data.pgn
+package com.example.chessrepertoiretrainer.core.chess.pgn.parse
 
 class PgnMovetextParser {
 
@@ -11,9 +11,11 @@ class PgnMovetextParser {
         return lines
     }
 
-    fun parseMovetextRecursive(text: String,
-                               startIndex: Int,
-                               parentPrefix: List<ParsedMove>): ParseResult {
+    fun parseMovetextRecursive(
+        text: String,
+        startIndex: Int,
+        parentPrefix: List<ParsedMove>
+    ): ParseResult {
         val variationLines = mutableListOf<List<ParsedMove>>()
         val current = parentPrefix.map { it.copy() }.toMutableList()
         var i = startIndex
@@ -24,17 +26,14 @@ class PgnMovetextParser {
                 val last = current.last()
                 val combined = if (last.comment.isNullOrEmpty()) {
                     textComment
-                }
-                else {
+                } else {
                     last.comment + "\n" + textComment
                 }
                 current[current.lastIndex] = last.copy(comment = combined)
-            }
-            else {
+            } else {
                 pendingCommentForNext = if (pendingCommentForNext == null) {
                     textComment
-                }
-                else {
+                } else {
                     pendingCommentForNext + "\n" + textComment
                 }
             }
@@ -71,8 +70,7 @@ class PgnMovetextParser {
                 c == '(' -> {
                     val parentForVariation = if (current.isNotEmpty()) {
                         current.dropLast(1)
-                    }
-                    else {
+                    } else {
                         current
                     }
 
@@ -86,8 +84,10 @@ class PgnMovetextParser {
                     break
                 }
 
-                text.startsWith("1-0", i) || text.startsWith("0-1", i) || text.startsWith("1/2-1/2",
-                                                                                          i) || c == '*' -> {
+                text.startsWith("1-0", i) || text.startsWith("0-1", i) || text.startsWith(
+                    "1/2-1/2",
+                    i
+                ) || c == '*' -> {
                     i += when {
                         text.startsWith("1-0", i) -> 3
                         text.startsWith("0-1", i) -> 3

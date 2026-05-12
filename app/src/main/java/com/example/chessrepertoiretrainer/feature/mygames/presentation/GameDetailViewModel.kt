@@ -6,15 +6,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
-import com.example.chessrepertoiretrainer.core.chess.domain.moveFromSan
-import com.example.chessrepertoiretrainer.core.chess.utils.PGNExtractor
+import com.example.chessrepertoiretrainer.core.chess.pgn.extract.PGNExtractor
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
 import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
-import com.example.chessrepertoiretrainer.feature.mygames.domain.usecase.ComplianceIndex
-import com.example.chessrepertoiretrainer.feature.mygames.domain.usecase.RepertoireComplianceAnalyzer
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.usecase.ComplianceIndex
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.usecase.RepertoireComplianceAnalyzer
+import com.github.bhlangonijr.chesslib.Side
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,9 +26,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class GameDetailViewModel(val game: SavedGame,
-                          private val analyzer: RepertoireComplianceAnalyzer,
-                          private val engine: StockfishEngine) : ViewModel() {
+class GameDetailViewModel(
+    val game: SavedGame,
+    private val analyzer: RepertoireComplianceAnalyzer,
+    private val engine: StockfishEngine
+) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
 
@@ -44,8 +46,9 @@ class GameDetailViewModel(val game: SavedGame,
 
     private var cachedIndex: ComplianceIndex? = null
 
-    val currentAnnotation: StateFlow<MoveAnnotation?> = combine(_annotations,
-                                                                snapshotFlow { chessController.currentMoveIndex }) { annotations, idx ->
+    val currentAnnotation: StateFlow<MoveAnnotation?> = combine(
+        _annotations,
+        snapshotFlow { chessController.currentMoveIndex }) { annotations, idx ->
         annotations.getOrNull(idx)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -53,10 +56,13 @@ class GameDetailViewModel(val game: SavedGame,
         engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     val engineAnalysis: StateFlow<EngineAnalysis?> =
         engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(viewModelScope,
-                                                                                     SharingStarted.WhileSubscribed(
-                                                                                         5_000),
-                                                                                     EngineSearchState.IDLE)
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(
+            5_000
+        ),
+        EngineSearchState.IDLE
+    )
     val engineError: StateFlow<String?> =
         engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -71,16 +77,9 @@ class GameDetailViewModel(val game: SavedGame,
 
     private fun loadGame() {
         chessController.resetBoard()
-        val board = chessController.getBoard()
-        for (san in gameSanMoves) {
-            val move = board.moveFromSan(san) ?: break
-            chessController.onMove(move)
-        }
+        chessController.replaySanSequence(gameSanMoves)
         repeat(gameSanMoves.size) { chessController.navigateBack() }
-
-        if (game.isPlayerWhite == chessController.isFlipped) {
-            chessController.flipBoard()
-        }
+        chessController.orientForSide(if (game.isPlayerWhite) Side.WHITE else Side.BLACK)
     }
 
     fun toggleCompliance() {
@@ -88,8 +87,7 @@ class GameDetailViewModel(val game: SavedGame,
         _complianceEnabled.value = enabling
         if (enabling) {
             viewModelScope.launch { loadAnnotations() }
-        }
-        else {
+        } else {
             _annotations.value = emptyList()
         }
     }
@@ -103,8 +101,7 @@ class GameDetailViewModel(val game: SavedGame,
                 _annotations.value = withContext(Dispatchers.Default) {
                     analyzer.annotate(gameSanMoves, game.isPlayerWhite, index)
                 }
-            }
-            finally {
+            } finally {
                 _isLoadingCompliance.value = false
             }
         }
@@ -118,8 +115,7 @@ class GameDetailViewModel(val game: SavedGame,
             _annotations.value = withContext(Dispatchers.Default) {
                 analyzer.annotate(gameSanMoves, game.isPlayerWhite, index)
             }
-        }
-        finally {
+        } finally {
             _isLoadingCompliance.value = false
         }
     }
@@ -136,9 +132,11 @@ class GameDetailViewModel(val game: SavedGame,
         engine.disable()
     }
 
-    class Factory(private val game: SavedGame,
-                  private val analyzer: RepertoireComplianceAnalyzer,
-                  private val engine: StockfishEngine) : ViewModelProvider.Factory {
+    class Factory(
+        private val game: SavedGame,
+        private val analyzer: RepertoireComplianceAnalyzer,
+        private val engine: StockfishEngine
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             return GameDetailViewModel(game, analyzer, engine) as T

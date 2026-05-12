@@ -1,9 +1,11 @@
 package com.example.chessrepertoiretrainer.core.engine
 
-data class EngineAnalysis(val centipawns: Int?,
-                          val mateIn: Int?,
-                          val depth: Int,
-                          val line: String) {
+data class EngineAnalysis(
+    val centipawns: Int?,
+    val mateIn: Int?,
+    val depth: Int,
+    val line: String
+) {
     val evaluationBarFraction: Float
         get() {
             if (mateIn != null) return if (mateIn > 0) 1.0f else 0.0f

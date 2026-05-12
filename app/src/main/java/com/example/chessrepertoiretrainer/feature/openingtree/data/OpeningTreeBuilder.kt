@@ -2,28 +2,34 @@ package com.example.chessrepertoiretrainer.feature.openingtree.data
 
 import android.util.Log
 import com.example.chessrepertoiretrainer.core.chess.domain.moveFromSan
-import com.example.chessrepertoiretrainer.core.chess.utils.PGNExtractor
+import com.example.chessrepertoiretrainer.core.chess.pgn.extract.PGNExtractor
 import com.github.bhlangonijr.chesslib.Board
 
 enum class GameOutcome { WIN, DRAW, LOSS }
 
 data class GameForOpeningTree(val pgn: String, val isUserWhite: Boolean, val resultTag: String)
 
-data class OpeningTreeMoveAggregate(val moveSan: String,
-                                    val toFen: String,
-                                    var games: Int = 0,
-                                    var wins: Int = 0,
-                                    var draws: Int = 0,
-                                    var losses: Int = 0)
+data class OpeningTreeMoveAggregate(
+    val moveSan: String,
+    val toFen: String,
+    var games: Int = 0,
+    var wins: Int = 0,
+    var draws: Int = 0,
+    var losses: Int = 0
+)
 
-data class OpeningTreeNode(val fen: String,
-                           val parentFen: String?,
-                           val moveSanFromParent: String?,
-                           val children: MutableMap<String, OpeningTreeMoveAggregate> = mutableMapOf())
+data class OpeningTreeNode(
+    val fen: String,
+    val parentFen: String?,
+    val moveSanFromParent: String?,
+    val children: MutableMap<String, OpeningTreeMoveAggregate> = mutableMapOf()
+)
 
-data class OpeningTree(val rootFen: String,
-                       val playerIsBlack: Boolean,
-                       internal val nodesByFen: Map<String, OpeningTreeNode>) {
+data class OpeningTree(
+    val rootFen: String,
+    val playerIsBlack: Boolean,
+    internal val nodesByFen: Map<String, OpeningTreeNode>
+) {
     fun getNode(fen: String): OpeningTreeNode? = nodesByFen[fen]
 }
 
@@ -45,8 +51,7 @@ object OpeningTreeBuilder {
             try {
                 board.loadFromFen(rootFen)
                 applyGameMoves(board = board, nodes = nodes, sanMoves = sanMoves, outcome = outcome)
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 Log.e("OpeningTreeBuilder", "Error processing game index=$index: ${e.message}", e)
             }
         }
@@ -54,10 +59,12 @@ object OpeningTreeBuilder {
         return OpeningTree(rootFen = rootFen, playerIsBlack = playerIsBlack, nodesByFen = nodes)
     }
 
-    private fun applyGameMoves(board: Board,
-                               nodes: MutableMap<String, OpeningTreeNode>,
-                               sanMoves: List<String>,
-                               outcome: GameOutcome) {
+    private fun applyGameMoves(
+        board: Board,
+        nodes: MutableMap<String, OpeningTreeNode>,
+        sanMoves: List<String>,
+        outcome: GameOutcome
+    ) {
         for (san in sanMoves) {
             val fenBefore = board.fen
             val node = nodes.getOrPut(fenBefore) {

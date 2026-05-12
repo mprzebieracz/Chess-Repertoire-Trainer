@@ -28,8 +28,10 @@ import java.io.OutputStreamWriter
 
 private const val TAG = "StockfishEngine"
 
-class StockfishEngine(private val context: Context,
-                      private val settingsRepository: UserSettingsRepository) {
+class StockfishEngine(
+    private val context: Context,
+    private val settingsRepository: UserSettingsRepository
+) {
     private val engineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val _isEnabled = MutableStateFlow(false)
@@ -117,16 +119,16 @@ class StockfishEngine(private val context: Context,
         else if (board.isKingAttacked) {
             // Side to move is mated
             val whiteMated = board.sideToMove == Side.WHITE
-            EngineAnalysis(centipawns = null,
-                           mateIn = if (whiteMated) -1 else 1,
-                           depth = 0,
-                           line = if (whiteMated) "Checkmate – Black wins" else "Checkmate – White wins")
-        }
-        else {
+            EngineAnalysis(
+                centipawns = null,
+                mateIn = if (whiteMated) -1 else 1,
+                depth = 0,
+                line = if (whiteMated) "Checkmate – Black wins" else "Checkmate – White wins"
+            )
+        } else {
             EngineAnalysis(centipawns = 0, mateIn = null, depth = 0, line = "Stalemate – Draw")
         }
-    }
-    catch (_: Exception) {
+    } catch (_: Exception) {
         null
     }
 
@@ -154,8 +156,7 @@ class StockfishEngine(private val context: Context,
             pendingForcedStop = true
             pendingNewSearch = action
             sendCommand("stop")
-        }
-        else {
+        } else {
             action()
         }
     }
@@ -177,8 +178,7 @@ class StockfishEngine(private val context: Context,
             val w = writer ?: return
             w.write("$cmd\n")
             w.flush()
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             Log.e(TAG, "sendCommand failed for '$cmd': ${e.message}")
         }
     }
@@ -197,8 +197,7 @@ class StockfishEngine(private val context: Context,
             Log.w(TAG, "Binary not executable, attempting chmod: ${binary.absolutePath}")
             try {
                 Runtime.getRuntime().exec("chmod 755 ${binary.absolutePath}").waitFor()
-            }
-            catch (_: Exception) {
+            } catch (_: Exception) {
             }
         }
 
@@ -212,8 +211,7 @@ class StockfishEngine(private val context: Context,
                 val exitCode = p.exitValue()
                 val output = try {
                     p.inputStream.bufferedReader().readText().take(300)
-                }
-                catch (_: Exception) {
+                } catch (_: Exception) {
                     ""
                 }
                 val hint = when (exitCode) {
@@ -240,8 +238,7 @@ class StockfishEngine(private val context: Context,
                 while (isActive) {
                     val line = try {
                         r.readLine()
-                    }
-                    catch (_: Exception) {
+                    } catch (_: Exception) {
                         break
                     } ?: break
                     Log.v(TAG, "< $line")
@@ -251,8 +248,7 @@ class StockfishEngine(private val context: Context,
                             Log.d(TAG, "Engine ready")
                             ready.complete(Unit)
                         }
-                    }
-                    else {
+                    } else {
                         handleOutputLine(line)
                     }
                 }
@@ -274,8 +270,7 @@ class StockfishEngine(private val context: Context,
                 return false
             }
             true
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             val msg = "Failed to start engine: ${e.message}"
             Log.e(TAG, msg, e)
             _engineError.value = msg
@@ -291,8 +286,7 @@ class StockfishEngine(private val context: Context,
                     pendingForcedStop = false
                     pendingNewSearch?.invoke()
                     pendingNewSearch = null
-                }
-                else {
+                } else {
                     _searchState.value = EngineSearchState.COMPLETE
                 }
             }
@@ -341,10 +335,12 @@ class StockfishEngine(private val context: Context,
             val whiteCp = if (isBlackToMove && cp != null) -cp else cp
             val whiteMate = if (isBlackToMove && mateIn != null) -mateIn else mateIn
             val pvSan = convertPvToSan(fen, pvMoves)
-            _analysis.value = EngineAnalysis(centipawns = whiteCp,
-                                             mateIn = whiteMate,
-                                             depth = depth,
-                                             line = pvSan)
+            _analysis.value = EngineAnalysis(
+                centipawns = whiteCp,
+                mateIn = whiteMate,
+                depth = depth,
+                line = pvSan
+            )
         }
     }
 
@@ -369,8 +365,7 @@ class StockfishEngine(private val context: Context,
                 if (board.sideToMove == Side.WHITE) moveNum++
             }
             sb.toString().trim()
-        }
-        catch (_: Exception) {
+        } catch (_: Exception) {
             uciMoves.take(5).joinToString(" ")
         }
     }

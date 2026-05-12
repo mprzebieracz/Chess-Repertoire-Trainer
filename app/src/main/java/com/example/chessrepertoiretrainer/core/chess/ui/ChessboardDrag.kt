@@ -15,12 +15,14 @@ import com.github.bhlangonijr.chesslib.Square
 import kotlin.math.roundToInt
 
 @Composable
-internal fun DraggedPieceLayer(piece: Piece,
-                               square: Square,
-                               squareSizePx: Float,
-                               isFlipped: Boolean,
-                               initialTouchOffset: Offset,
-                               dragOffset: Offset) {
+internal fun DraggedPieceLayer(
+    piece: Piece,
+    square: Square,
+    squareSizePx: Float,
+    isFlipped: Boolean,
+    initialTouchOffset: Offset,
+    dragOffset: Offset
+) {
     val density = LocalDensity.current
     val visual = visualPosition(square, isFlipped)
 
@@ -29,12 +31,16 @@ internal fun DraggedPieceLayer(piece: Piece,
     val dragScale = ChessUiConstants.DragPreview.scale
     val sizeDp = with(density) { (squareSizePx * dragScale).toDp() }
 
-    Box(modifier = Modifier
-        .size(sizeDp)
-        .offset {
-            IntOffset((startXPx + initialTouchOffset.x + dragOffset.x - (squareSizePx * dragScale / 2)).roundToInt(),
-                      (startYPx + initialTouchOffset.y + dragOffset.y - (squareSizePx * dragScale / 2)).roundToInt())
-        }, contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .size(sizeDp)
+            .offset {
+                IntOffset(
+                    (startXPx + initialTouchOffset.x + dragOffset.x - (squareSizePx * dragScale / 2)).roundToInt(),
+                    (startYPx + initialTouchOffset.y + dragOffset.y - (squareSizePx * dragScale / 2)).roundToInt()
+                )
+            }, contentAlignment = Alignment.Center
+    ) {
         PieceDisplay(piece, modifier = Modifier.fillMaxSize())
     }
 }

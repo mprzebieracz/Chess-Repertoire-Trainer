@@ -20,8 +20,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CourseOverviewViewModel(private val repertoireRepository: RepertoireRepository,
-                              savedStateHandle: SavedStateHandle) : ViewModel() {
+class CourseOverviewViewModel(
+    private val repertoireRepository: RepertoireRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val repertoireId: Int = checkNotNull(savedStateHandle["repertoireId"])
 
@@ -37,9 +39,11 @@ class CourseOverviewViewModel(private val repertoireRepository: RepertoireReposi
                 val learned = repertoireRepository.getLearnedLineCountForChapter(chapter.id)
                 ChapterWithStats(chapter = chapter, totalLines = total, learnedLines = learned)
             }
-        }.stateIn(scope = viewModelScope,
-                  started = SharingStarted.WhileSubscribed(5000),
-                  initialValue = emptyList())
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     private val _showChapterSelection = MutableStateFlow(false)
     val showChapterSelection: StateFlow<Boolean> = _showChapterSelection.asStateFlow()

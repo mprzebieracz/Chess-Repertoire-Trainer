@@ -1,12 +1,9 @@
 package com.example.chessrepertoiretrainer.feature.analysis
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +17,7 @@ import com.example.chessrepertoiretrainer.core.chess.ui.ChessScreenLayout
 import com.example.chessrepertoiretrainer.core.chess.ui.ChessTopBar
 import com.example.chessrepertoiretrainer.core.chess.ui.DeeperButton
 import com.example.chessrepertoiretrainer.core.chess.ui.EngineSection
+import com.example.chessrepertoiretrainer.core.chess.ui.EngineToggleButton
 import com.example.chessrepertoiretrainer.core.chess.ui.PgnTextViewer
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 
@@ -39,12 +37,16 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
                 onBackClick = onBackClick,
                 actions = {
                     engineAnalysis?.depth?.let { depth ->
-                        if (isEngineEnabled) DeeperButton(searchState = engineSearchState,
-                                                          depth = depth,
-                                                          onClick = viewModel::analyzeDeeper)
+                        if (isEngineEnabled) DeeperButton(
+                            searchState = engineSearchState,
+                            depth = depth,
+                            onClick = viewModel::analyzeDeeper
+                        )
                     }
-                    EngineToggleButton(isEnabled = isEngineEnabled,
-                                       onClick = viewModel::toggleEngine)
+                    EngineToggleButton(
+                        isEnabled = isEngineEnabled,
+                        onClick = viewModel::toggleEngine
+                    )
                 },
             )
         },
@@ -76,25 +78,15 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
             ChessBottomBar {
                 BottomBarButton(AppIcons.FlipBoard, "Flip", { chessCtrl.flipBoard() })
                 BottomBarButton(AppIcons.ResetBoard, "Reset", { chessCtrl.resetBoard() })
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                "Prev",
-                                { chessCtrl.navigateBack() })
-                BottomBarButton(Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                "Next",
-                                { chessCtrl.navigateForward() })
+                BottomBarButton(
+                    Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    "Prev",
+                    { chessCtrl.navigateBack() })
+                BottomBarButton(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    "Next",
+                    { chessCtrl.navigateForward() })
             }
         },
     )
-}
-
-@Composable
-fun EngineToggleButton(isEnabled: Boolean, onClick: () -> Unit) {
-    IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
-        Icon(
-            imageVector = AppIcons.Engine,
-            contentDescription = if (isEnabled) "Disable engine" else "Enable engine",
-            tint = if (isEnabled) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-        )
-    }
 }

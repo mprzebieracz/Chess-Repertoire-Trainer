@@ -23,8 +23,10 @@ class GamesListViewModel(private val repository: SavedGameRepository) : ViewMode
     val filter: StateFlow<GameFilter> = _filter.asStateFlow()
 
     val games: StateFlow<List<SavedGame>> = _filter.flatMapLatest { f ->
-        repository.getAllGamesFiltered(platform = f.platform,
-                                       isWhite = f.isPlayerWhite).map { games ->
+        repository.getAllGamesFiltered(
+            platform = f.platform,
+            isWhite = f.isPlayerWhite
+        ).map { games ->
             games
                 .let { list ->
                     if (f.selectedResults.isEmpty()) list

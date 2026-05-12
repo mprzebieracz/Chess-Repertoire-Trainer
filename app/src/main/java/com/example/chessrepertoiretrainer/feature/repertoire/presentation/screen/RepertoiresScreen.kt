@@ -58,28 +58,34 @@ fun RepertoiresScreen(viewModel: RepertoiresViewModel, onNavigateToChapters: (In
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(topBar = {
-        RepertoiresTopBar(isRebuildingIndex = isRebuildingIndex,
-                          onRebuildIndex = viewModel::rebuildComplianceIndex)
+        RepertoiresTopBar(
+            isRebuildingIndex = isRebuildingIndex,
+            onRebuildIndex = viewModel::rebuildComplianceIndex
+        )
     }, floatingActionButton = {
         FloatingActionButton(onClick = { showAddDialog = true }) {
             Icon(AppIcons.AddRepertoire, contentDescription = "Add course")
         }
     }) { paddingValues ->
         if (courses.isEmpty()) {
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-                contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
                 Text("No courses yet. Tap + to add one.")
             }
-        }
-        else {
-            LazyColumn(modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)) {
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
                 items(courses) { course ->
-                    RepertoireCard(course = course,
-                                   onClick = { onNavigateToChapters(course.repertoire.id) })
+                    RepertoireCard(
+                        course = course,
+                        onClick = { onNavigateToChapters(course.repertoire.id) })
                 }
             }
         }
@@ -104,14 +110,17 @@ private fun RepertoiresTopBar(isRebuildingIndex: Boolean, onRebuildIndex: () -> 
         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
             DropdownMenuItem(text = {
                 if (isRebuildingIndex) {
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp),
-                                                  strokeWidth = 2.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
                         Text("Rebuilding…")
                     }
-                }
-                else {
+                } else {
                     Text("Rebuild Compliance Index")
                 }
             }, onClick = {
@@ -124,21 +133,27 @@ private fun RepertoiresTopBar(isRebuildingIndex: Boolean, onRebuildIndex: () -> 
 
 @Composable
 private fun RepertoireCard(course: CourseProgress, onClick: () -> Unit) {
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 8.dp)
-        .clickable(onClick = onClick)) {
-        RepertoireCardContent(course = course, modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth())
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick = onClick)
+    ) {
+        RepertoireCardContent(
+            course = course, modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        )
     }
 }
 
 @Composable
 private fun RepertoireCardContent(course: CourseProgress, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        Row(verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(text = course.repertoire.name, style = MaterialTheme.typography.titleLarge)
             ColorBadge(color = course.repertoire.color)
         }
@@ -147,14 +162,17 @@ private fun RepertoireCardContent(course: CourseProgress, modifier: Modifier = M
         val learned = course.learnedLines
         if (total > 0) {
             val percent = (learned * 100 / total)
-            Text(text = "$learned / $total lines learned ($percent%)",
-                 style = MaterialTheme.typography.bodySmall)
-            LinearProgressIndicator(progress = { course.learnedFraction },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 4.dp))
-        }
-        else {
+            Text(
+                text = "$learned / $total lines learned ($percent%)",
+                style = MaterialTheme.typography.bodySmall
+            )
+            LinearProgressIndicator(
+                progress = { course.learnedFraction },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+            )
+        } else {
             Text(text = "No lines yet", style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -165,10 +183,12 @@ private fun ColorBadge(color: String) {
     val isWhite = color.equals("White", ignoreCase = true)
     val bgColor = if (isWhite) Color(0xFFF5F5F5) else Color(0xFF212121)
     val textColor = if (isWhite) Color(0xFF212121) else Color(0xFFF5F5F5)
-    Box(modifier = Modifier
-        .clip(CircleShape)
-        .background(bgColor)
-        .padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(bgColor)
+            .padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center
+    ) {
         Text(text = color, style = MaterialTheme.typography.labelSmall, color = textColor)
     }
 }
@@ -181,21 +201,27 @@ private fun AddRepertoireDialog(onDismiss: () -> Unit, onConfirm: (String, Strin
 
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Add New Repertoire") }, text = {
         Column {
-            OutlinedTextField(value = name,
-                              onValueChange = { name = it },
-                              label = { Text("Repertoire Name (e.g. Sicilian)") },
-                              singleLine = true,
-                              modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Repertoire Name (e.g. Sicilian)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
             Spacer(modifier = Modifier.height(16.dp))
             Text("Select Side:", style = MaterialTheme.typography.labelLarge)
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = selectedColor == "White",
-                           onClick = { selectedColor = "White" },
-                           label = { Text("White") })
-                FilterChip(selected = selectedColor == "Black",
-                           onClick = { selectedColor = "Black" },
-                           label = { Text("Black") })
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = selectedColor == "White",
+                    onClick = { selectedColor = "White" },
+                    label = { Text("White") })
+                FilterChip(
+                    selected = selectedColor == "Black",
+                    onClick = { selectedColor = "Black" },
+                    label = { Text("Black") })
             }
         }
     }, confirmButton = {

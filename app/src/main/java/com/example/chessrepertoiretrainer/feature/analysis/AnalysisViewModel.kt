@@ -27,10 +27,13 @@ class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? =
         engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     val engineAnalysis: StateFlow<EngineAnalysis?> =
         engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(viewModelScope,
-                                                                                     SharingStarted.WhileSubscribed(
-                                                                                         5_000),
-                                                                                     EngineSearchState.IDLE)
+    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(
+            5_000
+        ),
+        EngineSearchState.IDLE
+    )
     val engineError: StateFlow<String?> =
         engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

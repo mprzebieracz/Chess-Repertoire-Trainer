@@ -1,9 +1,9 @@
-package com.example.chessrepertoiretrainer.feature.repertoire.data.pgn
+package com.example.chessrepertoiretrainer.core.chess.pgn.parse
 
 class PgnTextProcessor {
 
     fun preprocess(raw: String): String {
-        var text = raw.replace("\r\n", "\n").replace('\r', '\n').replace('\u00A0', ' ')
+        var text = raw.replace("\r\n", "\n").replace('\r', '\n').replace(' ', ' ')
         val inlineEngineTagRegex = Regex("""\[%[^]]*]""")
         text = text.replace(inlineEngineTagRegex, "")
         return text.lines().joinToString("\n") { it.trimEnd() }
@@ -34,4 +34,3 @@ class PgnTextProcessor {
         return games.map { it.toString().trim() }
     }
 }
-
