@@ -67,7 +67,8 @@ fun GamesListScreen(viewModel: GamesListViewModel,
             .padding(padding)) {
             FilterPanel(filter = filter,
                         onFilterChange = viewModel::setFilter,
-                        onToggleTimeCategory = viewModel::toggleTimeCategory)
+                        onToggleTimeCategory = viewModel::toggleTimeCategory,
+                        onToggleResult = viewModel::toggleResult)
 
             HorizontalDivider()
 
@@ -91,7 +92,8 @@ fun GamesListScreen(viewModel: GamesListViewModel,
 @Composable
 private fun FilterPanel(filter: GameFilter,
                         onFilterChange: (GameFilter) -> Unit,
-                        onToggleTimeCategory: (String) -> Unit) {
+                        onToggleTimeCategory: (String) -> Unit,
+                        onToggleResult: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     val activeSummary = buildList {
@@ -99,7 +101,7 @@ private fun FilterPanel(filter: GameFilter,
         if (filter.isPlayerWhite == true) add("White")
         else if (filter.isPlayerWhite == false) add("Black")
         filter.timeCategories.forEach { add(it.replaceFirstChar { c -> c.uppercase() }) }
-        filter.playerResult?.let { add(it.replaceFirstChar { c -> c.uppercase() }) }
+        filter.selectedResults.forEach { add(it.replaceFirstChar { c -> c.uppercase() }) }
     }.joinToString(" · ")
 
     Column {
@@ -152,8 +154,8 @@ private fun FilterPanel(filter: GameFilter,
                     listOf("win" to "Win",
                            "loss" to "Loss",
                            "draw" to "Draw").forEach { (key, label) ->
-                        OptionChip(label, filter.playerResult == key) {
-                            onFilterChange(filter.copy(playerResult = if (filter.playerResult == key) null else key))
+                        OptionChip(label, key in filter.selectedResults) {
+                            onToggleResult(key)
                         }
                     }
                 }

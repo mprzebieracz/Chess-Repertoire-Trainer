@@ -76,7 +76,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                         onColorThemeChange = viewModel::updateAppColorTheme,
                         onBoardThemeChange = viewModel::updateBoardTheme,
                         onPlatformChange = viewModel::updateDefaultOnlinePlatform,
-                        onDynamicColorsChange = viewModel::updateUseDynamicColors,
                         onEngineDepthChange = viewModel::updateEngineDepth,
                         onEngineMoveTimeChange = viewModel::updateEngineMovetime,
                         onEngineThreadsChange = viewModel::updateEngineThreads)
@@ -135,7 +134,6 @@ private fun SettingsContent(settings: UserSettings,
                             onColorThemeChange: (AppColorTheme) -> Unit,
                             onBoardThemeChange: (BoardTheme) -> Unit,
                             onPlatformChange: (String) -> Unit,
-                            onDynamicColorsChange: (Boolean) -> Unit,
                             onEngineDepthChange: (Int) -> Unit,
                             onEngineMoveTimeChange: (Int) -> Unit,
                             onEngineThreadsChange: (Int) -> Unit) {
@@ -154,17 +152,12 @@ private fun SettingsContent(settings: UserSettings,
     DefaultPlatformSection(selectedPlatform = settings.defaultOnlinePlatform,
                            onPlatformChange = onPlatformChange)
 
-    DynamicColorsSection(useDynamicColors = settings.useDynamicColors,
-                         onDynamicColorsChange = onDynamicColorsChange)
-
-    EngineSection(depth = settings.engineDepth,
-                  movetime = settings.engineMovetime,
-                  threads = settings.engineThreads,
-                  onDepthChange = onEngineDepthChange,
-                  onMoveTimeChange = onEngineMoveTimeChange,
-                  onThreadsChange = onEngineThreadsChange)
-
-    AdvancedSection()
+    AdvancedSection(depth = settings.engineDepth,
+                    movetime = settings.engineMovetime,
+                    threads = settings.engineThreads,
+                    onDepthChange = onEngineDepthChange,
+                    onMoveTimeChange = onEngineMoveTimeChange,
+                    onThreadsChange = onEngineThreadsChange)
 }
 
 @Composable
@@ -264,33 +257,16 @@ private fun DefaultPlatformSection(selectedPlatform: String, onPlatformChange: (
 }
 
 @Composable
-private fun DynamicColorsSection(useDynamicColors: Boolean,
-                                 onDynamicColorsChange: (Boolean) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text("Dynamic Material colors")
-            Text(text = "Use system-derived colors on Android 12+ (overrides Color theme above)",
-                 style = MaterialTheme.typography.bodySmall)
-        }
-        Switch(checked = useDynamicColors,
-               onCheckedChange = onDynamicColorsChange,
-               colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary))
-    }
-}
-
-@Composable
 private fun EngineSection(depth: Int,
                           movetime: Int,
                           threads: Int,
                           onDepthChange: (Int) -> Unit,
                           onMoveTimeChange: (Int) -> Unit,
                           onThreadsChange: (Int) -> Unit) {
-    SectionHeader(text = "Engine (Stockfish)", modifier = Modifier.padding(top = 8.dp))
-    Text(text = "Place libstockfish.so in jniLibs/arm64-v8a/ to enable analysis.",
-         style = MaterialTheme.typography.bodySmall,
-         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+    Text(text = "Engine",
+         style = MaterialTheme.typography.titleSmall,
+         fontWeight = FontWeight.SemiBold,
+         modifier = Modifier.padding(top = 4.dp))
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text("Depth: $depth", style = MaterialTheme.typography.bodyMedium)
@@ -310,9 +286,6 @@ private fun EngineSection(depth: Int,
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text("Threads: $threads", style = MaterialTheme.typography.bodyMedium)
-        Text(text = "1 = battery-friendly, 4 = strongest (heats device)",
-             style = MaterialTheme.typography.bodySmall,
-             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
         Slider(value = threads.toFloat(),
                onValueChange = { onThreadsChange(it.toInt()) },
                valueRange = 1f..4f,
@@ -321,11 +294,19 @@ private fun EngineSection(depth: Int,
 }
 
 @Composable
-private fun AdvancedSection() {
+private fun AdvancedSection(depth: Int,
+                            movetime: Int,
+                            threads: Int,
+                            onDepthChange: (Int) -> Unit,
+                            onMoveTimeChange: (Int) -> Unit,
+                            onThreadsChange: (Int) -> Unit) {
     SectionHeader(text = "Advanced", modifier = Modifier.padding(top = 8.dp))
-
-    Text(text = "Here you could later tweak training speed, default learn mode options, PGN import filters, etc.",
-         style = MaterialTheme.typography.bodySmall)
+    EngineSection(depth = depth,
+                  movetime = movetime,
+                  threads = threads,
+                  onDepthChange = onDepthChange,
+                  onMoveTimeChange = onMoveTimeChange,
+                  onThreadsChange = onThreadsChange)
 }
 
 @Composable

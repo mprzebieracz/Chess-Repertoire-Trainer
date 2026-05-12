@@ -24,10 +24,16 @@ class GamesListViewModel(private val repository: SavedGameRepository) : ViewMode
 
     val games: StateFlow<List<SavedGame>> = _filter.flatMapLatest { f ->
         repository.getAllGamesFiltered(platform = f.platform,
-                                       result = f.playerResult,
                                        isWhite = f.isPlayerWhite).map { games ->
-            if (f.timeCategories.isEmpty()) games
-            else games.filter { it.timeCategory in f.timeCategories }
+            games
+                .let { list ->
+                    if (f.selectedResults.isEmpty()) list
+                    else list.filter { it.playerResult in f.selectedResults }
+                }
+                .let { list ->
+                    if (f.timeCategories.isEmpty()) list
+                    else list.filter { it.timeCategory in f.timeCategories }
+                }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -39,6 +45,12 @@ class GamesListViewModel(private val repository: SavedGameRepository) : ViewMode
         val current = _filter.value.timeCategories
         _filter.value =
             _filter.value.copy(timeCategories = if (category in current) current - category else current + category)
+    }
+
+    fun toggleResult(result: String) {
+        val current = _filter.value.selectedResults
+        _filter.value =
+            _filter.value.copy(selectedResults = if (result in current) current - result else current + result)
     }
 
     class Factory(private val repository: SavedGameRepository) : ViewModelProvider.Factory {

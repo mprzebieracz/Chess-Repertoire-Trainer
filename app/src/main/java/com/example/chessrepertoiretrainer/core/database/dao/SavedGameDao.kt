@@ -26,12 +26,10 @@ interface SavedGameDao {
     @Query("""
         SELECT * FROM saved_games
         WHERE (:platform IS NULL OR platform = :platform)
-        AND (:result IS NULL OR playerResult = :result)
         AND (:isWhite IS NULL OR isPlayerWhite = :isWhite)
         ORDER BY playedAt DESC
     """)
     fun getAllGamesFiltered(platform: String?,
-                            result: String?,
                             isWhite: Boolean?): Flow<List<SavedGame>>
 
     @Query("""

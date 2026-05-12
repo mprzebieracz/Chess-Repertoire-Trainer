@@ -10,7 +10,6 @@ interface SavedGameRepository {
     suspend fun getLatestPlayedAt(platform: String, username: String): Long?
     suspend fun countGames(platform: String, username: String): Int
     fun getAllGamesFiltered(platform: String?,
-                            result: String?,
                             isWhite: Boolean?): Flow<List<SavedGame>>
 
     suspend fun getStats(username: String,
