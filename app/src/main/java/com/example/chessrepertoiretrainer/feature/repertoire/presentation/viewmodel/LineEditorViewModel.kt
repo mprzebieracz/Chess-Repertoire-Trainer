@@ -8,7 +8,10 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
+import com.example.chessrepertoiretrainer.core.chess.domain.parseArrows
+import com.example.chessrepertoiretrainer.core.chess.domain.serializeArrows
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.LinearGameNavigator
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
@@ -40,6 +43,9 @@ class LineEditorViewModel(
 
     private val _hasChanges = MutableStateFlow(false)
     val hasChanges: StateFlow<Boolean> = _hasChanges.asStateFlow()
+
+    private val _isArrowDrawingMode = MutableStateFlow(false)
+    val isArrowDrawingMode: StateFlow<Boolean> = _isArrowDrawingMode.asStateFlow()
 
     val dbMoves: StateFlow<List<LineMove>> = repertoireRepository.getMovesForLine(lineId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -105,6 +111,35 @@ class LineEditorViewModel(
                     if (engine.isEnabled.value) engine.updatePosition(fen)
                 }
             }
+
+            viewModelScope.launch {
+                snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
+                    val currentMove = dbMoves.value.firstOrNull { it.fen == fen }
+                    chessController.arrows = currentMove?.arrows.parseArrows()
+                    _isArrowDrawingMode.value = false
+                }
+            }
+        }
+    }
+
+    fun toggleArrowDrawingMode() {
+        _isArrowDrawingMode.value = !_isArrowDrawingMode.value
+    }
+
+    fun onArrowDrawn(arrow: Arrow) {
+        _isArrowDrawingMode.value = false
+        val current = chessController.arrows.toMutableList()
+        if (!current.remove(arrow)) current.add(arrow)
+        chessController.arrows = current
+        persistCurrentArrows()
+    }
+
+    private fun persistCurrentArrows() {
+        viewModelScope.launch {
+            val fen = chessController.boardState
+            val target = dbMoves.value.firstOrNull { it.fen == fen } ?: return@launch
+            val serialized = chessController.arrows.serializeArrows().ifEmpty { null }
+            repertoireRepository.updateLineMove(target.copy(arrows = serialized))
         }
     }
 

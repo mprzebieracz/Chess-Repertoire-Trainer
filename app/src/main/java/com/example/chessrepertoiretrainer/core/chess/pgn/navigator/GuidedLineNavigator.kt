@@ -48,17 +48,18 @@ class GuidedLineNavigator(moves: List<LineMove>, val initialFen: String = STARTI
         if (currentIndex < 0) return false
         currentIndex--
         currentMoveIndex = currentIndex
-        currentNodeId = nodeList.getOrNull(currentIndex)?.id
-        // Board is managed by the ViewModel (undoLastMove). onPositionChanged not used here.
+        val node = nodeList.getOrNull(currentIndex)
+        currentNodeId = node?.id
         return true
     }
+
+    fun currentFen(): String = nodeList.getOrNull(currentIndex)?.fenAfter ?: initialFen
 
     override fun goNext(): Boolean {
         if (currentIndex >= nodeList.lastIndex) return false
         currentIndex++
         currentMoveIndex = currentIndex
         currentNodeId = nodeList[currentIndex].id
-        // Board is managed by the ViewModel (onMove). onPositionChanged not used here.
         return true
     }
 

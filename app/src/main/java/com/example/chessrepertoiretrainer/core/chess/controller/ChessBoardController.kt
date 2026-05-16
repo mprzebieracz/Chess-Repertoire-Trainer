@@ -3,6 +3,7 @@ package com.example.chessrepertoiretrainer.core.chess.controller
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Board
@@ -31,6 +32,7 @@ class DefaultChessBoardController : ChessBoardController {
     override var markedSquare by mutableStateOf<Square?>(null)
     override var isFlipped by mutableStateOf(false)
         private set
+    override var arrows by mutableStateOf<List<Arrow>>(emptyList())
 
     override var pendingPromotion by mutableStateOf<PendingPromotion?>(null)
         private set
@@ -141,18 +143,6 @@ class DefaultChessBoardController : ChessBoardController {
         markedSquare = null
         pendingPromotion = null
         onMoveApplied?.invoke(AppliedMove(move, san, fenBefore, board.fen))
-    }
-
-    override fun undoLastMove() {
-        if (board.backup.isNotEmpty()) {
-            board.undoMove()
-            boardState = board.fen
-            selectedSquare = null
-            hoveredSquare = null
-            markedSquare = null
-            pendingPromotion = null
-            lastMove = null
-        }
     }
 
     private fun isInputBlockedBySideRestriction(): Boolean {

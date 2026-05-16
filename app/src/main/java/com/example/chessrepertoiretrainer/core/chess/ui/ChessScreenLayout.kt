@@ -38,6 +38,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.GameNavigator
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveNode
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveNodeId
@@ -61,13 +62,19 @@ fun ChessScreenLayout(
     engineSection: @Composable () -> Unit = {},
     contentBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    arrowDrawingMode: Boolean = false,
+    onArrowDrawn: ((Arrow) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         topBar()
         engineSection()
         Box(modifier = Modifier.fillMaxWidth()) {
-            ChessboardUI(state = chessCtrl)
+            ChessboardUI(
+                state = chessCtrl,
+                arrowDrawingMode = arrowDrawingMode,
+                onArrowDrawn = onArrowDrawn,
+            )
         }
         Box(
             modifier = Modifier

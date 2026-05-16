@@ -7,12 +7,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
+import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.TreeGameNavigator
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
 import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -48,6 +51,19 @@ class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? =
         viewModelScope.launch {
             snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
                 if (engine.isEnabled.value) engine.updatePosition(fen)
+                chessController.arrows = emptyList()
+            }
+        }
+        viewModelScope.launch {
+            engineAnalysis.collectLatest { analysis ->
+                if (analysis != null && isEngineEnabled.value) {
+                    val firstSan = analysis.line.trim().split(" ")
+                        .firstOrNull { !it.contains(".") && it.isNotBlank() }
+                    val move = firstSan?.let { chessController.getBoard().findLegalMoveBySan(it) }
+                    chessController.arrows = if (move != null) listOf(Arrow(move.from, move.to)) else emptyList()
+                } else {
+                    chessController.arrows = emptyList()
+                }
             }
         }
     }

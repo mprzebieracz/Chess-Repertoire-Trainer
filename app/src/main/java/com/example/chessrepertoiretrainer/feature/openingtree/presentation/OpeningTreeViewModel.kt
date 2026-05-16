@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTree
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTreeMoveAggregate
@@ -49,7 +50,8 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
         if (tree != null) {
             chessController.orientForSide(if (tree.playerIsBlack) Side.BLACK else Side.WHITE)
             applyFen(tree.rootFen, tree, updateBoard = true)
-        } else {
+        }
+        else {
             showEmptyState("Opening tree not found. Please go back and search again.")
         }
     }
@@ -64,8 +66,9 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
 
     fun onGoBack() {
         val t = tree ?: return
-        chessController.undoLastMove()
-        applyFen(chessController.boardState, t, updateBoard = false)
+        val currentFen = _uiState.value.currentFen ?: return
+        val parentFen = t.getNode(currentFen)?.parentFen ?: return
+        applyFen(parentFen, t, updateBoard = true)
     }
 
     fun onGoRoot() {
@@ -84,6 +87,7 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
                 moves = emptyList(),
                 canGoBack = fen != tree.rootFen
             )
+            chessController.arrows = emptyList()
             if (updateBoard) chessController.loadPositionFromFen(fen)
             return
         }
@@ -103,6 +107,21 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
         )
 
         if (updateBoard) chessController.loadPositionFromFen(fen)
+
+        val totalGames = movesUi.sumOf { it.games }.coerceAtLeast(1)
+        val board = chessController.getBoard()
+        chessController.arrows = movesUi.mapNotNull { moveUi ->
+            val move = board.findLegalMoveBySan(moveUi.moveSan) ?: return@mapNotNull null
+            val pct = moveUi.games.toFloat() / totalGames
+            val alpha = when {
+                pct >= 0.50f -> 1.00f
+                pct >= 0.25f -> 0.80f
+                pct >= 0.10f -> 0.60f
+                pct >= 0.03f -> 0.42f
+                else -> 0.28f
+            }
+            Arrow(move.from, move.to, alpha)
+        }
     }
 
     private fun buildPathForNode(node: OpeningTreeNode, tree: OpeningTree): List<String> {

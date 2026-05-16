@@ -193,7 +193,7 @@ class ReviewChapterViewModel(
         if (lineNavigator.isAtStart) return
 
         lineNavigator.goPrevious()
-        chessController.undoLastMove()
+        chessController.loadPositionFromFen(lineNavigator.currentFen())
 
         _uiState.update {
             it.copy(

@@ -38,6 +38,10 @@ internal fun ChessboardGrid(
     onDragUpdate: (Offset) -> Unit,
     onDragEnd: () -> Unit
 ) {
+    // Read boardState so this composable resubscribes and redraws pieces
+    // whenever the position changes, even when other observable fields are unchanged.
+    @Suppress("UNUSED_VARIABLE") val boardState = state.boardState
+
     Column(modifier = Modifier.fillMaxSize()) {
         val ranks = if (state.isFlipped) 0..7 else 7 downTo 0
         val files = if (state.isFlipped) 7 downTo 0 else 0..7

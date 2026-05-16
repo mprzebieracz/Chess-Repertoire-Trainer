@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.core.chess.controller
 
+import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
@@ -19,6 +20,8 @@ interface ChessBoardController {
 
     var markedSquare: Square?
     val isFlipped: Boolean
+
+    var arrows: List<Arrow>
 
     /**
      * When null, board input is unrestricted (both sides can move).
@@ -47,9 +50,4 @@ interface ChessBoardController {
      */
     fun tryApplyMove(move: Move): AppliedMove?
 
-    /**
-     * Undoes the last move on the board (pure position undo, no history tracking).
-     * Used by screens that manage their own navigation (e.g. OpeningTree).
-     */
-    fun undoLastMove()
 }

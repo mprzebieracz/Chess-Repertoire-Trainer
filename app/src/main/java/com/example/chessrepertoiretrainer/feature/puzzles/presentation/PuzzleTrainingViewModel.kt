@@ -158,7 +158,7 @@ class PuzzleTrainingViewModel(private val repository: PuzzleRepository) : ViewMo
                         statusMessage = "Incorrect, try again"
                     )
                 }
-                chessController.undoLastMove()
+                chessController.loadPositionFromFen((result as MoveTrainingEngine.MoveResult.Incorrect).fenBefore)
             }
         }
     }

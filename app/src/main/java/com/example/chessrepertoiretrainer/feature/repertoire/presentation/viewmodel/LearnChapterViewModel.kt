@@ -192,7 +192,7 @@ class LearnChapterViewModel(
     fun onPreviousMove() {
         if (lineNavigator.isAtStart) return
         lineNavigator.goPrevious()
-        chessController.undoLastMove()
+        chessController.loadPositionFromFen(lineNavigator.currentFen())
         _uiState.update {
             it.copy(
                 isAtLineStart = lineNavigator.isAtStart,

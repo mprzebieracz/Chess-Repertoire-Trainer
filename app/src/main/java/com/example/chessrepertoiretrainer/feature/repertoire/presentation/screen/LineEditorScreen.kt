@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FirstPage
@@ -20,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -52,6 +54,7 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
     val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
+    val isArrowDrawingMode by viewModel.isArrowDrawingMode.collectAsStateWithLifecycle()
     val chessCtrl = viewModel.chessController
 
     var showExitDialog by remember { mutableStateOf(false) }
@@ -61,11 +64,21 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
 
     ChessScreenLayout(
         chessCtrl = chessCtrl,
+        arrowDrawingMode = isArrowDrawingMode,
+        onArrowDrawn = viewModel::onArrowDrawn,
         topBar = {
             ChessTopBar(
                 title = "Edit Line",
                 onBackClick = { if (hasChanges) showExitDialog = true else onBackClick() },
                 actions = {
+                    IconButton(onClick = viewModel::toggleArrowDrawingMode) {
+                        Icon(
+                            imageVector = Icons.Filled.Create,
+                            contentDescription = "Draw arrow",
+                            tint = if (isArrowDrawingMode) MaterialTheme.colorScheme.primary
+                            else LocalContentColor.current,
+                        )
+                    }
                     engineAnalysis?.depth?.let { depth ->
                         if (isEngineEnabled) DeeperButton(
                             searchState = engineSearchState,

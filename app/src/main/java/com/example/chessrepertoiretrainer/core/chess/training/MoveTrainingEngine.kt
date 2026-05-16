@@ -17,7 +17,7 @@ class MoveTrainingEngine(
 
     sealed class MoveResult {
         data class Correct(val userSan: String, val expectedSan: String) : MoveResult()
-        data class Incorrect(val userSan: String, val expectedSan: String) : MoveResult()
+        data class Incorrect(val userSan: String, val expectedSan: String, val fenBefore: String) : MoveResult()
     }
 
     private var config: Config? = null
@@ -29,7 +29,7 @@ class MoveTrainingEngine(
     init {
         chessController.onMoveApplied = listener@{ applied: AppliedMove ->
             if (isAutoPlaying) return@listener
-            val result = handleUserMoveInternal(applied.san) ?: return@listener
+            val result = handleUserMoveInternal(applied.san, applied.fenBefore) ?: return@listener
             resultListener?.invoke(result)
         }
     }
@@ -48,7 +48,7 @@ class MoveTrainingEngine(
         return currentIndex >= cfg.sanMoves.size
     }
 
-    private fun handleUserMoveInternal(san: String): MoveResult? {
+    private fun handleUserMoveInternal(san: String, fenBefore: String): MoveResult? {
         val cfg = config ?: return null
         if (currentIndex !in cfg.sanMoves.indices) return null
 
@@ -59,7 +59,7 @@ class MoveTrainingEngine(
             currentIndex++
             MoveResult.Correct(userSan = san, expectedSan = expectedSan)
         } else {
-            MoveResult.Incorrect(userSan = san, expectedSan = expectedSan)
+            MoveResult.Incorrect(userSan = san, expectedSan = expectedSan, fenBefore = fenBefore)
         }
     }
 
