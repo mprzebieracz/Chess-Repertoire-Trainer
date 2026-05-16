@@ -10,7 +10,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
-import com.example.chessrepertoiretrainer.core.chess.pgn.LinearPgnLineSource
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.GuidedLineNavigator
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
@@ -47,7 +47,8 @@ class ReviewChapterViewModel(
         val isAtLineStart: Boolean = true,
         val isAtLineEnd: Boolean = false,
         val statusMessage: String? = null,
-        val currentMoveComment: String? = null
+        val currentMoveLabel: String? = null,  // e.g. "3. f4" or "3… f4"
+        val currentMoveComment: String? = null,
     )
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
@@ -56,10 +57,10 @@ class ReviewChapterViewModel(
     private val _uiState = MutableStateFlow(ReviewChapterUiState(chapterId = chapterId))
     val uiState: StateFlow<ReviewChapterUiState> = _uiState.asStateFlow()
 
-    val chessController = DefaultChessBoardController(onMoveListener = null)
+    val chessController = DefaultChessBoardController()
 
     private var lines: List<Line> = emptyList()
-    private var lineSource: LinearPgnLineSource = LinearPgnLineSource(emptyList())
+    private var lineNavigator: GuidedLineNavigator = GuidedLineNavigator.empty()
     private var currentLineIndex: Int = -1
     private var mySide: Side = Side.WHITE
 
@@ -69,9 +70,7 @@ class ReviewChapterViewModel(
         engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
     val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
         viewModelScope,
-        SharingStarted.WhileSubscribed(
-            5_000
-        ),
+        SharingStarted.WhileSubscribed(5_000),
         EngineSearchState.IDLE
     )
     val engineError: StateFlow<String?> =
@@ -97,8 +96,6 @@ class ReviewChapterViewModel(
         val colorString = repertoire?.color ?: "White"
 
         mySide = colorString.toSide()
-
-        // Orient the board from the player's perspective once per session.
         chessController.orientForSide(mySide)
 
         val loadedLines = repertoireRepository.getLinesForChapter(chapterId).first()
@@ -129,7 +126,6 @@ class ReviewChapterViewModel(
         colorString: String? = null
     ) {
         if (index !in lines.indices) {
-            // Out of range – nothing to show.
             _uiState.update {
                 it.copy(isLoading = false, statusMessage = "No more lines in this chapter.")
             }
@@ -140,8 +136,7 @@ class ReviewChapterViewModel(
         val line = lines[index]
 
         val loadedMoves = repertoireRepository.getMovesForLine(line.id).first()
-        lineSource = LinearPgnLineSource(loadedMoves)
-
+        lineNavigator = GuidedLineNavigator(loadedMoves)
         chessController.resetBoard()
 
         _uiState.update {
@@ -155,54 +150,58 @@ class ReviewChapterViewModel(
                 totalLines = lines.size,
                 myColor = colorString ?: it.myColor,
                 isAtLineStart = true,
-                isAtLineEnd = lineSource.isEmpty,
-                statusMessage = if (lineSource.isEmpty) "This line has no moves." else null,
-                currentMoveComment = null
+                isAtLineEnd = lineNavigator.isEmpty,
+                statusMessage = if (lineNavigator.isEmpty) "This line has no moves." else null,
+                currentMoveLabel = null,
+                currentMoveComment = null,
             )
         }
     }
 
     fun onNextMove() {
-        if (lineSource.isEmpty) {
+        val nextSan = lineNavigator.peekNextSan() ?: run {
             _uiState.update { it.copy(isAtLineEnd = true) }
             return
         }
 
-        val moveData = lineSource.next() ?: run {
-            _uiState.update { it.copy(isAtLineEnd = true) }
-            return
-        }
-
-        val legalMove = chessController.getBoard().findLegalMoveBySan(moveData.san)
+        val legalMove = chessController.getBoard().findLegalMoveBySan(nextSan)
         if (legalMove == null) {
-            lineSource.previous()
-            _uiState.update { it.copy(statusMessage = "Cannot play move: ${moveData.san}") }
+            _uiState.update { it.copy(statusMessage = "Cannot play move: $nextSan") }
             return
         }
 
+        // Suppress onMoveApplied so navigator doesn't receive this as a user move.
+        val saved = chessController.onMoveApplied
+        chessController.onMoveApplied = null
         chessController.onMove(legalMove)
+        chessController.onMoveApplied = saved
+
+        lineNavigator.goNext()
+
         _uiState.update {
             it.copy(
-                isAtLineStart = lineSource.isAtStart,
-                isAtLineEnd = lineSource.isAtEnd,
+                isAtLineStart = lineNavigator.isAtStart,
+                isAtLineEnd = lineNavigator.isAtEnd,
                 statusMessage = null,
-                currentMoveComment = lineSource.currentComment
+                currentMoveLabel = moveLabel(),
+                currentMoveComment = lineNavigator.currentComment,
             )
         }
     }
 
     fun onPreviousMove() {
-        if (lineSource.isAtStart) return
+        if (lineNavigator.isAtStart) return
 
-        lineSource.previous()
-        chessController.navigateBack()
+        lineNavigator.goPrevious()
+        chessController.undoLastMove()
 
         _uiState.update {
             it.copy(
-                isAtLineStart = lineSource.isAtStart,
-                isAtLineEnd = lineSource.isAtEnd,
+                isAtLineStart = lineNavigator.isAtStart,
+                isAtLineEnd = lineNavigator.isAtEnd,
                 statusMessage = null,
-                currentMoveComment = lineSource.currentComment
+                currentMoveLabel = moveLabel(),
+                currentMoveComment = lineNavigator.currentComment,
             )
         }
     }
@@ -211,14 +210,15 @@ class ReviewChapterViewModel(
         if (currentLineIndex !in lines.indices) return
 
         chessController.resetBoard()
-        lineSource.reset()
+        lineNavigator.reset()
 
         _uiState.update {
             it.copy(
                 isAtLineStart = true,
-                isAtLineEnd = lineSource.isEmpty,
+                isAtLineEnd = lineNavigator.isEmpty,
                 statusMessage = null,
-                currentMoveComment = null
+                currentMoveLabel = null,
+                currentMoveComment = null,
             )
         }
     }
@@ -226,18 +226,14 @@ class ReviewChapterViewModel(
     fun goToPreviousLine() {
         viewModelScope.launch {
             val prevIndex = currentLineIndex - 1
-            if (prevIndex in lines.indices) {
-                startLine(prevIndex)
-            }
+            if (prevIndex in lines.indices) startLine(prevIndex)
         }
     }
 
     fun goToNextLine() {
         viewModelScope.launch {
             val nextIndex = currentLineIndex + 1
-            if (nextIndex in lines.indices) {
-                startLine(nextIndex)
-            }
+            if (nextIndex in lines.indices) startLine(nextIndex)
         }
     }
 
@@ -251,6 +247,15 @@ class ReviewChapterViewModel(
     override fun onCleared() {
         super.onCleared()
         engine.disable()
+    }
+
+    /** e.g. "3. f4" (white) or "3… f4" (black). Null when at root position. */
+    private fun moveLabel(): String? {
+        val node = lineNavigator.currentNode() ?: return null
+        val fenParts = node.fenBefore.split(" ")
+        val moveNum = fenParts.getOrNull(5)?.toIntOrNull() ?: 1
+        val isWhite = fenParts.getOrNull(1) != "b"
+        return if (isWhite) "$moveNum. ${node.san}" else "$moveNum… ${node.san}"
     }
 
     class Factory(

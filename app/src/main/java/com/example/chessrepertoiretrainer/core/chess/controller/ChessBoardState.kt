@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.core.chess.controller
 
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
@@ -9,9 +10,7 @@ import com.github.bhlangonijr.chesslib.move.Move
 data class PendingPromotion(val from: Square, val to: Square)
 
 interface ChessBoardController {
-    val pgnState: String
     val boardState: String
-    val currentMoveIndex: Int
     val selectedSquare: Square?
     val lastMove: Move?
 
@@ -28,25 +27,29 @@ interface ChessBoardController {
      * and are not restricted by this flag.
      */
     var allowedMoveSide: Side?
-    var onMoveListener: ((Move, String, String) -> Unit)?
+
     val pendingPromotion: PendingPromotion?
     fun getBoard(): Board
     fun onSquareClick(square: Square)
     fun onMove(move: Move)
     fun promotePendingMove(promotionPiece: Piece)
-    val sanHistory: List<String>
-    fun navigateBack()
-    fun navigateForward()
-    fun navigateToMoveIndex(index: Int)
-    fun loadPositionFromFen(fen: String)
+    fun loadPositionFromFen(fen: String, lastMove: Move? = null)
     fun resetBoard()
     fun flipBoard()
     fun orientForSide(side: Side)
 
+    /** Called after a move is applied. Navigators subscribe here to receive move data. */
+    var onMoveApplied: ((AppliedMove) -> Unit)?
+
     /**
-     * Replay a sequence of SAN moves from the current board position.
-     * If [suppressListener] is true (default), [onMoveListener] is silenced during replay
-     * so callers don't receive spurious move callbacks for programmatic setup moves.
+     * Applies [move] to the board if legal and fires [onMoveApplied].
+     * Returns the applied move data, or null if the move is illegal.
      */
-    fun replaySanSequence(sans: List<String>, suppressListener: Boolean = true)
+    fun tryApplyMove(move: Move): AppliedMove?
+
+    /**
+     * Undoes the last move on the board (pure position undo, no history tracking).
+     * Used by screens that manage their own navigation (e.g. OpeningTree).
+     */
+    fun undoLastMove()
 }

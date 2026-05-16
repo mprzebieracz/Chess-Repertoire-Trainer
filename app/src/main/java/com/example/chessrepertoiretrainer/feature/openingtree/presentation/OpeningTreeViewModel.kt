@@ -39,10 +39,10 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
     val uiState: StateFlow<OpeningTreeUiState> = _uiState.asStateFlow()
 
     init {
-        chessController.onMoveListener = { _, _, fen ->
+        chessController.onMoveApplied = { applied ->
             val t = tree
-            if (t != null && _uiState.value.currentFen != fen) {
-                applyFen(fen, t, updateBoard = false)
+            if (t != null && _uiState.value.currentFen != applied.fenAfter) {
+                applyFen(applied.fenAfter, t, updateBoard = false)
             }
         }
 
@@ -64,7 +64,7 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
 
     fun onGoBack() {
         val t = tree ?: return
-        chessController.navigateBack()
+        chessController.undoLastMove()
         applyFen(chessController.boardState, t, updateBoard = false)
     }
 

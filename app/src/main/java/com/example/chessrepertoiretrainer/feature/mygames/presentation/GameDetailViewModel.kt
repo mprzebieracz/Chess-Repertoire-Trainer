@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.pgn.extract.PGNExtractor
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.LinearGameNavigator
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
@@ -33,6 +35,7 @@ class GameDetailViewModel(
 ) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
+    val navigator = LinearGameNavigator()
 
     private val gameSanMoves: List<String> = PGNExtractor.extractSanMovesFromPgn(game.pgn)
 
@@ -48,7 +51,7 @@ class GameDetailViewModel(
 
     val currentAnnotation: StateFlow<MoveAnnotation?> = combine(
         _annotations,
-        snapshotFlow { chessController.currentMoveIndex }) { annotations, idx ->
+        snapshotFlow { navigator.currentMoveIndex }) { annotations, idx ->
         annotations.getOrNull(idx)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -67,6 +70,9 @@ class GameDetailViewModel(
         engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
+        chessController.onMoveApplied = { navigator.onUserMove(it) }
+        navigator.onPositionChanged = { fen, lm -> chessController.loadPositionFromFen(fen, lm) }
+
         loadGame()
         viewModelScope.launch {
             snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
@@ -77,8 +83,15 @@ class GameDetailViewModel(
 
     private fun loadGame() {
         chessController.resetBoard()
-        chessController.replaySanSequence(gameSanMoves)
-        repeat(gameSanMoves.size) { chessController.navigateBack() }
+        val board = chessController.getBoard()
+        // Seed the navigator by replaying all moves through the controller
+        // (onMoveApplied fires for each, populating the navigator).
+        for (san in gameSanMoves) {
+            val move = board.findLegalMoveBySan(san) ?: break
+            chessController.tryApplyMove(move)
+        }
+        // Go back to start — navigator handles the position push.
+        navigator.reset()
         chessController.orientForSide(if (game.isPlayerWhite) Side.WHITE else Side.BLACK)
     }
 

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.TreeGameNavigator
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
 import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
@@ -23,6 +24,8 @@ class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? =
         if (startFen != null) ctrl.loadPositionFromFen(startFen)
     }
 
+    val navigator = TreeGameNavigator(startFen ?: TreeGameNavigator.STARTING_FEN)
+
     val isEngineEnabled: StateFlow<Boolean> =
         engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     val engineAnalysis: StateFlow<EngineAnalysis?> =
@@ -38,6 +41,9 @@ class AnalysisViewModel(private val engine: StockfishEngine, startFen: String? =
         engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
+        chessController.onMoveApplied = { navigator.onUserMove(it) }
+        navigator.onPositionChanged = { fen, lm -> chessController.loadPositionFromFen(fen, lm) }
+
         engine.enable(chessController.boardState)
         viewModelScope.launch {
             snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->

@@ -2,6 +2,7 @@ package com.example.chessrepertoiretrainer.core.chess.training
 
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import kotlinx.coroutines.delay
@@ -26,9 +27,9 @@ class MoveTrainingEngine(
     private var resultListener: ((MoveResult) -> Unit)? = null
 
     init {
-        chessController.onMoveListener = listener@{ _, san, _ ->
+        chessController.onMoveApplied = listener@{ applied: AppliedMove ->
             if (isAutoPlaying) return@listener
-            val result = handleUserMoveInternal(san) ?: return@listener
+            val result = handleUserMoveInternal(applied.san) ?: return@listener
             resultListener?.invoke(result)
         }
     }

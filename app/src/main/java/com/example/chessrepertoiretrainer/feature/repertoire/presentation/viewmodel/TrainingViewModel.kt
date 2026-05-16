@@ -181,7 +181,7 @@ class TrainingViewModel(
                         statusMessage = "Incorrect move"
                     )
                 }
-                chessController.navigateBack()
+                chessController.undoLastMove()
             }
         }
     }

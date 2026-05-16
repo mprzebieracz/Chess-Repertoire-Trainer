@@ -69,23 +69,25 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
         },
         contentBar = {
             PgnTextViewer(
-                sanHistory = chessCtrl.sanHistory,
-                currentMoveIndex = chessCtrl.currentMoveIndex,
-                onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
+                navigator = viewModel.navigator,
+                onMoveClick = { viewModel.navigator.goTo(it) },
             )
         },
         bottomBar = {
             ChessBottomBar {
                 BottomBarButton(AppIcons.FlipBoard, "Flip", { chessCtrl.flipBoard() })
-                BottomBarButton(AppIcons.ResetBoard, "Reset", { chessCtrl.resetBoard() })
+                BottomBarButton(AppIcons.ResetBoard, "Reset", {
+                    viewModel.navigator.clear()
+                    chessCtrl.resetBoard()
+                })
                 BottomBarButton(
                     Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     "Prev",
-                    { chessCtrl.navigateBack() })
+                    { viewModel.navigator.goPrevious() })
                 BottomBarButton(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     "Next",
-                    { chessCtrl.navigateForward() })
+                    { viewModel.navigator.goNext() })
             }
         },
     )

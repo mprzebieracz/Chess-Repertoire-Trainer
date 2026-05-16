@@ -1,11 +1,10 @@
 package com.example.chessrepertoiretrainer.core.chess.controller
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Rank
@@ -13,8 +12,7 @@ import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 
-class DefaultChessBoardController(override var onMoveListener: ((Move, String, String) -> Unit)? = null) :
-    ChessBoardController {
+class DefaultChessBoardController : ChessBoardController {
 
     companion object {
         private const val STARTING_POSITION_FEN =
@@ -22,13 +20,8 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
     }
 
     private val board = Board()
-    private val fullMoveHistory = mutableListOf<Move>()
-    private val fullSanHistory = mutableListOf<String>()
-    private var currentPositionIndex = -1
 
     override var boardState by mutableStateOf(board.fen)
-        private set
-    override var currentMoveIndex by mutableIntStateOf(-1)
         private set
     override var selectedSquare by mutableStateOf<Square?>(null)
         private set
@@ -39,21 +32,16 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
     override var isFlipped by mutableStateOf(false)
         private set
 
-    override var pgnState by mutableStateOf("")
-        private set
-    override val sanHistory: List<String> get() = fullSanHistory
-
     override var pendingPromotion by mutableStateOf<PendingPromotion?>(null)
         private set
 
     override var allowedMoveSide: Side? = null
+    override var onMoveApplied: ((AppliedMove) -> Unit)? = null
 
     override fun getBoard(): Board = board
 
     override fun onSquareClick(square: Square) {
-        if (isInputBlockedBySideRestriction()) {
-            return
-        }
+        if (isInputBlockedBySideRestriction()) return
 
         val currentSelected = selectedSquare
         if (currentSelected == null) {
@@ -66,9 +54,7 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
                 selectedSquare = null
                 return
             }
-
-            val move = Move(currentSelected, square)
-            onMove(move)
+            onMove(Move(currentSelected, square))
         }
     }
 
@@ -76,13 +62,13 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
         val piece = board.getPiece(move.from)
 
         val isPawnPromotionMove =
-            (piece == Piece.WHITE_PAWN && move.to.rank == Rank.RANK_8) || (piece == Piece.BLACK_PAWN && move.to.rank == Rank.RANK_1)
+            (piece == Piece.WHITE_PAWN && move.to.rank == Rank.RANK_8) ||
+                    (piece == Piece.BLACK_PAWN && move.to.rank == Rank.RANK_1)
 
         if (isPawnPromotionMove) {
             val promotionMoves = board.legalMoves().filter { legal ->
                 legal.from == move.from && legal.to == move.to && legal.promotion != Piece.NONE
             }
-
             if (promotionMoves.isNotEmpty()) {
                 pendingPromotion = PendingPromotion(move.from, move.to)
                 selectedSquare = null
@@ -96,8 +82,8 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
         if (legalMoves.contains(move)) {
             applyMove(move)
         } else {
-            val piece = board.getPiece(move.to)
-            if (piece != Piece.NONE && piece.pieceSide == board.sideToMove) {
+            val piece2 = board.getPiece(move.to)
+            if (piece2 != Piece.NONE && piece2.pieceSide == board.sideToMove) {
                 selectedSquare = move.to
             } else {
                 selectedSquare = null
@@ -105,109 +91,13 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
         }
     }
 
-    override fun navigateBack() {
-        if (currentPositionIndex >= 0) {
-            board.undoMove()
-            currentPositionIndex--
-            currentMoveIndex = currentPositionIndex
-            updateAfterNavigation()
-        }
-    }
-
     override fun promotePendingMove(promotionPiece: Piece) {
         val pending = pendingPromotion ?: return
-
         val promotionMove = board.legalMoves().firstOrNull { legal ->
             legal.from == pending.from && legal.to == pending.to && legal.promotion == promotionPiece
         } ?: return
-
         pendingPromotion = null
-
-        if (isNextRecordedMove(promotionMove)) {
-            navigateForward()
-            return
-        }
-
         applyMove(promotionMove)
-    }
-
-    override fun navigateForward() {
-        if (currentPositionIndex < fullMoveHistory.size - 1) {
-            currentPositionIndex++
-            currentMoveIndex = currentPositionIndex
-            val nextMove = fullMoveHistory[currentPositionIndex]
-            board.doMove(nextMove)
-            updateAfterNavigation()
-        }
-    }
-
-    override fun navigateToMoveIndex(index: Int) {
-        val clamped = index.coerceIn(0, fullMoveHistory.size - 1)
-        while (currentPositionIndex > clamped) {
-            board.undoMove()
-            currentPositionIndex--
-        }
-        while (currentPositionIndex < clamped) {
-            currentPositionIndex++
-            board.doMove(fullMoveHistory[currentPositionIndex])
-        }
-        currentMoveIndex = currentPositionIndex
-        updateAfterNavigation()
-    }
-
-    private fun updateAfterNavigation() {
-        boardState = board.fen
-        selectedSquare = null
-        hoveredSquare = null
-        markedSquare = null
-        pendingPromotion = null
-        lastMove = if (currentPositionIndex >= 0) fullMoveHistory[currentPositionIndex] else null
-        updatePgn()
-    }
-
-    private fun applyMove(move: Move) {
-        trimFutureHistory()
-
-        val san = board.toSan(move)
-        board.doMove(move)
-
-        fullMoveHistory.add(move)
-        fullSanHistory.add(san)
-        currentPositionIndex++
-        currentMoveIndex = currentPositionIndex
-
-        updatePgn()
-        boardState = board.fen
-        selectedSquare = null
-        lastMove = move
-        hoveredSquare = null
-        markedSquare = null
-        pendingPromotion = null
-
-        onMoveListener?.invoke(move, san, board.fen)
-    }
-
-    private fun updatePgn() {
-        if (fullSanHistory.isEmpty()) {
-            pgnState = ""
-            return
-        }
-
-        val sb = StringBuilder()
-        for (i in fullSanHistory.indices) {
-            if (i % 2 == 0) {
-                sb.append("${(i / 2) + 1}. ")
-            }
-
-            val san = fullSanHistory[i]
-            if (i == currentPositionIndex) {
-                sb.append("[").append(san).append("] ")
-            } else {
-                sb.append(san).append(" ")
-            }
-        }
-
-        pgnState = sb.toString().trim()
     }
 
     override fun flipBoard() {
@@ -219,26 +109,50 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
         else if (side == Side.WHITE && isFlipped) flipBoard()
     }
 
-    override fun replaySanSequence(sans: List<String>, suppressListener: Boolean) {
-        if (sans.isEmpty()) return
-        val savedListener = onMoveListener
-        if (suppressListener) onMoveListener = null
-        try {
-            for (san in sans) {
-                val move = board.findLegalMoveBySan(san) ?: break
-                applyMove(move)
-            }
-        } finally {
-            if (suppressListener) onMoveListener = savedListener
-        }
-    }
-
     override fun resetBoard() {
         loadFenAndResetState(STARTING_POSITION_FEN)
     }
 
-    override fun loadPositionFromFen(fen: String) {
+    override fun loadPositionFromFen(fen: String, lastMove: Move?) {
         loadFenAndResetState(fen)
+        this.lastMove = lastMove
+    }
+
+    override fun tryApplyMove(move: Move): AppliedMove? {
+        if (!board.legalMoves().contains(move)) return null
+        val fenBefore = board.fen
+        val san = board.toSan(move)
+        applyMoveInternal(move, san, fenBefore)
+        return AppliedMove(move, san, fenBefore, board.fen)
+    }
+
+    private fun applyMove(move: Move) {
+        val fenBefore = board.fen
+        val san = board.toSan(move)
+        applyMoveInternal(move, san, fenBefore)
+    }
+
+    private fun applyMoveInternal(move: Move, san: String, fenBefore: String) {
+        board.doMove(move)
+        boardState = board.fen
+        selectedSquare = null
+        lastMove = move
+        hoveredSquare = null
+        markedSquare = null
+        pendingPromotion = null
+        onMoveApplied?.invoke(AppliedMove(move, san, fenBefore, board.fen))
+    }
+
+    override fun undoLastMove() {
+        if (board.backup.isNotEmpty()) {
+            board.undoMove()
+            boardState = board.fen
+            selectedSquare = null
+            hoveredSquare = null
+            markedSquare = null
+            pendingPromotion = null
+            lastMove = null
+        }
     }
 
     private fun isInputBlockedBySideRestriction(): Boolean {
@@ -246,40 +160,13 @@ class DefaultChessBoardController(override var onMoveListener: ((Move, String, S
         return board.sideToMove != restriction
     }
 
-    private fun isNextRecordedMove(move: Move): Boolean {
-        if (currentPositionIndex >= fullMoveHistory.size - 1) {
-            return false
-        }
-
-        val nextRecordedMove = fullMoveHistory[currentPositionIndex + 1]
-        return nextRecordedMove.from == move.from && nextRecordedMove.to == move.to && nextRecordedMove.promotion == move.promotion
-    }
-
-    private fun trimFutureHistory() {
-        if (currentPositionIndex >= fullMoveHistory.size - 1) {
-            return
-        }
-
-        val itemsToRemove = fullMoveHistory.size - 1 - currentPositionIndex
-        repeat(itemsToRemove) {
-            fullMoveHistory.removeAt(fullMoveHistory.lastIndex)
-            fullSanHistory.removeAt(fullSanHistory.lastIndex)
-        }
-    }
-
     private fun loadFenAndResetState(fen: String) {
         board.loadFromFen(fen)
-        fullMoveHistory.clear()
-        fullSanHistory.clear()
-        currentPositionIndex = -1
-        currentMoveIndex = -1
-        pgnState = ""
         boardState = board.fen
         selectedSquare = null
         lastMove = null
         hoveredSquare = null
         markedSquare = null
         pendingPromotion = null
-        updatePgn()
     }
 }

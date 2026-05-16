@@ -9,6 +9,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -126,10 +130,24 @@ private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiSta
                 if (uiState.totalLines > 0) {
                     LineProgressHeader(lineName = uiState.currentLineName)
                 }
+                val label = uiState.currentMoveLabel
                 val comment = uiState.currentMoveComment
-                if (!comment.isNullOrBlank()) {
+                if (!label.isNullOrBlank() || !comment.isNullOrBlank()) {
                     MoveCommentCard {
-                        Text(text = comment, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = buildAnnotatedString {
+                                if (!label.isNullOrBlank()) {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                                        append(label)
+                                    }
+                                }
+                                if (!comment.isNullOrBlank()) {
+                                    if (!label.isNullOrBlank()) append("  ")
+                                    append(comment)
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                 }
                 uiState.statusMessage?.let {

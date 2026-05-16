@@ -13,6 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -146,9 +149,23 @@ private fun LearnContentArea(
                         )
                         Spacer(Modifier.height(4.dp))
                     }
+                    val label = uiState.currentMoveLabel
                     val comment = uiState.currentMoveComment
-                    if (!comment.isNullOrBlank()) {
-                        Text(text = comment, style = MaterialTheme.typography.bodyMedium)
+                    if (!label.isNullOrBlank() || !comment.isNullOrBlank()) {
+                        Text(
+                            text = buildAnnotatedString {
+                                if (!label.isNullOrBlank()) {
+                                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) {
+                                        append(label)
+                                    }
+                                }
+                                if (!comment.isNullOrBlank()) {
+                                    if (!label.isNullOrBlank()) append("  ")
+                                    append(comment)
+                                }
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
                     }
                     if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
                         Spacer(Modifier.height(8.dp))

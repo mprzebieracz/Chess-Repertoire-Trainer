@@ -38,6 +38,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.GameNavigator
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveNode
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveNodeId
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveTree
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 
 /**
@@ -191,54 +195,55 @@ fun RowScope.BottomBarButton(
 }
 
 // ---------------------------------------------------------------------------
-// Flowing PGN text view — left-to-right, top-to-bottom, vertically scrollable.
-// Placeholder until a proper tree-aware PGN is implemented.
+// PGN viewer — navigator-driven, renders the mainline with variations in parens.
 // ---------------------------------------------------------------------------
 
 @Composable
 fun PgnTextViewer(
-    sanHistory: List<String>,
-    currentMoveIndex: Int,
-    onMoveClick: ((Int) -> Unit)?,
+    navigator: GameNavigator,
+    onMoveClick: (MoveNodeId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tree = navigator.tree
+    val currentNodeId = navigator.currentNodeId
+
     val scrollState = rememberScrollState()
-    LaunchedEffect(currentMoveIndex) {
-        if (currentMoveIndex >= 0) scrollState.animateScrollTo(scrollState.maxValue)
+    val tokens = androidx.compose.runtime.remember(tree) { flattenTree(tree) }
+    val currentTokenIdx = tokens.indexOfFirst { it is PgnToken.Move && it.nodeId == currentNodeId }
+    LaunchedEffect(currentTokenIdx) {
+        if (currentTokenIdx >= 0) scrollState.animateScrollTo(scrollState.maxValue)
     }
 
     val highlightBg = MaterialTheme.colorScheme.primaryContainer
     val highlightFg = MaterialTheme.colorScheme.onPrimaryContainer
     val normalFg = MaterialTheme.colorScheme.onBackground
     val dimFg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+    val varFg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.70f)
 
     val annotated = buildAnnotatedString {
-        if (sanHistory.isEmpty()) {
+        if (tokens.isEmpty()) {
             withStyle(SpanStyle(color = dimFg)) { append("No moves yet.") }
         } else {
-            sanHistory.forEachIndexed { index, san ->
-                if (index > 0) append(" ")
-                if (index % 2 == 0) {
-                    withStyle(SpanStyle(color = dimFg)) { append("${index / 2 + 1}.") }
-                    append(" ")
-                }
-                val isCurrent = index == currentMoveIndex
-                val spanStyle =
-                    if (isCurrent) SpanStyle(background = highlightBg, color = highlightFg)
-                    else SpanStyle(color = normalFg)
-                if (onMoveClick != null) {
-                    val idx = index
-                    pushLink(
-                        LinkAnnotation.Clickable(
-                            tag = idx.toString(),
-                            styles = TextLinkStyles(spanStyle),
-                            linkInteractionListener = { onMoveClick(idx) },
+            tokens.forEach { token ->
+                when (token) {
+                    is PgnToken.MoveNumber -> withStyle(SpanStyle(color = dimFg)) { append(token.text) }
+                    is PgnToken.Move -> {
+                        val isCurrent = token.nodeId == currentNodeId
+                        val fg = if (token.inVariation) varFg else normalFg
+                        val spanStyle =
+                            if (isCurrent) SpanStyle(background = highlightBg, color = highlightFg)
+                            else SpanStyle(color = fg)
+                        pushLink(
+                            LinkAnnotation.Clickable(
+                                tag = token.nodeId.value.toString(),
+                                styles = TextLinkStyles(spanStyle),
+                                linkInteractionListener = { onMoveClick(token.nodeId) },
+                            )
                         )
-                    )
-                    append(san)
-                    pop()
-                } else {
-                    withStyle(spanStyle) { append(san) }
+                        append(token.san)
+                        pop()
+                    }
+                    is PgnToken.Punctuation -> withStyle(SpanStyle(color = dimFg)) { append(token.text) }
                 }
             }
         }
@@ -251,5 +256,73 @@ fun PgnTextViewer(
             .fillMaxWidth()
             .verticalScroll(scrollState)
             .padding(horizontal = 12.dp, vertical = 8.dp),
+    )
+}
+
+private sealed interface PgnToken {
+    data class MoveNumber(val text: String) : PgnToken
+    data class Move(val nodeId: MoveNodeId, val san: String, val inVariation: Boolean) : PgnToken
+    data class Punctuation(val text: String) : PgnToken
+}
+
+/** Flattens a [MoveTree] depth-first into a renderable token list. */
+private fun flattenTree(tree: MoveTree): List<PgnToken> {
+    val tokens = mutableListOf<PgnToken>()
+    appendSection(tree, tree.rootChildren, tokens, inVariation = false, needsMoveNum = false)
+    return tokens
+}
+
+private fun appendSection(
+    tree: MoveTree,
+    childIds: List<MoveNodeId>,
+    tokens: MutableList<PgnToken>,
+    inVariation: Boolean,
+    needsMoveNum: Boolean,
+) {
+    val mainlineId = childIds.firstOrNull() ?: return
+    val variations = childIds.drop(1)
+    val node = tree.nodes[mainlineId] ?: return
+
+    val fenParts = node.fenBefore.split(" ")
+    val moveNum = fenParts.getOrNull(5)?.toIntOrNull() ?: 1
+    val isWhite = fenParts.getOrNull(1) != "b"
+
+    if (tokens.isNotEmpty()) tokens.add(PgnToken.Punctuation(" "))
+
+    // Move number
+    when {
+        isWhite -> tokens.add(PgnToken.MoveNumber("$moveNum."))
+        needsMoveNum || inVariation -> tokens.add(PgnToken.MoveNumber("$moveNum…"))  // ellipsis
+    }
+    if (isWhite || needsMoveNum || inVariation) tokens.add(PgnToken.Punctuation(" "))
+
+    tokens.add(PgnToken.Move(mainlineId, node.san, inVariation))
+
+    // Inline variations in parens after mainline move
+    for (varId in variations) {
+        val varNode = tree.nodes[varId] ?: continue
+        val varFenParts = varNode.fenBefore.split(" ")
+        val varMoveNum = varFenParts.getOrNull(5)?.toIntOrNull() ?: 1
+        val varIsWhite = varFenParts.getOrNull(1) != "b"
+
+        tokens.add(PgnToken.Punctuation(" ("))
+        if (varIsWhite) {
+            tokens.add(PgnToken.MoveNumber("$varMoveNum."))
+        } else {
+            tokens.add(PgnToken.MoveNumber("$varMoveNum…"))
+        }
+        tokens.add(PgnToken.Punctuation(" "))
+        tokens.add(PgnToken.Move(varId, varNode.san, inVariation = true))
+        appendSection(tree, varNode.children, tokens, inVariation = true, needsMoveNum = false)
+        tokens.add(PgnToken.Punctuation(")"))
+    }
+
+    // Continue mainline
+    appendSection(
+        tree,
+        node.children,
+        tokens,
+        inVariation = inVariation,
+        needsMoveNum = variations.isNotEmpty(),  // re-state move number after variations
     )
 }

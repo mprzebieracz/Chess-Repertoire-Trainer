@@ -150,9 +150,8 @@ fun GameDetailScreen(
                     )
                 }
                 PgnTextViewer(
-                    sanHistory = chessCtrl.sanHistory,
-                    currentMoveIndex = chessCtrl.currentMoveIndex,
-                    onMoveClick = { chessCtrl.navigateToMoveIndex(it) },
+                    navigator = viewModel.navigator,
+                    onMoveClick = { viewModel.navigator.goTo(it) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -162,11 +161,11 @@ fun GameDetailScreen(
                 BottomBarButton(
                     Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     "Prev",
-                    { chessCtrl.navigateBack() })
+                    { viewModel.navigator.goPrevious() })
                 BottomBarButton(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     "Next",
-                    { chessCtrl.navigateForward() })
+                    { viewModel.navigator.goNext() })
             }
         },
     )

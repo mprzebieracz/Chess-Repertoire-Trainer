@@ -158,7 +158,7 @@ class PuzzleTrainingViewModel(private val repository: PuzzleRepository) : ViewMo
                         statusMessage = "Incorrect, try again"
                     )
                 }
-                chessController.navigateBack()
+                chessController.undoLastMove()
             }
         }
     }

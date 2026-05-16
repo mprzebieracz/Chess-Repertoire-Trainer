@@ -118,11 +118,11 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
                 BottomBarButton(
                     Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     "Prev",
-                    { chessCtrl.navigateBack() })
+                    { viewModel.navigator.goPrevious() })
                 BottomBarButton(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     "Next",
-                    { chessCtrl.navigateForward() })
+                    { viewModel.navigator.goNext() })
             }
         },
     )

@@ -8,7 +8,9 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.LinearGameNavigator
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
 import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
@@ -31,6 +33,7 @@ class LineEditorViewModel(
 
     val lineId: Int = checkNotNull(savedStateHandle["lineId"])
     val chessController = DefaultChessBoardController()
+    val navigator = LinearGameNavigator()
 
     private val _editingComment = MutableStateFlow<String?>(null)
     val editingComment: StateFlow<String?> = _editingComment.asStateFlow()
@@ -56,6 +59,8 @@ class LineEditorViewModel(
         engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
+        navigator.onPositionChanged = { fen, lm -> chessController.loadPositionFromFen(fen, lm) }
+
         viewModelScope.launch {
             val line = repertoireRepository.getLineById(lineId)
             if (line != null) {
@@ -67,10 +72,16 @@ class LineEditorViewModel(
                 chessController.orientForSide(colorString.toSide())
             }
 
+            // Seed navigator by replaying stored moves through the controller.
             val moves = repertoireRepository.getMovesForLine(lineId).first()
-            chessController.replaySanSequence(moves.map { it.moveSan })
+            val board = chessController.getBoard()
+            for (move in moves) {
+                val legalMove = board.findLegalMoveBySan(move.moveSan) ?: break
+                chessController.tryApplyMove(legalMove)?.let { navigator.onUserMove(it) }
+            }
 
-            chessController.onMoveListener = { _, san, fen ->
+            // Wire persistence: new moves applied to the board are saved to the DB.
+            chessController.onMoveApplied = { applied ->
                 _editingComment.value = null
                 _hasChanges.value = true
                 viewModelScope.launch {
@@ -79,13 +90,14 @@ class LineEditorViewModel(
                         LineMove(
                             lineId = lineId,
                             moveIndex = nextIndex,
-                            moveSan = san,
-                            fen = fen,
+                            moveSan = applied.san,
+                            fen = applied.fenAfter,
                             comment = null,
                             arrows = null
                         )
                     )
                 }
+                navigator.onUserMove(applied)
             }
 
             viewModelScope.launch {
@@ -97,13 +109,14 @@ class LineEditorViewModel(
     }
 
     fun resetToStart() {
-        val tempListener = chessController.onMoveListener
-        chessController.onMoveListener = null
         _editingComment.value = null
-        while (chessController.currentMoveIndex > 0) {
-            chessController.navigateBack()
+        val savedApplied = chessController.onMoveApplied
+        chessController.onMoveApplied = null
+        // Stop at index 0 (after first move), matching original behaviour.
+        while (navigator.currentMoveIndex > 0) {
+            navigator.goPrevious()
         }
-        chessController.onMoveListener = tempListener
+        chessController.onMoveApplied = savedApplied
     }
 
     fun deleteLastMove() {
@@ -112,11 +125,10 @@ class LineEditorViewModel(
             if (currentMoves.isNotEmpty()) {
                 repertoireRepository.deleteLineMove(currentMoves.last())
                 _hasChanges.value = true
-
-                val tempListener = chessController.onMoveListener
-                chessController.onMoveListener = null
-                chessController.navigateBack()
-                chessController.onMoveListener = tempListener
+                val savedApplied = chessController.onMoveApplied
+                chessController.onMoveApplied = null
+                navigator.goPrevious()
+                chessController.onMoveApplied = savedApplied
                 _editingComment.value = null
             }
         }

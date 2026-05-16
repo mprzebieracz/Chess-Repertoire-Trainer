@@ -9,7 +9,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
-import com.example.chessrepertoiretrainer.core.chess.pgn.LinearPgnLineSource
+import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.GuidedLineNavigator
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.github.bhlangonijr.chesslib.Side
@@ -44,7 +44,8 @@ class LearnChapterViewModel(
         val isAtLineStart: Boolean = true,
         val isAtLineEnd: Boolean = false,
         val statusMessage: String? = null,
-        val currentMoveComment: String? = null
+        val currentMoveLabel: String? = null,
+        val currentMoveComment: String? = null,
     )
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
@@ -54,10 +55,10 @@ class LearnChapterViewModel(
 
     // Separate board controller for learn mode so we don't interfere with
     // the main TrainingViewModel's controller.
-    val chessController = DefaultChessBoardController(onMoveListener = null)
+    val chessController = DefaultChessBoardController()
 
     private var lines: List<Line> = emptyList()
-    private var lineSource: LinearPgnLineSource = LinearPgnLineSource(emptyList())
+    private var lineNavigator: GuidedLineNavigator = GuidedLineNavigator.empty()
     private var currentLineIndex: Int = -1
     private var mySide: Side = Side.WHITE
 
@@ -134,8 +135,7 @@ class LearnChapterViewModel(
         val line = lines[index]
 
         val loadedMoves = repertoireRepository.getMovesForLine(line.id).first()
-        lineSource = LinearPgnLineSource(loadedMoves)
-
+        lineNavigator = GuidedLineNavigator(loadedMoves)
         chessController.resetBoard()
 
         _uiState.update {
@@ -148,77 +148,85 @@ class LearnChapterViewModel(
                 currentLineNumber = index + 1,
                 totalLines = lines.size,
                 myColor = colorString ?: it.myColor,
-                phase = if (lineSource.isEmpty) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                phase = if (lineNavigator.isEmpty) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
                 isAtLineStart = true,
-                isAtLineEnd = lineSource.isEmpty,
-                statusMessage = if (lineSource.isEmpty) "This line has no moves." else null,
-                currentMoveComment = null
+                isAtLineEnd = lineNavigator.isEmpty,
+                statusMessage = if (lineNavigator.isEmpty) "This line has no moves." else null,
+                currentMoveLabel = null,
+                currentMoveComment = null,
             )
         }
     }
 
     fun onNextMove() {
-        if (lineSource.isEmpty) {
+        val nextSan = lineNavigator.peekNextSan() ?: run {
             _uiState.update { it.copy(phase = LearnPhase.LINE_COMPLETE, isAtLineEnd = true) }
             return
         }
 
-        val moveData = lineSource.next() ?: run {
-            _uiState.update { it.copy(phase = LearnPhase.LINE_COMPLETE, isAtLineEnd = true) }
-            return
-        }
-
-        val legalMove = chessController.getBoard().findLegalMoveBySan(moveData.san)
+        val legalMove = chessController.getBoard().findLegalMoveBySan(nextSan)
         if (legalMove == null) {
-            lineSource.previous()
-            _uiState.update { it.copy(statusMessage = "Cannot play move: ${moveData.san}") }
+            _uiState.update { it.copy(statusMessage = "Cannot play move: $nextSan") }
             return
         }
 
+        val saved = chessController.onMoveApplied
+        chessController.onMoveApplied = null
         chessController.onMove(legalMove)
+        chessController.onMoveApplied = saved
+
+        lineNavigator.goNext()
+
         _uiState.update {
             it.copy(
-                isAtLineStart = lineSource.isAtStart,
-                isAtLineEnd = lineSource.isAtEnd,
-                phase = if (lineSource.isAtEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                isAtLineStart = lineNavigator.isAtStart,
+                isAtLineEnd = lineNavigator.isAtEnd,
+                phase = if (lineNavigator.isAtEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
                 statusMessage = null,
-                currentMoveComment = lineSource.currentComment
+                currentMoveLabel = moveLabel(),
+                currentMoveComment = lineNavigator.currentComment,
             )
         }
     }
 
     fun onPreviousMove() {
-        if (lineSource.isAtStart) return
-
-        lineSource.previous()
-        chessController.navigateBack()
-
+        if (lineNavigator.isAtStart) return
+        lineNavigator.goPrevious()
+        chessController.undoLastMove()
         _uiState.update {
             it.copy(
-                isAtLineStart = lineSource.isAtStart,
-                isAtLineEnd = lineSource.isAtEnd,
-                phase = if (lineSource.isAtEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                isAtLineStart = lineNavigator.isAtStart,
+                isAtLineEnd = lineNavigator.isAtEnd,
+                phase = if (lineNavigator.isAtEnd) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
                 statusMessage = null,
-                currentMoveComment = lineSource.currentComment
+                currentMoveLabel = moveLabel(),
+                currentMoveComment = lineNavigator.currentComment,
             )
         }
     }
 
     fun restartCurrentLine() {
         if (currentLineIndex !in lines.indices) return
-
         chessController.resetBoard()
-        lineSource.reset()
-
+        lineNavigator.reset()
         _uiState.update {
             it.copy(
                 isAtLineStart = true,
-                isAtLineEnd = lineSource.isEmpty,
-                phase = if (lineSource.isEmpty) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
+                isAtLineEnd = lineNavigator.isEmpty,
+                phase = if (lineNavigator.isEmpty) LearnPhase.LINE_COMPLETE else LearnPhase.STUDYING_LINE,
                 statusMessage = null,
-                currentMoveComment = null
+                currentMoveLabel = null,
+                currentMoveComment = null,
             )
         }
+    }
+
+    private fun moveLabel(): String? {
+        val node = lineNavigator.currentNode() ?: return null
+        val fenParts = node.fenBefore.split(" ")
+        val moveNum = fenParts.getOrNull(5)?.toIntOrNull() ?: 1
+        val isWhite = fenParts.getOrNull(1) != "b"
+        return if (isWhite) "$moveNum. ${node.san}" else "$moveNum… ${node.san}"
     }
 
     fun skipTrainingForCurrentLine() {
