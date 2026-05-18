@@ -125,6 +125,14 @@ fun OpeningTreeSearchScreen(
                 }, label = { Text("Classical") })
             }
 
+            ChipGroupSection(label = "Game type") {
+                FilterChip(
+                    selected = formState.ratedOnly,
+                    onClick = { formState = formState.copy(ratedOnly = !formState.ratedOnly) },
+                    label = { Text("Rated") }
+                )
+            }
+
             OutlinedTextField(
                 value = formState.maxGamesText,
                 onValueChange = { newValue ->
@@ -146,6 +154,7 @@ fun OpeningTreeSearchScreen(
                         maxGames = maxGames,
                         color = formState.colorFilter,
                         timeControlFilter = timeControlFilter,
+                        ratedOnly = formState.ratedOnly,
                         onTreeReady = { tree -> onOpenTree(tree) })
                 },
                 enabled = formState.username.isNotBlank() && !uiState.isSyncing,
@@ -219,6 +228,7 @@ data class OpeningTreeSearchFormState(
     val blitzEnabled: Boolean = true,
     val rapidEnabled: Boolean = true,
     val classicalEnabled: Boolean = true,
+    val ratedOnly: Boolean = false,
     val maxGamesText: String = "200"
 ) {
     fun withPlatform(

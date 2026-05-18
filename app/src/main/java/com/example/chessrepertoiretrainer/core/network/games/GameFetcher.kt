@@ -23,6 +23,7 @@ interface GameFetcher {
         maxGames: Int? = null,
         colorFilter: String = "both",
         timeControlFilter: String = "",
+        ratedOnly: Boolean = false,
         since: Long? = null,
         onProgress: ((fetched: Int) -> Unit)? = null
     ): List<FetchedGame>

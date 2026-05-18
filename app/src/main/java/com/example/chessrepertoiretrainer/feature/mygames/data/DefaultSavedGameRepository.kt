@@ -46,9 +46,10 @@ class DefaultSavedGameRepository(private val dao: SavedGameDao) : SavedGameRepos
 
     override fun getAllGamesFiltered(
         platform: String?,
-        isWhite: Boolean?
+        isWhite: Boolean?,
+        ratedOnly: Boolean
     ): Flow<List<SavedGame>> =
-        dao.getAllGamesFiltered(platform, isWhite)
+        dao.getAllGamesFiltered(platform, isWhite, ratedOnly)
 
     override suspend fun getStats(
         username: String,

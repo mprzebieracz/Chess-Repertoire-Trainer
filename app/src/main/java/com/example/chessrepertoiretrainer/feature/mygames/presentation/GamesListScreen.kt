@@ -109,6 +109,7 @@ private fun FilterPanel(
         else if (filter.isPlayerWhite == false) add("Black")
         filter.timeCategories.forEach { add(it.replaceFirstChar { c -> c.uppercase() }) }
         filter.selectedResults.forEach { add(it.replaceFirstChar { c -> c.uppercase() }) }
+                if (filter.ratedOnly) add("Rated")
     }.joinToString(" · ")
 
     Column {
@@ -153,6 +154,12 @@ private fun FilterPanel(
                     }
                     OptionChip("Black ♚", filter.isPlayerWhite == false) {
                         onFilterChange(filter.copy(isPlayerWhite = if (filter.isPlayerWhite == false) null else false))
+                    }
+                }
+
+                FilterSection(label = "Game type") {
+                    OptionChip("Rated", filter.ratedOnly) {
+                        onFilterChange(filter.copy(ratedOnly = !filter.ratedOnly))
                     }
                 }
 
@@ -204,7 +211,8 @@ private fun OptionChip(label: String, selected: Boolean, onClick: () -> Unit) {
     FilterChip(selected = selected, onClick = onClick, label = { Text(label) })
 }
 
-private val gameDateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+private val gameDateFormat: SimpleDateFormat
+    get() = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
 
 @Composable
 private fun GameListCard(game: SavedGame, onClick: () -> Unit) {

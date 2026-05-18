@@ -11,7 +11,8 @@ interface SavedGameRepository {
     suspend fun countGames(platform: String, username: String): Int
     fun getAllGamesFiltered(
         platform: String?,
-        isWhite: Boolean?
+        isWhite: Boolean?,
+        ratedOnly: Boolean
     ): Flow<List<SavedGame>>
 
     suspend fun getStats(

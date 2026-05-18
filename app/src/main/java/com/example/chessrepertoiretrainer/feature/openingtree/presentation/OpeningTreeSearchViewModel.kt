@@ -37,6 +37,7 @@ class OpeningTreeSearchViewModel(private val fetcherRegistry: GameFetcherRegistr
         maxGames: Int?,
         color: String,
         timeControlFilter: String,
+        ratedOnly: Boolean,
         onTreeReady: (OpeningTree) -> Unit
     ) {
         if (username.isBlank() || _uiState.value.isSyncing) return
@@ -56,6 +57,7 @@ class OpeningTreeSearchViewModel(private val fetcherRegistry: GameFetcherRegistr
                     maxGames = maxGames,
                     colorFilter = color,
                     timeControlFilter = timeControlFilter,
+                    ratedOnly = ratedOnly,
                     onProgress = { fetched ->
                         _uiState.value =
                             _uiState.value.copy(fetchedGameCount = fetched)
@@ -98,9 +100,6 @@ class OpeningTreeSearchViewModel(private val fetcherRegistry: GameFetcherRegistr
         }
     }
 
-    fun clearError() {
-        _uiState.value = _uiState.value.copy(errorMessage = null)
-    }
 
     class Factory(private val fetcherRegistry: GameFetcherRegistry) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")

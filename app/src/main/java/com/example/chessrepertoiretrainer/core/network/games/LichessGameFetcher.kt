@@ -17,6 +17,7 @@ object LichessGameFetcher : GameFetcher {
         maxGames: Int?,
         colorFilter: String,
         timeControlFilter: String,
+        ratedOnly: Boolean,
         since: Long?,
         onProgress: ((fetched: Int) -> Unit)?
     ): List<FetchedGame> =
@@ -25,8 +26,15 @@ object LichessGameFetcher : GameFetcher {
             if (normalizedUser.isBlank()) return@withContext emptyList()
 
             val urlString =
-                buildRequestUrl(normalizedUser, maxGames, colorFilter, timeControlFilter, since)
-            return@withContext streamGames(urlString, normalizedUser, onProgress)
+                buildRequestUrl(
+                    normalizedUser,
+                    maxGames,
+                    colorFilter,
+                    timeControlFilter,
+                    ratedOnly,
+                    since
+                )
+            return@withContext streamGames(urlString, normalizedUser, ratedOnly, onProgress)
         }
 
     private fun buildRequestUrl(
@@ -34,6 +42,7 @@ object LichessGameFetcher : GameFetcher {
         maxGames: Int?,
         colorFilter: String,
         timeControlFilter: String,
+        ratedOnly: Boolean,
         since: Long?
     ): String {
         val params = mutableListOf(
@@ -45,6 +54,7 @@ object LichessGameFetcher : GameFetcher {
         )
         if (maxGames != null && maxGames > 0) params += "max=$maxGames"
         if (since != null) params += "since=$since"
+        if (ratedOnly) params += "rated=true"
 
         if (colorFilter == "white" || colorFilter == "black") {
             params += "color=$colorFilter"
@@ -64,6 +74,7 @@ object LichessGameFetcher : GameFetcher {
     private fun streamGames(
         urlString: String,
         username: String,
+        ratedOnly: Boolean,
         onProgress: ((Int) -> Unit)?
     ): List<FetchedGame> {
         val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
@@ -81,7 +92,7 @@ object LichessGameFetcher : GameFetcher {
         var fetched = 0
         return connection.inputStream.bufferedReader().useLines { lines ->
             lines.mapNotNull { line ->
-                parseLichessGame(line, username)?.also {
+                parseLichessGame(line, username, ratedOnly)?.also {
                     fetched++
                     onProgress?.invoke(fetched)
                 }
@@ -89,13 +100,14 @@ object LichessGameFetcher : GameFetcher {
         }
     }
 
-    private fun parseLichessGame(jsonLine: String, username: String): FetchedGame? {
+    private fun parseLichessGame(jsonLine: String, username: String, ratedOnly: Boolean): FetchedGame? {
         if (jsonLine.isBlank()) return null
 
         return runCatching {
             val obj = JSONObject(jsonLine)
             val pgn = obj.optString("pgn", "")
             if (pgn.isBlank()) return null
+            if (ratedOnly && !obj.optBoolean("rated", false)) return null
 
             val players = obj.optJSONObject("players")
             val whiteUser = extractUsername(players?.optJSONObject("white"), "White")

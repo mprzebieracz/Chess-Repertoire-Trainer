@@ -18,6 +18,7 @@ object ChessComGameFetcher : GameFetcher {
         maxGames: Int?,
         colorFilter: String,
         timeControlFilter: String,
+        ratedOnly: Boolean,
         since: Long?,
         onProgress: ((fetched: Int) -> Unit)?
     ): List<FetchedGame> =
@@ -44,6 +45,7 @@ object ChessComGameFetcher : GameFetcher {
                     if (result.size >= effectiveMaxGames) break
                     if (since != null && game.playedAt <= since) continue
 
+                    if (ratedOnly && !game.rated) continue
                     if (colorFilter == "white" && !game.isUserWhite) continue
                     if (colorFilter == "black" && game.isUserWhite) continue
 

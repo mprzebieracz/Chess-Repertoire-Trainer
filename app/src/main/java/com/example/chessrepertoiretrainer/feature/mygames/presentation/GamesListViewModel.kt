@@ -25,7 +25,8 @@ class GamesListViewModel(private val repository: SavedGameRepository) : ViewMode
     val games: StateFlow<List<SavedGame>> = _filter.flatMapLatest { f ->
         repository.getAllGamesFiltered(
             platform = f.platform,
-            isWhite = f.isPlayerWhite
+            isWhite = f.isPlayerWhite,
+            ratedOnly = f.ratedOnly
         ).map { games ->
             games
                 .let { list ->
