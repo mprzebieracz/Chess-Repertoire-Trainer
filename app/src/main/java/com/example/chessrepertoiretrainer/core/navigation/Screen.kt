@@ -83,4 +83,6 @@ sealed class Screen(
         fun createRoute(platform: String, username: String) =
             "opening_stats/${android.net.Uri.encode(platform)}/${android.net.Uri.encode(username)}"
     }
+
+    object CourseTransfer : Screen("course_transfer")
 }

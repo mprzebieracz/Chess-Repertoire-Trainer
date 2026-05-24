@@ -16,7 +16,10 @@ import com.example.chessrepertoiretrainer.feature.repertoire.domain.usecase.Repe
 import com.example.chessrepertoiretrainer.core.activity.ActivityRecorder
 import com.example.chessrepertoiretrainer.core.network.explorer.LichessExplorerService
 import com.example.chessrepertoiretrainer.core.opening.OpeningRegistry
+import com.example.chessrepertoiretrainer.core.bluetooth.BluetoothTransfer
 import com.example.chessrepertoiretrainer.core.repertoire.GameChapterMatcher
+import com.example.chessrepertoiretrainer.feature.repertoire.data.transfer.RepertoireExporter
+import com.example.chessrepertoiretrainer.feature.repertoire.data.transfer.RepertoireImporter
 import com.example.chessrepertoiretrainer.feature.mygames.domain.OnDemandGameAnalyzer
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 
@@ -59,4 +62,8 @@ class AppContainer(context: Context) {
     val onDemandGameAnalyzer = OnDemandGameAnalyzer(stockfishEngine, moveEvalDao)
 
     val navTransientStore = NavTransientStore()
+
+    val bluetoothTransfer = BluetoothTransfer(context.applicationContext)
+    val repertoireExporter = RepertoireExporter(repertoireDao)
+    val repertoireImporter = RepertoireImporter(repertoireDao)
 }

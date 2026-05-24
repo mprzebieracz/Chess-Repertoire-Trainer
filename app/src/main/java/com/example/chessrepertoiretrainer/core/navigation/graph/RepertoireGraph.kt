@@ -28,6 +28,8 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.LineEditorViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.RepertoiresViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.ReviewChapterViewModel
+import com.example.chessrepertoiretrainer.feature.coursetransfer.presentation.CourseTransferScreen
+import com.example.chessrepertoiretrainer.feature.coursetransfer.presentation.CourseTransferViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
 fun NavGraphBuilder.repertoireGraph(
@@ -43,9 +45,28 @@ fun NavGraphBuilder.repertoireGraph(
                 complianceAnalyzer
             )
         )
-        RepertoiresScreen(viewModel = vm, onNavigateToChapters = {
-            navController.navigate(Screen.CourseOverview.createRoute(it))
-        })
+        RepertoiresScreen(
+            viewModel = vm,
+            onNavigateToChapters = {
+                navController.navigate(Screen.CourseOverview.createRoute(it))
+            },
+            onOpenTransfer = { navController.navigate(Screen.CourseTransfer.route) },
+        )
+    }
+
+    composable(Screen.CourseTransfer.route) {
+        val vm: CourseTransferViewModel = viewModel(
+            factory = CourseTransferViewModel.Factory(
+                repertoireRepository,
+                appContainer.bluetoothTransfer,
+                appContainer.repertoireExporter,
+                appContainer.repertoireImporter,
+            )
+        )
+        CourseTransferScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+        )
     }
 
     composable(

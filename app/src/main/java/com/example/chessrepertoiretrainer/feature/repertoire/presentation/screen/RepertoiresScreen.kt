@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -52,7 +53,11 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RepertoiresScreen(viewModel: RepertoiresViewModel, onNavigateToChapters: (Int) -> Unit) {
+fun RepertoiresScreen(
+    viewModel: RepertoiresViewModel,
+    onNavigateToChapters: (Int) -> Unit,
+    onOpenTransfer: () -> Unit = {},
+) {
     val courses by viewModel.courses.collectAsStateWithLifecycle()
     val isRebuildingIndex by viewModel.isRebuildingIndex.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -60,7 +65,8 @@ fun RepertoiresScreen(viewModel: RepertoiresViewModel, onNavigateToChapters: (In
     Scaffold(topBar = {
         RepertoiresTopBar(
             isRebuildingIndex = isRebuildingIndex,
-            onRebuildIndex = viewModel::rebuildComplianceIndex
+            onRebuildIndex = viewModel::rebuildComplianceIndex,
+            onOpenTransfer = onOpenTransfer,
         )
     }, floatingActionButton = {
         FloatingActionButton(onClick = { showAddDialog = true }) {
@@ -101,9 +107,16 @@ fun RepertoiresScreen(viewModel: RepertoiresViewModel, onNavigateToChapters: (In
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RepertoiresTopBar(isRebuildingIndex: Boolean, onRebuildIndex: () -> Unit) {
+private fun RepertoiresTopBar(
+    isRebuildingIndex: Boolean,
+    onRebuildIndex: () -> Unit,
+    onOpenTransfer: () -> Unit,
+) {
     var menuExpanded by remember { mutableStateOf(false) }
     TopAppBar(title = { Text("Your Courses") }, actions = {
+        IconButton(onClick = onOpenTransfer) {
+            Icon(Icons.Default.Bluetooth, contentDescription = "Transfer courses")
+        }
         IconButton(onClick = { menuExpanded = true }) {
             Icon(Icons.Default.MoreVert, contentDescription = "Options")
         }
