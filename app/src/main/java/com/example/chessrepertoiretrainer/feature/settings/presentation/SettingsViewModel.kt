@@ -106,6 +106,10 @@ class SettingsViewModel(
         viewModelScope.launch { repository.updateEngineThreads(threads) }
     }
 
+    fun updateSoundsEnabled(enabled: Boolean) {
+        viewModelScope.launch { repository.updateSoundsEnabled(enabled) }
+    }
+
     private fun saveUsername(
         username: String,
         onSave: suspend (String) -> Result<Unit>,

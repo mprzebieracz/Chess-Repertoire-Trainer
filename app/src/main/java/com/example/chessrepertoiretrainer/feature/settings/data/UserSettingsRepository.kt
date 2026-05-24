@@ -36,7 +36,8 @@ data class UserSettings(
     val chessComLastSyncAt: Long = 0L,
     val engineDepth: Int = 18,
     val engineMovetime: Int = 2000,
-    val engineThreads: Int = 2
+    val engineThreads: Int = 2,
+    val soundsEnabled: Boolean = true
 )
 
 class UserSettingsRepository(private val context: Context) {
@@ -55,6 +56,7 @@ class UserSettingsRepository(private val context: Context) {
         val ENGINE_MOVETIME = intPreferencesKey("engine_movetime")
         val ENGINE_THREADS = intPreferencesKey("engine_threads")
         val LICHESS_API_TOKEN = stringPreferencesKey("lichess_api_token")
+        val SOUNDS_ENABLED = booleanPreferencesKey("sounds_enabled")
     }
 
     val settingsFlow: Flow<UserSettings> = context.settingsDataStore.data.catch { exception ->
@@ -90,7 +92,8 @@ class UserSettingsRepository(private val context: Context) {
             chessComLastSyncAt = prefs[Keys.CHESSCOM_LAST_SYNC_AT] ?: 0L,
             engineDepth = prefs[Keys.ENGINE_DEPTH] ?: 20,
             engineMovetime = prefs[Keys.ENGINE_MOVETIME] ?: 2000,
-            engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2)
+            engineThreads = prefs[Keys.ENGINE_THREADS] ?: 2,
+            soundsEnabled = prefs[Keys.SOUNDS_ENABLED] ?: true)
     }
 
     suspend fun updateLichessUsername(username: String) {
@@ -163,5 +166,9 @@ class UserSettingsRepository(private val context: Context) {
 
     suspend fun updateEngineThreads(threads: Int) {
         context.settingsDataStore.edit { prefs -> prefs[Keys.ENGINE_THREADS] = threads }
+    }
+
+    suspend fun updateSoundsEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { prefs -> prefs[Keys.SOUNDS_ENABLED] = enabled }
     }
 }

@@ -5,6 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
+import com.example.chessrepertoiretrainer.core.sound.MoveSoundClassifier
+import com.example.chessrepertoiretrainer.core.sound.MoveSoundType
+import com.example.chessrepertoiretrainer.core.sound.SoundPlayer
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Rank
@@ -12,11 +15,16 @@ import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
 
-class DefaultChessBoardController : ChessBoardController {
+class DefaultChessBoardController(
+    private val soundPlayer: SoundPlayer? = defaultSoundPlayer,
+) : ChessBoardController {
 
     companion object {
         private const val STARTING_POSITION_FEN =
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+        @Volatile
+        var defaultSoundPlayer: SoundPlayer? = null
     }
 
     private val board = Board()
@@ -116,8 +124,28 @@ class DefaultChessBoardController : ChessBoardController {
     }
 
     override fun loadPositionFromFen(fen: String, lastMove: Move?) {
+        val capturedByLastMove = lastMove?.let { mv ->
+            val targetPiece = board.getPiece(mv.to)
+            if (targetPiece != Piece.NONE) true
+            else {
+                val mover = board.getPiece(mv.from)
+                (mover == Piece.WHITE_PAWN || mover == Piece.BLACK_PAWN) &&
+                        mv.from.file != mv.to.file
+            }
+        } ?: false
+
         loadFenAndResetState(fen)
         this.lastMove = lastMove
+
+        if (lastMove != null && soundPlayer != null) {
+            val type = when {
+                board.isMated -> MoveSoundType.MATE
+                board.isKingAttacked -> MoveSoundType.CHECK
+                capturedByLastMove -> MoveSoundType.CAPTURE
+                else -> MoveSoundType.MOVE
+            }
+            soundPlayer.play(type)
+        }
     }
 
     override fun tryApplyMove(move: Move): AppliedMove? {
@@ -143,6 +171,7 @@ class DefaultChessBoardController : ChessBoardController {
         markedSquare = null
         pendingPromotion = null
         onMoveApplied?.invoke(AppliedMove(move, san, fenBefore, board.fen))
+        soundPlayer?.play(MoveSoundClassifier.fromSan(san))
     }
 
     private fun isInputBlockedBySideRestriction(): Boolean {
