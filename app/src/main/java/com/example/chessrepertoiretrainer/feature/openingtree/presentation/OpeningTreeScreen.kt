@@ -48,6 +48,7 @@ fun OpeningTreeScreen(viewModel: OpeningTreeViewModel, onBackClick: () -> Unit) 
 
     ChessScreenLayout(
         chessCtrl = viewModel.chessController,
+        annotations = viewModel.annotations,
         topBar = { ChessTopBar(title = "Opening Tree", onBackClick = onBackClick) },
         contentBar = {
             OpeningTreeMovesPanel(uiState = uiState, onMoveSelected = viewModel::onMoveSelected)

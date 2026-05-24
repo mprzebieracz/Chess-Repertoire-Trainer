@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "saved_games",
-    indices = [Index("playedAt"), Index("platform"), Index("timeCategory"), Index("playerUsername")]
+    indices = [Index("playedAt"), Index("platform"), Index("timeCategory"), Index("playerUsername"), Index("ecoCode")]
 )
 data class SavedGame(
     @PrimaryKey val id: String,
@@ -24,5 +24,6 @@ data class SavedGame(
     val opponentRating: Int?,
     val rated: Boolean,
     val playedAt: Long,
-    val pgn: String
+    val pgn: String,
+    val ecoCode: String? = null
 )

@@ -53,6 +53,12 @@ class SettingsViewModel(
         )
     }
 
+    fun updateLichessApiToken(token: String) {
+        viewModelScope.launch {
+            updateSettingUseCase.lichessApiToken(token)
+        }
+    }
+
     fun clearTransientMessages() {
         _screenState.value =
             _screenState.value.copy(saveSuccessMessage = null, saveErrorMessage = null)

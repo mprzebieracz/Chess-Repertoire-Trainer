@@ -17,11 +17,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
+import com.example.chessrepertoiretrainer.core.chess.domain.BoardMoveAnnotation
 import com.github.bhlangonijr.chesslib.Square
 
 @Composable
 fun ChessboardUI(
     state: ChessBoardController,
+    arrows: List<Arrow> = emptyList(),
+    lastMoveAnnotation: BoardMoveAnnotation? = null,
     arrowDrawingMode: Boolean = false,
     onArrowDrawn: ((Arrow) -> Unit)? = null,
 ) {
@@ -52,6 +55,7 @@ fun ChessboardUI(
             legalMoves = legalMoves,
             draggingSquare = draggingSquare,
             squareSizePx = squareSizePx,
+            lastMoveAnnotation = lastMoveAnnotation,
             onDragStart = { sq, offset ->
                 draggingSquare = sq
                 dragOffset = Offset.Zero
@@ -64,7 +68,7 @@ fun ChessboardUI(
             })
 
         ArrowsLayer(
-            arrows = state.arrows,
+            arrows = arrows,
             squareSizePx = squareSizePx,
             isFlipped = state.isFlipped,
             modifier = Modifier.matchParentSize()

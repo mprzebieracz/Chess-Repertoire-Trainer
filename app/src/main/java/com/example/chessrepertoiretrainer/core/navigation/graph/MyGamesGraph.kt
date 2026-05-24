@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.core.navigation.graph
 
-import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -17,6 +16,8 @@ import com.example.chessrepertoiretrainer.feature.mygames.presentation.GamesList
 import com.example.chessrepertoiretrainer.feature.mygames.presentation.GamesListViewModel
 import com.example.chessrepertoiretrainer.feature.mygames.presentation.MyGamesScreen
 import com.example.chessrepertoiretrainer.feature.mygames.presentation.MyGamesViewModel
+import com.example.chessrepertoiretrainer.feature.mygames.presentation.OpeningStatsScreen
+import com.example.chessrepertoiretrainer.feature.mygames.presentation.OpeningStatsViewModel
 
 fun NavGraphBuilder.myGamesGraph(navController: NavHostController, appContainer: AppContainer) {
     composable(Screen.MyGames.route) {
@@ -53,7 +54,33 @@ fun NavGraphBuilder.myGamesGraph(navController: NavHostController, appContainer:
                     repository = appContainer.savedGameRepository
                 )
             )
-        AccountStatsScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
+        AccountStatsScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+            onOpenOpeningStats = {
+                navController.navigate(Screen.OpeningStats.createRoute(platform, username))
+            }
+        )
+    }
+
+    composable(
+        route = Screen.OpeningStats.route,
+        arguments = listOf(
+            navArgument("platform") { type = NavType.StringType },
+            navArgument("username") { type = NavType.StringType }
+        )
+    ) { backStackEntry ->
+        val platform = backStackEntry.arguments?.getString("platform") ?: return@composable
+        val username = backStackEntry.arguments?.getString("username") ?: return@composable
+        val vm: OpeningStatsViewModel = viewModel(
+            factory = OpeningStatsViewModel.Factory(
+                platform = platform,
+                username = username,
+                repository = appContainer.savedGameRepository,
+                openingRegistry = appContainer.openingRegistry
+            )
+        )
+        OpeningStatsScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 
     composable(Screen.GamesList.route) {
@@ -69,26 +96,22 @@ fun NavGraphBuilder.myGamesGraph(navController: NavHostController, appContainer:
         route = Screen.GameDetail.route,
         arguments = listOf(navArgument("gameId") { type = NavType.StringType })
     ) {
-        val game = remember { appContainer.navTransientStore.takeSavedGame() }
-        if (game != null) {
-            val vm: GameDetailViewModel = viewModel(
-                factory = GameDetailViewModel.Factory(
-                    game,
-                    appContainer.repertoireComplianceAnalyzer,
-                    appContainer.stockfishEngine
-                )
+        val vm: GameDetailViewModel = viewModel(
+            factory = GameDetailViewModel.Factory(
+                appContainer.navTransientStore,
+                appContainer.repertoireComplianceAnalyzer,
+                appContainer.stockfishEngine,
+                appContainer.onDemandGameAnalyzer
             )
-            GameDetailScreen(
-                viewModel = vm,
-                onBackClick = { navController.popBackStack() },
-                onViewInCourse = { chapterId, lineId ->
-                    navController.navigate(
-                        Screen.ChapterReview.createRoute(
-                            chapterId,
-                            lineId
-                        )
-                    )
-                })
-        }
+        )
+        GameDetailScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+            onViewInCourse = { chapterId, lineId ->
+                navController.navigate(
+                    Screen.ChapterReview.createRoute(chapterId, lineId)
+                )
+            }
+        )
     }
 }

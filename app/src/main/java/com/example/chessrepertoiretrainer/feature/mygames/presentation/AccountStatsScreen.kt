@@ -47,16 +47,28 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AccountStatsScreen(viewModel: AccountStatsViewModel, onBackClick: () -> Unit) {
+fun AccountStatsScreen(
+    viewModel: AccountStatsViewModel,
+    onBackClick: () -> Unit,
+    onOpenOpeningStats: () -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedCategoryIndex by remember { mutableIntStateOf(0) }
 
     Scaffold(topBar = {
-        TopAppBar(title = { Text(viewModel.username) }, navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        TopAppBar(
+            title = { Text(viewModel.username) },
+            navigationIcon = {
+                IconButton(onClick = onBackClick) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            },
+            actions = {
+                androidx.compose.material3.TextButton(onClick = onOpenOpeningStats) {
+                    Text("By Opening")
+                }
             }
-        })
+        )
     }) { padding ->
         Column(
             modifier = Modifier

@@ -19,6 +19,11 @@ data class LineFenRow(
     @ColumnInfo(name = "lineId") val lineId: Int
 )
 
+data class LineMoveFenRow(
+    @ColumnInfo(name = "lineId") val lineId: Int,
+    @ColumnInfo(name = "fen") val fen: String
+)
+
 @Dao
 interface RepertoireDao {
     // Repertoire
@@ -115,4 +120,13 @@ interface RepertoireDao {
     """
     )
     suspend fun getLineFensForColor(color: String): List<LineFenRow>
+
+    @Query("SELECT DISTINCT lastEcoCode FROM lines WHERE lastEcoCode IS NOT NULL")
+    suspend fun getDistinctEcoCodes(): List<String>
+
+    @Query("SELECT lineId, fen FROM line_moves ORDER BY lineId ASC, moveIndex ASC")
+    suspend fun getAllLineMoveFens(): List<LineMoveFenRow>
+
+    @Query("UPDATE lines SET lastEcoCode = :ecoCode WHERE id = :lineId")
+    suspend fun updateLastEcoCode(lineId: Int, ecoCode: String?)
 }

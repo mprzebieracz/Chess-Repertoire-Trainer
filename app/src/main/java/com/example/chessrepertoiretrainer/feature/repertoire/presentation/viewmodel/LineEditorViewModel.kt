@@ -7,16 +7,17 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.core.chess.controller.BoardAnnotations
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.parseArrows
 import com.example.chessrepertoiretrainer.core.chess.domain.serializeArrows
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
+import com.example.chessrepertoiretrainer.core.chess.domain.toggle
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.LinearGameNavigator
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
-import com.example.chessrepertoiretrainer.core.engine.EngineAnalysis
-import com.example.chessrepertoiretrainer.core.engine.EngineSearchState
+import com.example.chessrepertoiretrainer.core.engine.EngineAnalysisHolder
 import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,12 +32,19 @@ import kotlinx.coroutines.launch
 class LineEditorViewModel(
     private val repertoireRepository: RepertoireRepository,
     savedStateHandle: SavedStateHandle,
-    private val engine: StockfishEngine
+    engine: StockfishEngine,
 ) : ViewModel() {
 
     val lineId: Int = checkNotNull(savedStateHandle["lineId"])
     val chessController = DefaultChessBoardController()
+    val annotations = BoardAnnotations()
     val navigator = LinearGameNavigator()
+
+    private val engineHolder = EngineAnalysisHolder(engine, viewModelScope, chessController)
+    val isEngineEnabled = engineHolder.isEnabled
+    val engineAnalysis = engineHolder.analysis
+    val engineSearchState = engineHolder.searchState
+    val engineError = engineHolder.error
 
     private val _editingComment = MutableStateFlow<String?>(null)
     val editingComment: StateFlow<String?> = _editingComment.asStateFlow()
@@ -49,20 +57,6 @@ class LineEditorViewModel(
 
     val dbMoves: StateFlow<List<LineMove>> = repertoireRepository.getMovesForLine(lineId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val isEngineEnabled: StateFlow<Boolean> =
-        engine.isEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-    val engineAnalysis: StateFlow<EngineAnalysis?> =
-        engine.analysis.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-    val engineSearchState: StateFlow<EngineSearchState> = engine.searchState.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(
-            5_000
-        ),
-        EngineSearchState.IDLE
-    )
-    val engineError: StateFlow<String?> =
-        engine.engineError.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     init {
         navigator.onPositionChanged = { fen, lm -> chessController.loadPositionFromFen(fen, lm) }
@@ -86,7 +80,6 @@ class LineEditorViewModel(
                 chessController.tryApplyMove(legalMove)?.let { navigator.onUserMove(it) }
             }
 
-            // Wire persistence: new moves applied to the board are saved to the DB.
             chessController.onMoveApplied = { applied ->
                 _editingComment.value = null
                 _hasChanges.value = true
@@ -99,25 +92,19 @@ class LineEditorViewModel(
                             moveSan = applied.san,
                             fen = applied.fenAfter,
                             comment = null,
-                            arrows = null
+                            arrows = null,
                         )
                     )
                 }
                 navigator.onUserMove(applied)
             }
+        }
 
-            viewModelScope.launch {
-                snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
-                    if (engine.isEnabled.value) engine.updatePosition(fen)
-                }
-            }
-
-            viewModelScope.launch {
-                snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
-                    val currentMove = dbMoves.value.firstOrNull { it.fen == fen }
-                    chessController.arrows = currentMove?.arrows.parseArrows()
-                    _isArrowDrawingMode.value = false
-                }
+        viewModelScope.launch {
+            snapshotFlow { chessController.boardState }.distinctUntilChanged().collect { fen ->
+                val currentMove = dbMoves.value.firstOrNull { it.fen == fen }
+                annotations.arrows = currentMove?.arrows.parseArrows()
+                _isArrowDrawingMode.value = false
             }
         }
     }
@@ -128,9 +115,7 @@ class LineEditorViewModel(
 
     fun onArrowDrawn(arrow: Arrow) {
         _isArrowDrawingMode.value = false
-        val current = chessController.arrows.toMutableList()
-        if (!current.remove(arrow)) current.add(arrow)
-        chessController.arrows = current
+        annotations.arrows = annotations.arrows.toggle(arrow)
         persistCurrentArrows()
     }
 
@@ -138,7 +123,7 @@ class LineEditorViewModel(
         viewModelScope.launch {
             val fen = chessController.boardState
             val target = dbMoves.value.firstOrNull { it.fen == fen } ?: return@launch
-            val serialized = chessController.arrows.serializeArrows().ifEmpty { null }
+            val serialized = annotations.arrows.serializeArrows().ifEmpty { null }
             repertoireRepository.updateLineMove(target.copy(arrows = serialized))
         }
     }
@@ -190,21 +175,17 @@ class LineEditorViewModel(
         _editingComment.value = null
     }
 
-    fun toggleEngine() {
-        if (engine.isEnabled.value) engine.disable()
-        else engine.enable(chessController.boardState)
-    }
-
-    fun analyzeDeeper() = engine.analyzeDeeper()
+    fun toggleEngine() = engineHolder.toggle()
+    fun analyzeDeeper() = engineHolder.analyzeDeeper()
 
     override fun onCleared() {
         super.onCleared()
-        engine.disable()
+        engineHolder.dispose()
     }
 
     class Factory(
         private val repertoireRepository: RepertoireRepository,
-        private val engine: StockfishEngine
+        private val engine: StockfishEngine,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {

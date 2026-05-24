@@ -3,6 +3,7 @@ package com.example.chessrepertoiretrainer.feature.openingtree.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.core.chess.controller.BoardAnnotations
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 data class OpeningTreeMoveUi(
     val moveSan: String,
     val toFen: String,
-    val games: Int,
+    val games: Long,
     val winPercent: Int,
     val drawPercent: Int,
     val lossPercent: Int
@@ -35,6 +36,7 @@ data class OpeningTreeUiState(
 class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
 
     val chessController = DefaultChessBoardController()
+    val annotations = BoardAnnotations()
 
     private val _uiState = MutableStateFlow(OpeningTreeUiState())
     val uiState: StateFlow<OpeningTreeUiState> = _uiState.asStateFlow()
@@ -50,8 +52,7 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
         if (tree != null) {
             chessController.orientForSide(if (tree.playerIsBlack) Side.BLACK else Side.WHITE)
             applyFen(tree.rootFen, tree, updateBoard = true)
-        }
-        else {
+        } else {
             showEmptyState("Opening tree not found. Please go back and search again.")
         }
     }
@@ -87,7 +88,7 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
                 moves = emptyList(),
                 canGoBack = fen != tree.rootFen
             )
-            chessController.arrows = emptyList()
+            annotations.arrows = emptyList()
             if (updateBoard) chessController.loadPositionFromFen(fen)
             return
         }
@@ -108,11 +109,11 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
 
         if (updateBoard) chessController.loadPositionFromFen(fen)
 
-        val totalGames = movesUi.sumOf { it.games }.coerceAtLeast(1)
+        val totalGames = movesUi.sumOf { it.games }.coerceAtLeast(1L)
         val board = chessController.getBoard()
-        chessController.arrows = movesUi.mapNotNull { moveUi ->
+        annotations.arrows = movesUi.mapNotNull { moveUi ->
             val move = board.findLegalMoveBySan(moveUi.moveSan) ?: return@mapNotNull null
-            val pct = moveUi.games.toFloat() / totalGames
+            val pct = moveUi.games.toFloat() / totalGames.toFloat()
             val alpha = when {
                 pct >= 0.50f -> 1.00f
                 pct >= 0.25f -> 0.80f
@@ -136,14 +137,14 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
     }
 
     private fun toMoveUi(aggregate: OpeningTreeMoveAggregate): OpeningTreeMoveUi {
-        val totalGames = aggregate.games.takeIf { it > 0 } ?: 1
+        val totalGames = aggregate.games.takeIf { it > 0L } ?: 1L
         return OpeningTreeMoveUi(
             moveSan = aggregate.moveSan,
             toFen = aggregate.toFen,
             games = aggregate.games,
-            winPercent = (aggregate.wins * 100) / totalGames,
-            drawPercent = (aggregate.draws * 100) / totalGames,
-            lossPercent = (aggregate.losses * 100) / totalGames
+            winPercent = ((aggregate.wins * 100L) / totalGames).toInt(),
+            drawPercent = ((aggregate.draws * 100L) / totalGames).toInt(),
+            lossPercent = ((aggregate.losses * 100L) / totalGames).toInt()
         )
     }
 

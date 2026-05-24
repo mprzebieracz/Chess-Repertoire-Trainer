@@ -9,6 +9,10 @@ class UpdateSettingUseCase(private val repository: UserSettingsRepository) {
         repository.updateLichessUsername(username)
     }
 
+    suspend fun lichessApiToken(token: String): Result<Unit> = runCatching {
+        repository.updateLichessApiToken(token)
+    }
+
     suspend fun chessComUsername(username: String): Result<Unit> = runCatching {
         repository.updateChessComUsername(username)
     }

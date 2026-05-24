@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.chessrepertoiretrainer.core.activity.ActivityRecorder
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
@@ -23,6 +24,7 @@ import kotlinx.coroutines.launch
 
 class LearnChapterViewModel(
     private val repertoireRepository: RepertoireRepository,
+    private val activityRecorder: ActivityRecorder,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -237,23 +239,11 @@ class LearnChapterViewModel(
         viewModelScope.launch {
             if (currentLineIndex in lines.indices) {
                 val line = lines[currentLineIndex]
-                val now = System.currentTimeMillis()
-                val updated = if (!line.isLearned) {
-                    line.copy(
-                        isLearned = true,
-                        learnedAt = now,
-                        timesTrained = line.timesTrained + 1,
-                        lastTrainedAt = now
-                    )
-                } else {
-                    line.copy(timesTrained = line.timesTrained + 1, lastTrainedAt = now)
-                }
-                repertoireRepository.updateLine(updated)
+                val updated = activityRecorder.recordLineReviewed(line, wasCorrect = true)
                 lines = lines.toMutableList().also { list ->
                     list[currentLineIndex] = updated
                 }
             }
-
             goToNextLine()
         }
     }
@@ -277,12 +267,14 @@ class LearnChapterViewModel(
         }
     }
 
-    class Factory(private val repertoireRepository: RepertoireRepository) :
-        ViewModelProvider.Factory {
+    class Factory(
+        private val repertoireRepository: RepertoireRepository,
+        private val activityRecorder: ActivityRecorder
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()
-            return LearnChapterViewModel(repertoireRepository, savedStateHandle) as T
+            return LearnChapterViewModel(repertoireRepository, activityRecorder, savedStateHandle) as T
         }
     }
 }

@@ -19,3 +19,7 @@ fun String?.parseArrows(): List<Arrow> =
             )
         }.getOrNull()
     }
+
+/** Returns the list with [arrow] removed if present, otherwise with it appended. */
+fun List<Arrow>.toggle(arrow: Arrow): List<Arrow> =
+    if (contains(arrow)) filterNot { it == arrow } else this + arrow

@@ -71,4 +71,16 @@ sealed class Screen(
     }
 
     object MultiChapterTraining : Screen("multi_chapter_training")
+
+    object MasterGameViewer : Screen("master_game_viewer")
+
+    object OpeningExplorer : Screen("opening_explorer")
+
+    object RepertoirePuzzles : Screen("repertoire_puzzles")
+    object OpeningPuzzleSession : Screen("opening_puzzle_session")
+
+    object OpeningStats : Screen("opening_stats/{platform}/{username}") {
+        fun createRoute(platform: String, username: String) =
+            "opening_stats/${android.net.Uri.encode(platform)}/${android.net.Uri.encode(username)}"
+    }
 }

@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -31,9 +32,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
+import com.example.chessrepertoiretrainer.feature.mygames.domain.model.ChapterStats
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.CourseOverviewViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +48,7 @@ fun CourseOverviewScreen(
     onOpenChapterLearn: (chapterId: Int) -> Unit,
     onOpenChapterTrain: (chapterId: Int) -> Unit,
     onOpenChapterReview: (chapterId: Int) -> Unit,
-    onStartMultiChapterTraining: (List<Int>) -> Unit
+    onStartMultiChapterTraining: (List<Int>) -> Unit,
 ) {
     val repertoire by viewModel.repertoire.collectAsStateWithLifecycle()
     val chaptersWithStats by viewModel.chaptersWithStats.collectAsStateWithLifecycle()
@@ -217,6 +220,10 @@ private fun CourseChapterCard(
         ) {
             Text(text = chapter.name, style = MaterialTheme.typography.titleMedium)
             CourseChapterProgress(totalLines = item.totalLines, learnedLines = item.learnedLines)
+            if (item.gameStats != null) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                ChapterGameStatsRow(stats = item.gameStats)
+            }
             CourseChapterActionsRow(
                 chapterId = chapter.id,
                 onOpenChapterLearn = onOpenChapterLearn,
@@ -241,6 +248,56 @@ private fun CourseChapterProgress(totalLines: Int, learnedLines: Int) {
                 .fillMaxWidth()
                 .padding(top = 4.dp)
         )
+    }
+}
+
+@Composable
+private fun ChapterGameStatsRow(stats: ChapterStats) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "${stats.played} games",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "${(stats.winPct * 100).toInt()}% win",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "${stats.wins}W ${stats.losses}L ${stats.draws}D",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (stats.played > 0) {
+            val inBookPct = (stats.inBookPct * 100).toInt()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "In book",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "$inBookPct%  (${stats.gamesInBook}/${stats.played})",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (inBookPct >= 70) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 

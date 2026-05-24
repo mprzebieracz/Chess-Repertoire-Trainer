@@ -1,6 +1,8 @@
 package com.example.chessrepertoiretrainer.feature.mygames.data
 
+import com.example.chessrepertoiretrainer.core.database.dao.ChapterStatsRaw
 import com.example.chessrepertoiretrainer.core.database.dao.GameStatsRaw
+import com.example.chessrepertoiretrainer.core.database.dao.OpeningStatsRaw
 import com.example.chessrepertoiretrainer.core.database.dao.RatingPeakRaw
 import com.example.chessrepertoiretrainer.core.database.dao.SavedGameDao
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
@@ -91,4 +93,22 @@ class DefaultSavedGameRepository(private val dao: SavedGameDao) : SavedGameRepos
         dao.getAvgOpponentRating(username, platform, category, since)
 
     override suspend fun getGameById(id: String): SavedGame? = dao.getGameById(id)
+
+    override suspend fun getStatsByChapter(
+        chapterId: Int,
+        isWhite: Boolean?,
+        since: Long
+    ): ChapterStatsRaw? = dao.getStatsByChapter(chapterId, isWhite, since)
+
+    override suspend fun getStatsByOpening(
+        username: String,
+        platform: String,
+        since: Long
+    ): List<OpeningStatsRaw> = dao.getStatsByOpening(username, platform, since)
+
+    override suspend fun getGamesWithNullEcoCode(): List<SavedGame> =
+        dao.getGamesWithNullEcoCode()
+
+    override suspend fun updateEcoCode(id: String, ecoCode: String) =
+        dao.updateEcoCode(id, ecoCode)
 }

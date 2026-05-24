@@ -12,5 +12,8 @@ data class Puzzle(
     val themes: String,
     val isSolved: Boolean,
     val attempts: Int,
-    val sourceDate: String
+    val sourceDate: String,
+    val ecoCode: String? = null,
+    val openingFamily: String? = null,
+    val source: String = "daily"
 )

@@ -16,6 +16,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -42,7 +43,8 @@ fun OpeningTreeSearchScreen(
     defaultLichessUsername: String,
     defaultChessComUsername: String,
     defaultPlatform: String,
-    onOpenTree: (OpeningTree) -> Unit
+    onOpenTree: (OpeningTree) -> Unit,
+    onBackClick: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val initialState = remember(defaultPlatform, defaultLichessUsername, defaultChessComUsername) {
@@ -56,7 +58,18 @@ fun OpeningTreeSearchScreen(
         mutableStateOf(initialState)
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Opening Tree") }) }) { padding ->
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text("Opening Tree") },
+            navigationIcon = {
+                if (onBackClick != null) {
+                    IconButton(onClick = onBackClick) {
+                        Icon(AppIcons.Back, contentDescription = "Back")
+                    }
+                }
+            }
+        )
+    }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

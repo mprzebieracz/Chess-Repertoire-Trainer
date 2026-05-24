@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,7 +34,11 @@ import com.example.chessrepertoiretrainer.core.chess.ui.MoveCommentCard
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.ReviewChapterViewModel
 
 @Composable
-fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Unit) {
+fun ReviewChapterScreen(
+    viewModel: ReviewChapterViewModel,
+    onBackClick: () -> Unit,
+    onFindMasterGames: (fen: String) -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isEngineEnabled by viewModel.isEngineEnabled.collectAsStateWithLifecycle()
     val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
@@ -43,6 +48,7 @@ fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Un
 
     ChessScreenLayout(
         chessCtrl = chessCtrl,
+        annotations = viewModel.annotations,
         topBar = {
             ChessTopBar(
                 title = uiState.chapterName.ifBlank { "Review" },
@@ -75,6 +81,9 @@ fun ReviewChapterScreen(viewModel: ReviewChapterViewModel, onBackClick: () -> Un
                         isEnabled = isEngineEnabled,
                         onClick = viewModel::toggleEngine
                     )
+                    IconButton(onClick = { onFindMasterGames(chessCtrl.getBoard().fen) }) {
+                        Icon(Icons.Filled.ManageSearch, contentDescription = "Find master games")
+                    }
                 },
             )
         },

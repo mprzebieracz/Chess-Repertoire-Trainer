@@ -10,13 +10,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
+import com.example.chessrepertoiretrainer.core.chess.domain.BoardMoveAnnotation
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
 import com.github.bhlangonijr.chesslib.Side
@@ -34,6 +37,7 @@ internal fun ChessboardGrid(
     legalMoves: List<Square>,
     draggingSquare: Square?,
     squareSizePx: Float,
+    lastMoveAnnotation: BoardMoveAnnotation?,
     onDragStart: (Square, Offset) -> Unit,
     onDragUpdate: (Offset) -> Unit,
     onDragEnd: () -> Unit
@@ -61,6 +65,7 @@ internal fun ChessboardGrid(
                         isHovered = state.hoveredSquare == square,
                         isMarked = state.markedSquare == square,
                         isHiddenForDrag = draggingSquare == square,
+                        annotation = if (state.lastMove?.to == square) lastMoveAnnotation else null,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
@@ -94,6 +99,7 @@ private fun ChessSquare(
     isHovered: Boolean,
     isMarked: Boolean,
     isHiddenForDrag: Boolean,
+    annotation: BoardMoveAnnotation?,
     modifier: Modifier = Modifier
 ) {
     val boardColors = LocalBoardThemeColors.current
@@ -164,7 +170,31 @@ private fun ChessSquare(
         if (piece != Piece.NONE && !isHiddenForDrag) {
             PieceDisplay(piece)
         }
+
+        if (annotation != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(ChessUiConstants.BoardHighlights.annotationPadding)
+                    .size(ChessUiConstants.BoardHighlights.annotationCircleSize)
+                    .background(annotationColor(annotation), CircleShape)
+                    .border(
+                        ChessUiConstants.BoardHighlights.annotationBorder,
+                        ChessUiConstants.BoardHighlights.annotationBorderColor,
+                        CircleShape
+                    )
+            )
+        }
     }
+}
+
+private fun annotationColor(annotation: BoardMoveAnnotation): Color = when (annotation) {
+    BoardMoveAnnotation.BEST -> ChessUiConstants.BoardHighlights.annotationBest
+    BoardMoveAnnotation.GOOD -> ChessUiConstants.BoardHighlights.annotationGood
+    BoardMoveAnnotation.BOOK -> ChessUiConstants.BoardHighlights.annotationBook
+    BoardMoveAnnotation.INACCURACY -> ChessUiConstants.BoardHighlights.annotationInaccuracy
+    BoardMoveAnnotation.MISTAKE -> ChessUiConstants.BoardHighlights.annotationMistake
+    BoardMoveAnnotation.BLUNDER -> ChessUiConstants.BoardHighlights.annotationBlunder
 }
 
 internal fun Modifier.setupDragGestures(

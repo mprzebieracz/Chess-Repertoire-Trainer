@@ -5,19 +5,32 @@ import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Side
 import com.github.bhlangonijr.chesslib.Square
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class MoveTrainingEngine(
     private val chessController: DefaultChessBoardController,
-    private val normalizeSan: (String) -> String
+    private val scope: CoroutineScope,
+    private val normalizeSan: (String) -> String,
 ) {
 
     data class Config(val mySide: Side, val sanMoves: List<String>)
 
     sealed class MoveResult {
-        data class Correct(val userSan: String, val expectedSan: String) : MoveResult()
-        data class Incorrect(val userSan: String, val expectedSan: String, val fenBefore: String) : MoveResult()
+        /** [isComplete] is true when the sequence has been fully played. */
+        data class Correct(
+            val userSan: String,
+            val expectedSan: String,
+            val isComplete: Boolean,
+        ) : MoveResult()
+
+        data class Incorrect(
+            val userSan: String,
+            val expectedSan: String,
+            val fenBefore: String,
+        ) : MoveResult()
     }
 
     private var config: Config? = null
@@ -29,8 +42,21 @@ class MoveTrainingEngine(
     init {
         chessController.onMoveApplied = listener@{ applied: AppliedMove ->
             if (isAutoPlaying) return@listener
-            val result = handleUserMoveInternal(applied.san, applied.fenBefore) ?: return@listener
-            resultListener?.invoke(result)
+            val raw = classifyUserMove(applied.san, applied.fenBefore) ?: return@listener
+            when (raw) {
+                is RawResult.Correct -> scope.launch {
+                    advanceOpponentReplies()
+                    resultListener?.invoke(
+                        MoveResult.Correct(applied.san, raw.expectedSan, isSequenceComplete())
+                    )
+                }
+                is RawResult.Incorrect -> {
+                    chessController.loadPositionFromFen(applied.fenBefore)
+                    resultListener?.invoke(
+                        MoveResult.Incorrect(applied.san, raw.expectedSan, applied.fenBefore)
+                    )
+                }
+            }
         }
     }
 
@@ -48,7 +74,12 @@ class MoveTrainingEngine(
         return currentIndex >= cfg.sanMoves.size
     }
 
-    private fun handleUserMoveInternal(san: String, fenBefore: String): MoveResult? {
+    private sealed class RawResult {
+        data class Correct(val expectedSan: String) : RawResult()
+        data class Incorrect(val expectedSan: String) : RawResult()
+    }
+
+    private fun classifyUserMove(san: String, fenBefore: String): RawResult? {
         val cfg = config ?: return null
         if (currentIndex !in cfg.sanMoves.indices) return null
 
@@ -57,9 +88,9 @@ class MoveTrainingEngine(
 
         return if (isCorrect) {
             currentIndex++
-            MoveResult.Correct(userSan = san, expectedSan = expectedSan)
+            RawResult.Correct(expectedSan)
         } else {
-            MoveResult.Incorrect(userSan = san, expectedSan = expectedSan, fenBefore = fenBefore)
+            RawResult.Incorrect(expectedSan)
         }
     }
 

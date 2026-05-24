@@ -40,6 +40,17 @@ internal object ChessUiConstants {
         val markedBorderWidth = 3.dp
         const val legalMoveFillScale = 0.9f
         const val markedSquareScale = 0.8f
+
+        val annotationBest = Color(0xFF81B64C)
+        val annotationGood = Color(0xFFA9D158)
+        val annotationBook = Color(0xFFA88865)
+        val annotationInaccuracy = Color(0xFFF7C631)
+        val annotationMistake = Color(0xFFFFA459)
+        val annotationBlunder = Color(0xFFFA412D)
+        val annotationCircleSize = 18.dp
+        val annotationBorder = 2.dp
+        val annotationBorderColor = Color.White
+        val annotationPadding = 2.dp
     }
 
     object DragPreview {

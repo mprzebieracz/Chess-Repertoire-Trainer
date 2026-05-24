@@ -23,6 +23,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.chessrepertoiretrainer.core.chess.controller.BoardAnnotations
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.GameNavigator
@@ -59,6 +61,7 @@ import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 fun ChessScreenLayout(
     chessCtrl: ChessBoardController,
     topBar: @Composable () -> Unit,
+    annotations: BoardAnnotations = remember { BoardAnnotations() },
     engineSection: @Composable () -> Unit = {},
     contentBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
@@ -72,6 +75,8 @@ fun ChessScreenLayout(
         Box(modifier = Modifier.fillMaxWidth()) {
             ChessboardUI(
                 state = chessCtrl,
+                arrows = annotations.arrows,
+                lastMoveAnnotation = annotations.lastMoveAnnotation,
                 arrowDrawingMode = arrowDrawingMode,
                 onArrowDrawn = onArrowDrawn,
             )

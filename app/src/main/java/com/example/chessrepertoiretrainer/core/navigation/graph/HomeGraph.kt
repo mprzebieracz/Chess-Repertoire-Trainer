@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.core.navigation.graph
 
+import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -11,8 +12,12 @@ import com.example.chessrepertoiretrainer.feature.analysis.AnalysisViewModel
 import com.example.chessrepertoiretrainer.feature.home.HomeScreen
 import com.example.chessrepertoiretrainer.feature.home.HomeViewModel
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
+import com.example.chessrepertoiretrainer.feature.puzzles.presentation.OpeningPuzzleSessionScreen
+import com.example.chessrepertoiretrainer.feature.puzzles.presentation.OpeningPuzzleSessionViewModel
 import com.example.chessrepertoiretrainer.feature.puzzles.presentation.PuzzleTrainingScreen
 import com.example.chessrepertoiretrainer.feature.puzzles.presentation.PuzzleTrainingViewModel
+import com.example.chessrepertoiretrainer.feature.puzzles.presentation.RepertoirePuzzlesScreen
+import com.example.chessrepertoiretrainer.feature.puzzles.presentation.RepertoirePuzzlesViewModel
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsScreen
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
 
@@ -23,14 +28,20 @@ fun NavGraphBuilder.homeGraph(
     appContainer: AppContainer
 ) {
     composable(Screen.Home.route) {
-        val vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory(puzzleRepository))
+        val vm: HomeViewModel = viewModel(
+            factory = HomeViewModel.Factory(
+                puzzleRepository,
+                appContainer.activityRecorder,
+                appContainer.dailyActivityDao
+            )
+        )
         HomeScreen(
             viewModel = vm,
             onOpenAnalysis = { navController.navigate(Screen.Analysis.route) },
-            onPlayDailyPuzzle = {
-                navController.navigate(Screen.PuzzleTraining.route)
-            },
-            onOpenRepertoire = { })
+            onPlayDailyPuzzle = { navController.navigate(Screen.PuzzleTraining.route) },
+            onOpenRepertoire = { navController.navigate(Screen.RepertoireMain.route) },
+            onOpenRepertoirePuzzles = { navController.navigate(Screen.RepertoirePuzzles.route) }
+        )
     }
 
     composable(Screen.Settings.route) {
@@ -45,8 +56,38 @@ fun NavGraphBuilder.homeGraph(
     }
 
     composable(Screen.PuzzleTraining.route) {
+        val puzzleId = remember { appContainer.navTransientStore.takePendingPuzzleId() }
         val vm: PuzzleTrainingViewModel =
-            viewModel(factory = PuzzleTrainingViewModel.Factory(puzzleRepository))
+            viewModel(factory = PuzzleTrainingViewModel.Factory(puzzleRepository, puzzleId))
         PuzzleTrainingScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
+    }
+
+    composable(Screen.RepertoirePuzzles.route) {
+        val vm: RepertoirePuzzlesViewModel = viewModel(
+            factory = RepertoirePuzzlesViewModel.Factory(
+                puzzleRepository,
+                appContainer.repertoireDao,
+                appContainer.openingRegistry,
+            )
+        )
+        RepertoirePuzzlesScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+            onStartSession = { families ->
+                appContainer.navTransientStore.selectedOpeningFamilies = families
+                navController.navigate(Screen.OpeningPuzzleSession.route)
+            },
+        )
+    }
+
+    composable(Screen.OpeningPuzzleSession.route) {
+        val families = remember { appContainer.navTransientStore.takeSelectedOpeningFamilies() }
+        val vm: OpeningPuzzleSessionViewModel = viewModel(
+            factory = OpeningPuzzleSessionViewModel.Factory(
+                puzzleRepository,
+                families ?: emptyList(),
+            )
+        )
+        OpeningPuzzleSessionScreen(vm, onBackClick = { navController.popBackStack() })
     }
 }

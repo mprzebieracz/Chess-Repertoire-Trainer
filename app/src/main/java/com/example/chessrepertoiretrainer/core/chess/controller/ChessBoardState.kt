@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.core.chess.controller
 
-import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Board
 import com.github.bhlangonijr.chesslib.Piece
@@ -21,8 +20,6 @@ interface ChessBoardController {
     var markedSquare: Square?
     val isFlipped: Boolean
 
-    var arrows: List<Arrow>
-
     /**
      * When null, board input is unrestricted (both sides can move).
      * When set to a [Side], only that side may initiate moves via user input.
@@ -30,6 +27,9 @@ interface ChessBoardController {
      * and are not restricted by this flag.
      */
     var allowedMoveSide: Side?
+
+    /** When true, all user input (clicks and drags) is ignored. Programmatic moves still work. */
+    var isReadOnly: Boolean
 
     val pendingPromotion: PendingPromotion?
     fun getBoard(): Board

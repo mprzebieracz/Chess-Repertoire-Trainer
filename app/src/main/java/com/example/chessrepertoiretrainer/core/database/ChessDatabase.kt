@@ -4,19 +4,29 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.chessrepertoiretrainer.core.database.dao.DailyActivityDao
+import com.example.chessrepertoiretrainer.core.database.dao.LichessExplorerCacheDao
+import com.example.chessrepertoiretrainer.core.database.dao.MoveEvalDao
 import com.example.chessrepertoiretrainer.core.database.dao.PuzzleDao
 import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
+import com.example.chessrepertoiretrainer.core.database.dao.RepertoireOpeningDao
 import com.example.chessrepertoiretrainer.core.database.dao.RepertoirePositionIndexDao
+import com.example.chessrepertoiretrainer.core.database.dao.ReviewLogDao
 import com.example.chessrepertoiretrainer.core.database.dao.SavedGameDao
+import com.example.chessrepertoiretrainer.core.database.dao.SavedGameRepertoireMatchDao
 import com.example.chessrepertoiretrainer.core.database.entity.Chapter
+import com.example.chessrepertoiretrainer.core.database.entity.DailyActivity
+import com.example.chessrepertoiretrainer.core.database.entity.LichessExplorerCache
 import com.example.chessrepertoiretrainer.core.database.entity.Line
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
+import com.example.chessrepertoiretrainer.core.database.entity.MoveEval
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
+import com.example.chessrepertoiretrainer.core.database.entity.RepertoireOpening
 import com.example.chessrepertoiretrainer.core.database.entity.RepertoirePositionIndex
+import com.example.chessrepertoiretrainer.core.database.entity.ReviewLog
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
+import com.example.chessrepertoiretrainer.core.database.entity.SavedGameRepertoireMatch
 
 @Database(
     entities = [
@@ -27,7 +37,13 @@ import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
         Puzzle::class,
         SavedGame::class,
         RepertoirePositionIndex::class,
-    ], version = 18, exportSchema = false
+        DailyActivity::class,
+        ReviewLog::class,
+        SavedGameRepertoireMatch::class,
+        MoveEval::class,
+        LichessExplorerCache::class,
+        RepertoireOpening::class,
+    ], version = 23, exportSchema = false
 )
 abstract class ChessDatabase : RoomDatabase() {
 
@@ -35,14 +51,14 @@ abstract class ChessDatabase : RoomDatabase() {
     abstract fun puzzleDao(): PuzzleDao
     abstract fun savedGameDao(): SavedGameDao
     abstract fun repertoirePositionIndexDao(): RepertoirePositionIndexDao
+    abstract fun dailyActivityDao(): DailyActivityDao
+    abstract fun reviewLogDao(): ReviewLogDao
+    abstract fun savedGameRepertoireMatchDao(): SavedGameRepertoireMatchDao
+    abstract fun moveEvalDao(): MoveEvalDao
+    abstract fun lichessExplorerCacheDao(): LichessExplorerCacheDao
+    abstract fun repertoireOpeningDao(): RepertoireOpeningDao
 
     companion object {
-
-        private val MIGRATION_17_18 = object : Migration(17, 18) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE lines ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0")
-            }
-        }
 
         @Volatile
         private var INSTANCE: ChessDatabase? = null
@@ -54,7 +70,8 @@ abstract class ChessDatabase : RoomDatabase() {
                     ChessDatabase::class.java,
                     "chess_database"
                 )
-                    .fallbackToDestructiveMigration(false).addMigrations(MIGRATION_17_18).build()
+                    .fallbackToDestructiveMigration(true)
+                    .build()
                 INSTANCE = instance
                 return instance
             }

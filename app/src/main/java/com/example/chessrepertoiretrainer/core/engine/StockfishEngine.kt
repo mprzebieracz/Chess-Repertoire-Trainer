@@ -132,6 +132,23 @@ class StockfishEngine(
         null
     }
 
+    /**
+     * Analyze [fen] at [depth] without changing [isEnabled] — used by batch analyzers so the
+     * user-visible engine toggle is not affected. Clears the [analysis] StateFlow immediately
+     * so callers don't collect stale results from the previous position.
+     */
+    fun analyzePositionForBatch(fen: String, depth: Int) {
+        currentFen = fen
+        _analysis.value = null
+        engineScope.launch {
+            if (!startProcessIfNeeded()) return@launch
+            stopAndThen {
+                sendCommand("position fen $fen")
+                sendGo(depth, 8_000)
+            }
+        }
+    }
+
     fun analyzeDeeper() {
         val fen = currentFen ?: return
         if (!_isEnabled.value) return

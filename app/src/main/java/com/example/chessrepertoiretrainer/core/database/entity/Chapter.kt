@@ -19,5 +19,6 @@ data class Chapter(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val repertoireId: Int,
     val name: String,
-    val sortOrder: Int
+    val sortOrder: Int,
+    val primaryEcoCode: String? = null
 )

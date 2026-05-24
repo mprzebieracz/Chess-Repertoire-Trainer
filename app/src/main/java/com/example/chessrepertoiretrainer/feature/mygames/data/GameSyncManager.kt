@@ -1,13 +1,17 @@
 package com.example.chessrepertoiretrainer.feature.mygames.data
 
+import com.example.chessrepertoiretrainer.core.activity.ActivityRecorder
 import com.example.chessrepertoiretrainer.core.network.games.GameFetcherRegistry
+import com.example.chessrepertoiretrainer.core.repertoire.GameChapterMatcher
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 import kotlinx.coroutines.flow.first
 
 class GameSyncManager(
     private val fetcherRegistry: GameFetcherRegistry,
     private val repository: SavedGameRepository,
-    private val settingsRepository: UserSettingsRepository
+    private val settingsRepository: UserSettingsRepository,
+    private val gameChapterMatcher: GameChapterMatcher? = null,
+    private val activityRecorder: ActivityRecorder? = null
 ) {
     suspend fun syncAll(onProgress: (platform: String, count: Int) -> Unit): Map<String, Int> {
         val settings = settingsRepository.settingsFlow.first()
@@ -39,6 +43,10 @@ class GameSyncManager(
 
         val toInsert = fetched.map { it.toSavedGame(platform, username) }
         repository.insertGames(toInsert)
+        if (toInsert.isNotEmpty()) {
+            gameChapterMatcher?.matchAllGames(toInsert)
+            activityRecorder?.recordGamesImported(toInsert.size)
+        }
         return toInsert.size
     }
 }

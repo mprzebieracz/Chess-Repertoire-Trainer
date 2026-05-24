@@ -1,9 +1,14 @@
 package com.example.chessrepertoiretrainer.app
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import com.example.chessrepertoiretrainer.core.opening.OpeningClassifier
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -26,6 +31,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        runEcoBackfillIfNeeded()
         setContent {
             val repository = (application as ChessApplication).appContainer.userSettingsRepository
             val updateSettingUseCase = UpdateSettingUseCase(repository)
@@ -59,6 +65,20 @@ class MainActivity : ComponentActivity() {
                     AppNavigation(settingsViewModel)
                 }
             }
+        }
+    }
+
+    private fun runEcoBackfillIfNeeded() {
+        val prefs = getSharedPreferences("backfill", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("eco_v1_done", false)) return
+        val appContainer = (application as ChessApplication).appContainer
+        lifecycleScope.launch(Dispatchers.IO) {
+            val games = appContainer.savedGameRepository.getGamesWithNullEcoCode()
+            games.forEach { game ->
+                val entry = OpeningClassifier.classify(game.pgn, appContainer.openingRegistry)
+                if (entry != null) appContainer.savedGameRepository.updateEcoCode(game.id, entry.eco)
+            }
+            prefs.edit().putBoolean("eco_v1_done", true).apply()
         }
     }
 }

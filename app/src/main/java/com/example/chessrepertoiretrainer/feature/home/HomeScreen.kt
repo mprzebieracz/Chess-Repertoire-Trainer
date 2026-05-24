@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,10 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chessrepertoiretrainer.core.database.entity.DailyActivity
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,9 +46,10 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onOpenAnalysis: () -> Unit,
     onPlayDailyPuzzle: () -> Unit,
-    onOpenRepertoire: () -> Unit = {}
+    onOpenRepertoire: () -> Unit = {},
+    onOpenRepertoirePuzzles: () -> Unit = {}
 ) {
-    val dailyPuzzleState by viewModel.dailyPuzzleState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(topBar = {
         TopAppBar(
@@ -71,11 +77,96 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             DailyPuzzleCard(
-                state = dailyPuzzleState,
+                state = uiState.dailyPuzzleState,
                 onPlay = onPlayDailyPuzzle,
                 onRetry = viewModel::retry,
             )
-            QuickActionsRow(onOpenAnalysis = onOpenAnalysis, onOpenRepertoire = onOpenRepertoire)
+            StreakSection(streak = uiState.streak)
+            if (uiState.activityWeeks.isNotEmpty()) {
+                ActivityHeatmap(weeks = uiState.activityWeeks)
+            }
+            QuickActionsRow(
+                onOpenAnalysis = onOpenAnalysis,
+                onOpenRepertoire = onOpenRepertoire,
+                onOpenRepertoirePuzzles = onOpenRepertoirePuzzles
+            )
+        }
+    }
+}
+
+@Composable
+private fun StreakSection(streak: Int) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = Icons.Filled.LocalFireDepartment,
+            contentDescription = null,
+            tint = if (streak > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+        )
+        if (streak > 0) {
+            Text(
+                text = "$streak day streak",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+        } else {
+            Text(
+                text = "No streak yet — train today!",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActivityHeatmap(weeks: List<List<DailyActivity?>>) {
+    val cellSize = 14.dp
+    val gap = 2.dp
+    val primary = MaterialTheme.colorScheme.primary
+    val surface = MaterialTheme.colorScheme.surfaceVariant
+    val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            "Activity",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+            repeat(7) { dayRow ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(gap),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        dayLabels[dayRow],
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.width(10.dp),
+                    )
+                    weeks.forEach { week ->
+                        val activity = week.getOrNull(dayRow)
+                        val total = (activity?.linesTrained ?: 0) + (activity?.puzzlesSolved ?: 0)
+                        val alpha = when {
+                            total == 0 -> 0.15f
+                            total <= 2 -> 0.35f
+                            total <= 5 -> 0.65f
+                            else -> 0.9f
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(cellSize)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(primary.copy(alpha = alpha))
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -176,7 +267,11 @@ private fun DailyPuzzleCard(state: DailyPuzzleState, onPlay: () -> Unit, onRetry
 }
 
 @Composable
-private fun QuickActionsRow(onOpenAnalysis: () -> Unit, onOpenRepertoire: () -> Unit = {}) {
+private fun QuickActionsRow(
+    onOpenAnalysis: () -> Unit,
+    onOpenRepertoire: () -> Unit = {},
+    onOpenRepertoirePuzzles: () -> Unit = {}
+) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         QuickActionCard(
             modifier = Modifier.weight(1f),
@@ -191,6 +286,13 @@ private fun QuickActionsRow(onOpenAnalysis: () -> Unit, onOpenRepertoire: () -> 
             title = "Repertoire",
             subtitle = "Study lines",
             onClick = onOpenRepertoire,
+        )
+        QuickActionCard(
+            modifier = Modifier.weight(1f),
+            icon = AppIcons.DailyPuzzle,
+            title = "Puzzles",
+            subtitle = "By opening",
+            onClick = onOpenRepertoirePuzzles,
         )
     }
 }

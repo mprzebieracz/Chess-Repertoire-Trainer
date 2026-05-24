@@ -22,8 +22,25 @@ class NavTransientStore {
     @Volatile
     var analysisStartFen: String? = null
 
+    @Volatile
+    var explorerStartFen: String? = null
+
+    @Volatile
+    var masterGamePgn: String? = null
+
+    @Volatile
+    var pendingPuzzleId: String? = null
+
+    @Volatile
+    var selectedOpeningFamilies: List<String>? = null
+
     fun takeOpeningTree(): OpeningTree? = openingTree.also { openingTree = null }
     fun takeSavedGame(): SavedGame? = savedGame.also { savedGame = null }
     fun takeSelectedChapterIds(): List<Int>? = selectedChapterIds.also { selectedChapterIds = null }
     fun takeAnalysisStartFen(): String? = analysisStartFen.also { analysisStartFen = null }
+    fun takeExplorerStartFen(): String? = explorerStartFen.also { explorerStartFen = null }
+    fun takeMasterGamePgn(): String? = masterGamePgn.also { masterGamePgn = null }
+    fun takePendingPuzzleId(): String? = pendingPuzzleId.also { pendingPuzzleId = null }
+    fun takeSelectedOpeningFamilies(): List<String>? =
+        selectedOpeningFamilies.also { selectedOpeningFamilies = null }
 }

@@ -3,7 +3,6 @@ package com.example.chessrepertoiretrainer.core.chess.controller
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.domain.toSan
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.AppliedMove
 import com.github.bhlangonijr.chesslib.Board
@@ -32,18 +31,18 @@ class DefaultChessBoardController : ChessBoardController {
     override var markedSquare by mutableStateOf<Square?>(null)
     override var isFlipped by mutableStateOf(false)
         private set
-    override var arrows by mutableStateOf<List<Arrow>>(emptyList())
 
     override var pendingPromotion by mutableStateOf<PendingPromotion?>(null)
         private set
 
     override var allowedMoveSide: Side? = null
+    override var isReadOnly: Boolean = false
     override var onMoveApplied: ((AppliedMove) -> Unit)? = null
 
     override fun getBoard(): Board = board
 
     override fun onSquareClick(square: Square) {
-        if (isInputBlockedBySideRestriction()) return
+        if (isReadOnly || isInputBlockedBySideRestriction()) return
 
         val currentSelected = selectedSquare
         if (currentSelected == null) {
@@ -61,6 +60,7 @@ class DefaultChessBoardController : ChessBoardController {
     }
 
     override fun onMove(move: Move) {
+        if (isReadOnly) return
         val piece = board.getPiece(move.from)
 
         val isPawnPromotionMove =

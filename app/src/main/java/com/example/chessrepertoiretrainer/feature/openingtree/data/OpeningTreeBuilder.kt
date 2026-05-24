@@ -12,10 +12,10 @@ data class GameForOpeningTree(val pgn: String, val isUserWhite: Boolean, val res
 data class OpeningTreeMoveAggregate(
     val moveSan: String,
     val toFen: String,
-    var games: Int = 0,
-    var wins: Int = 0,
-    var draws: Int = 0,
-    var losses: Int = 0
+    var games: Long = 0L,
+    var wins: Long = 0L,
+    var draws: Long = 0L,
+    var losses: Long = 0L
 )
 
 data class OpeningTreeNode(

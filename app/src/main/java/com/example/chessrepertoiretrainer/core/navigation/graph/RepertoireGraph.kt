@@ -53,7 +53,7 @@ fun NavGraphBuilder.repertoireGraph(
         arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
     ) {
         val vm: CourseOverviewViewModel =
-            viewModel(factory = CourseOverviewViewModel.Factory(repertoireRepository))
+            viewModel(factory = CourseOverviewViewModel.Factory(repertoireRepository, appContainer.savedGameRepository))
         CourseOverviewScreen(
             viewModel = vm,
             onBackClick = { navController.popBackStack() },
@@ -103,7 +103,7 @@ fun NavGraphBuilder.repertoireGraph(
         type = NavType.IntType
     })) { backStackEntry ->
         val vm: LearnChapterViewModel =
-            viewModel(factory = LearnChapterViewModel.Factory(repertoireRepository))
+            viewModel(factory = LearnChapterViewModel.Factory(repertoireRepository, appContainer.activityRecorder))
         val savedStateHandle = backStackEntry.savedStateHandle
         val lineTrainingFinished by savedStateHandle.getStateFlow("lineTrainingFinished", false)
             .collectAsStateWithLifecycle()
@@ -141,7 +141,14 @@ fun NavGraphBuilder.repertoireGraph(
                 appContainer.stockfishEngine
             )
         )
-        ReviewChapterScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
+        ReviewChapterScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+            onFindMasterGames = { fen ->
+                appContainer.navTransientStore.explorerStartFen = fen
+                navController.navigate(Screen.OpeningExplorer.route)
+            }
+        )
     }
 
     composable(
@@ -154,7 +161,14 @@ fun NavGraphBuilder.repertoireGraph(
                 appContainer.stockfishEngine
             )
         )
-        LineEditorScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
+        LineEditorScreen(
+            viewModel = vm,
+            onBackClick = { navController.popBackStack() },
+            onFindMasterGames = { fen ->
+                appContainer.navTransientStore.explorerStartFen = fen
+                navController.navigate(Screen.OpeningExplorer.route)
+            }
+        )
     }
 
     composable(

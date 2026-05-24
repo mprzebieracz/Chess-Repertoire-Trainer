@@ -7,6 +7,10 @@ private val hiddenRouteExact = setOf(
     Screen.Analysis.route,
     Screen.PuzzleTraining.route,
     Screen.GamesList.route,
+    Screen.OpeningExplorer.route,
+    Screen.MasterGameViewer.route,
+    Screen.RepertoirePuzzles.route,
+    Screen.OpeningPuzzleSession.route,
 )
 
 private val hiddenRoutePrefixes = listOf(

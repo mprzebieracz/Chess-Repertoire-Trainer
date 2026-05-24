@@ -11,6 +11,26 @@ data class GameStatsRaw(val played: Int, val wins: Int, val losses: Int, val dra
 
 data class RatingPeakRaw(val rating: Int, val playedAt: Long)
 
+data class ChapterStatsRaw(
+    val played: Int,
+    val wins: Int,
+    val losses: Int,
+    val draws: Int,
+    val gamesInBook: Int,
+    val gamesDeviated: Int,
+    val avgBookDepthPlies: Double?
+)
+
+data class OpeningStatsRaw(
+    val ecoCode: String,
+    val played: Int,
+    val wins: Int,
+    val losses: Int,
+    val draws: Int,
+    val gamesInBook: Int,
+    val gamesDeviated: Int
+)
+
 @Dao
 interface SavedGameDao {
 
@@ -111,4 +131,57 @@ interface SavedGameDao {
 
     @Query("SELECT * FROM saved_games WHERE id = :id")
     suspend fun getGameById(id: String): SavedGame?
+
+    @Query(
+        """
+        SELECT
+            COUNT(*) AS played,
+            SUM(CASE WHEN sg.playerResult = 'win'  THEN 1 ELSE 0 END) AS wins,
+            SUM(CASE WHEN sg.playerResult = 'loss' THEN 1 ELSE 0 END) AS losses,
+            SUM(CASE WHEN sg.playerResult = 'draw' THEN 1 ELSE 0 END) AS draws,
+            SUM(CASE WHEN m.playerDeviated = 0 THEN 1 ELSE 0 END) AS gamesInBook,
+            SUM(CASE WHEN m.playerDeviated = 1 THEN 1 ELSE 0 END) AS gamesDeviated,
+            AVG(m.bookDepthPlies) AS avgBookDepthPlies
+        FROM saved_games sg
+        JOIN saved_game_repertoire_match m ON sg.id = m.gameId
+        WHERE m.deepestChapterId = :chapterId
+        AND (:isWhite IS NULL OR sg.isPlayerWhite = :isWhite)
+        AND sg.playedAt >= :since
+    """
+    )
+    suspend fun getStatsByChapter(
+        chapterId: Int,
+        isWhite: Boolean?,
+        since: Long
+    ): ChapterStatsRaw?
+
+    @Query(
+        """
+        SELECT sg.ecoCode AS ecoCode,
+            COUNT(*) AS played,
+            SUM(CASE WHEN sg.playerResult = 'win'  THEN 1 ELSE 0 END) AS wins,
+            SUM(CASE WHEN sg.playerResult = 'loss' THEN 1 ELSE 0 END) AS losses,
+            SUM(CASE WHEN sg.playerResult = 'draw' THEN 1 ELSE 0 END) AS draws,
+            SUM(CASE WHEN m.playerDeviated = 0 THEN 1 ELSE 0 END) AS gamesInBook,
+            SUM(CASE WHEN m.playerDeviated = 1 THEN 1 ELSE 0 END) AS gamesDeviated
+        FROM saved_games sg
+        LEFT JOIN saved_game_repertoire_match m ON sg.id = m.gameId
+        WHERE sg.ecoCode IS NOT NULL
+        AND sg.playerUsername = :username AND sg.platform = :platform
+        AND sg.playedAt >= :since
+        GROUP BY sg.ecoCode
+        ORDER BY played DESC
+    """
+    )
+    suspend fun getStatsByOpening(
+        username: String,
+        platform: String,
+        since: Long
+    ): List<OpeningStatsRaw>
+
+    @Query("SELECT * FROM saved_games WHERE ecoCode IS NULL")
+    suspend fun getGamesWithNullEcoCode(): List<SavedGame>
+
+    @Query("UPDATE saved_games SET ecoCode = :ecoCode WHERE id = :id")
+    suspend fun updateEcoCode(id: String, ecoCode: String)
 }

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FirstPage
 import androidx.compose.material3.AlertDialog
@@ -46,7 +47,11 @@ import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.LineEditorViewModel
 
 @Composable
-fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
+fun LineEditorScreen(
+    viewModel: LineEditorViewModel,
+    onBackClick: () -> Unit,
+    onFindMasterGames: (fen: String) -> Unit = {}
+) {
     val moves by viewModel.dbMoves.collectAsStateWithLifecycle()
     val editingComment by viewModel.editingComment.collectAsStateWithLifecycle()
     val hasChanges by viewModel.hasChanges.collectAsStateWithLifecycle()
@@ -64,6 +69,7 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
 
     ChessScreenLayout(
         chessCtrl = chessCtrl,
+        annotations = viewModel.annotations,
         arrowDrawingMode = isArrowDrawingMode,
         onArrowDrawn = viewModel::onArrowDrawn,
         topBar = {
@@ -90,6 +96,9 @@ fun LineEditorScreen(viewModel: LineEditorViewModel, onBackClick: () -> Unit) {
                         isEnabled = isEngineEnabled,
                         onClick = viewModel::toggleEngine
                     )
+                    IconButton(onClick = { onFindMasterGames(chessCtrl.getBoard().fen) }) {
+                        Icon(Icons.Filled.ManageSearch, contentDescription = "Find master games")
+                    }
                 },
             )
         },

@@ -31,6 +31,7 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
 
     ChessScreenLayout(
         chessCtrl = chessCtrl,
+        annotations = viewModel.annotations,
         topBar = {
             ChessTopBar(
                 title = "Analysis",

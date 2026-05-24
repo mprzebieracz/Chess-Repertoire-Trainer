@@ -26,6 +26,7 @@ enum class BoardTheme { CLASSIC, BLUE, BROWN, RED, NIGHT }
 data class UserSettings(
     val lichessUsername: String = "",
     val chessComUsername: String = "",
+    val lichessApiToken: String = "",
     val appThemeMode: AppThemeMode = AppThemeMode.SYSTEM,
     val appColorTheme: AppColorTheme = AppColorTheme.WARM_BROWN,
     val boardTheme: BoardTheme = BoardTheme.CLASSIC,
@@ -53,6 +54,7 @@ class UserSettingsRepository(private val context: Context) {
         val ENGINE_DEPTH = intPreferencesKey("engine_depth")
         val ENGINE_MOVETIME = intPreferencesKey("engine_movetime")
         val ENGINE_THREADS = intPreferencesKey("engine_threads")
+        val LICHESS_API_TOKEN = stringPreferencesKey("lichess_api_token")
     }
 
     val settingsFlow: Flow<UserSettings> = context.settingsDataStore.data.catch { exception ->
@@ -74,6 +76,7 @@ class UserSettingsRepository(private val context: Context) {
         UserSettings(
             lichessUsername = prefs[Keys.LICHESS_USERNAME] ?: "",
             chessComUsername = prefs[Keys.CHESSCOM_USERNAME] ?: "",
+            lichessApiToken = prefs[Keys.LICHESS_API_TOKEN] ?: "",
             appThemeMode = prefs[Keys.APP_THEME_MODE]?.let { stored ->
                 runCatching { AppThemeMode.valueOf(stored) }.getOrDefault(AppThemeMode.SYSTEM)
             } ?: AppThemeMode.SYSTEM,
@@ -93,6 +96,12 @@ class UserSettingsRepository(private val context: Context) {
     suspend fun updateLichessUsername(username: String) {
         context.settingsDataStore.edit { prefs ->
             prefs[Keys.LICHESS_USERNAME] = username.trim()
+        }
+    }
+
+    suspend fun updateLichessApiToken(token: String) {
+        context.settingsDataStore.edit { prefs ->
+            prefs[Keys.LICHESS_API_TOKEN] = token.trim()
         }
     }
 

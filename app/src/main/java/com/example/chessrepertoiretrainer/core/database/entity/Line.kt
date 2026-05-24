@@ -27,5 +27,6 @@ data class Line(
     val learnedAt: Long? = null,
     val timesTrained: Int = 0,
     val lastTrainedAt: Long? = null,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    val lastEcoCode: String? = null
 )

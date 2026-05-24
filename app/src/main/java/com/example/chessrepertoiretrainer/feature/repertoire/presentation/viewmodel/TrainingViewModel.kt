@@ -47,7 +47,8 @@ class TrainingViewModel(
     val uiState: StateFlow<TrainingUiState> = _uiState.asStateFlow()
 
     val chessController = DefaultChessBoardController()
-    private val moveTrainer = MoveTrainingEngine(chessController) { normalizeSan(it) }
+    private val moveTrainer =
+        MoveTrainingEngine(chessController, viewModelScope) { normalizeSan(it) }
 
     private val chapterId: Int? = savedStateHandle["chapterId"]
     private val lineId: Int? = savedStateHandle["lineId"]
@@ -162,13 +163,11 @@ class TrainingViewModel(
                         lastMoveWasCorrect = true,
                         lastUserSan = result.userSan,
                         lastExpectedSan = result.expectedSan,
-                        statusMessage = null
+                        isWaitingForUserMove = !result.isComplete,
+                        statusMessage = null,
                     )
                 }
-
-                viewModelScope.launch {
-                    advanceOpponentRepliesOrContinue()
-                }
+                if (result.isComplete) viewModelScope.launch { finishCurrentLine() }
             }
 
             is MoveTrainingEngine.MoveResult.Incorrect -> {
@@ -178,21 +177,9 @@ class TrainingViewModel(
                         lastUserSan = result.userSan,
                         lastExpectedSan = result.expectedSan,
                         isWaitingForUserMove = true,
-                        statusMessage = "Incorrect move"
+                        statusMessage = "Incorrect move",
                     )
                 }
-                chessController.loadPositionFromFen(result.fenBefore)
-            }
-        }
-    }
-
-    private suspend fun advanceOpponentRepliesOrContinue() {
-        moveTrainer.advanceOpponentReplies()
-        if (moveTrainer.isSequenceComplete()) {
-            finishCurrentLine()
-        } else {
-            _uiState.update {
-                it.copy(isWaitingForUserMove = true)
             }
         }
     }

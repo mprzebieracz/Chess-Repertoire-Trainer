@@ -1,28 +1,14 @@
 package com.example.chessrepertoiretrainer.feature.settings.presentation
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -31,12 +17,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 import com.example.chessrepertoiretrainer.feature.settings.data.AppColorTheme
 import com.example.chessrepertoiretrainer.feature.settings.data.AppThemeMode
 import com.example.chessrepertoiretrainer.feature.settings.data.BoardTheme
@@ -51,17 +35,21 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 
     var lichessInput by remember { mutableStateOf("") }
     var chessComInput by remember { mutableStateOf("") }
+    var tokenInput by remember { mutableStateOf("") }
 
     SyncAccountInputsEffect(
         lichessUsername = settings.lichessUsername,
         chessComUsername = settings.chessComUsername,
+        lichessApiToken = settings.lichessApiToken,
         onLichessInputChange = { lichessInput = it },
-        onChessComInputChange = { chessComInput = it })
+        onChessComInputChange = { chessComInput = it },
+        onTokenInputChange = { tokenInput = it },
+    )
 
     ClearSaveMessagesEffect(
         saveSuccessMessage = screenState.saveSuccessMessage,
         saveErrorMessage = screenState.saveErrorMessage,
-        onClearMessages = viewModel::clearTransientMessages
+        onClearMessages = viewModel::clearTransientMessages,
     )
 
     SettingsScaffold {
@@ -70,11 +58,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             screenState = screenState,
             lichessInput = lichessInput,
             chessComInput = chessComInput,
+            tokenInput = tokenInput,
             onLichessInputChange = { lichessInput = it },
             onChessComInputChange = { chessComInput = it },
+            onTokenInputChange = { tokenInput = it },
             onSaveUsernames = {
                 viewModel.updateLichessUsername(lichessInput)
                 viewModel.updateChessComUsername(chessComInput)
+                viewModel.updateLichessApiToken(tokenInput)
             },
             onThemeModeChange = viewModel::updateAppThemeMode,
             onColorThemeChange = viewModel::updateAppColorTheme,
@@ -82,7 +73,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onPlatformChange = viewModel::updateDefaultOnlinePlatform,
             onEngineDepthChange = viewModel::updateEngineDepth,
             onEngineMoveTimeChange = viewModel::updateEngineMovetime,
-            onEngineThreadsChange = viewModel::updateEngineThreads
+            onEngineThreadsChange = viewModel::updateEngineThreads,
         )
     }
 }
@@ -91,12 +82,15 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 private fun SyncAccountInputsEffect(
     lichessUsername: String,
     chessComUsername: String,
+    lichessApiToken: String,
     onLichessInputChange: (String) -> Unit,
-    onChessComInputChange: (String) -> Unit
+    onChessComInputChange: (String) -> Unit,
+    onTokenInputChange: (String) -> Unit,
 ) {
-    LaunchedEffect(lichessUsername, chessComUsername) {
+    LaunchedEffect(lichessUsername, chessComUsername, lichessApiToken) {
         onLichessInputChange(lichessUsername)
         onChessComInputChange(chessComUsername)
+        onTokenInputChange(lichessApiToken)
     }
 }
 
@@ -104,7 +98,7 @@ private fun SyncAccountInputsEffect(
 private fun ClearSaveMessagesEffect(
     saveSuccessMessage: String?,
     saveErrorMessage: String?,
-    onClearMessages: () -> Unit
+    onClearMessages: () -> Unit,
 ) {
     LaunchedEffect(saveSuccessMessage, saveErrorMessage) {
         if (saveSuccessMessage != null || saveErrorMessage != null) {
@@ -126,7 +120,7 @@ private fun SettingsScaffold(content: @Composable () -> Unit) {
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             content()
         }
@@ -139,8 +133,10 @@ private fun SettingsContent(
     screenState: SettingsUiState,
     lichessInput: String,
     chessComInput: String,
+    tokenInput: String,
     onLichessInputChange: (String) -> Unit,
     onChessComInputChange: (String) -> Unit,
+    onTokenInputChange: (String) -> Unit,
     onSaveUsernames: () -> Unit,
     onThemeModeChange: (AppThemeMode) -> Unit,
     onColorThemeChange: (AppColorTheme) -> Unit,
@@ -148,27 +144,29 @@ private fun SettingsContent(
     onPlatformChange: (String) -> Unit,
     onEngineDepthChange: (Int) -> Unit,
     onEngineMoveTimeChange: (Int) -> Unit,
-    onEngineThreadsChange: (Int) -> Unit
+    onEngineThreadsChange: (Int) -> Unit,
 ) {
     AccountsSection(
         lichessInput = lichessInput,
         chessComInput = chessComInput,
+        tokenInput = tokenInput,
         screenState = screenState,
         onLichessInputChange = onLichessInputChange,
         onChessComInputChange = onChessComInputChange,
-        onSaveUsernames = onSaveUsernames
+        onTokenInputChange = onTokenInputChange,
+        onSaveUsernames = onSaveUsernames,
     )
 
     AppearanceSection(
         settings = settings,
         onThemeModeChange = onThemeModeChange,
         onColorThemeChange = onColorThemeChange,
-        onBoardThemeChange = onBoardThemeChange
+        onBoardThemeChange = onBoardThemeChange,
     )
 
     DefaultPlatformSection(
         selectedPlatform = settings.defaultOnlinePlatform,
-        onPlatformChange = onPlatformChange
+        onPlatformChange = onPlatformChange,
     )
 
     AdvancedSection(
@@ -177,321 +175,16 @@ private fun SettingsContent(
         threads = settings.engineThreads,
         onDepthChange = onEngineDepthChange,
         onMoveTimeChange = onEngineMoveTimeChange,
-        onThreadsChange = onEngineThreadsChange
+        onThreadsChange = onEngineThreadsChange,
     )
 }
 
 @Composable
-private fun AccountsSection(
-    lichessInput: String,
-    chessComInput: String,
-    screenState: SettingsUiState,
-    onLichessInputChange: (String) -> Unit,
-    onChessComInputChange: (String) -> Unit,
-    onSaveUsernames: () -> Unit
-) {
-    SectionHeader(text = "Accounts")
-
-    AccountsInputFields(
-        lichessInput = lichessInput,
-        chessComInput = chessComInput,
-        onLichessInputChange = onLichessInputChange,
-        onChessComInputChange = onChessComInputChange
-    )
-
-    SaveUsernamesRow(screenState = screenState, onSaveUsernames = onSaveUsernames)
-}
-
-@Composable
-private fun AccountsInputFields(
-    lichessInput: String,
-    chessComInput: String,
-    onLichessInputChange: (String) -> Unit,
-    onChessComInputChange: (String) -> Unit
-) {
-    OutlinedTextField(
-        value = lichessInput,
-        onValueChange = onLichessInputChange,
-        label = { Text("Lichess username") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
-    )
-
-    OutlinedTextField(
-        value = chessComInput,
-        onValueChange = onChessComInputChange,
-        label = { Text("Chess.com username") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
-    )
-}
-
-@Composable
-private fun SaveUsernamesRow(screenState: SettingsUiState, onSaveUsernames: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Button(onClick = onSaveUsernames) {
-            Text("Save usernames")
-        }
-
-        SaveStatusMessage(screenState = screenState)
-    }
-}
-
-@Composable
-private fun SaveStatusMessage(screenState: SettingsUiState) {
-    if (screenState.isSaving) {
-        Text(
-            text = "Saving...",
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.bodySmall
-        )
-    } else if (screenState.saveSuccessMessage != null) {
-        Text(
-            text = "Saved",
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.bodySmall
-        )
-    } else if (screenState.saveErrorMessage != null) {
-        Text(
-            text = screenState.saveErrorMessage,
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodySmall
-        )
-    }
-}
-
-@Composable
-private fun AppearanceSection(
-    settings: UserSettings,
-    onThemeModeChange: (AppThemeMode) -> Unit,
-    onColorThemeChange: (AppColorTheme) -> Unit,
-    onBoardThemeChange: (BoardTheme) -> Unit
-) {
-    SectionHeader(text = "Appearance", modifier = Modifier.padding(top = 8.dp))
-
-    ThemeModeSelector(current = settings.appThemeMode, onChange = onThemeModeChange)
-    ColorThemeSelector(current = settings.appColorTheme, onChange = onColorThemeChange)
-    BoardThemeSelector(current = settings.boardTheme, onChange = onBoardThemeChange)
-}
-
-@Composable
-private fun DefaultPlatformSection(selectedPlatform: String, onPlatformChange: (String) -> Unit) {
-    SectionHeader(text = "Default online platform", modifier = Modifier.padding(top = 8.dp))
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        RadioButton(
-            selected = selectedPlatform == "lichess",
-            onClick = { onPlatformChange("lichess") })
-        Text(text = "Lichess")
-
-        Spacer(modifier = Modifier.padding(start = 16.dp))
-
-        RadioButton(
-            selected = selectedPlatform == "chess.com",
-            onClick = { onPlatformChange("chess.com") })
-        Text(text = "Chess.com")
-    }
-}
-
-@Composable
-private fun EngineSection(
-    depth: Int,
-    movetime: Int,
-    threads: Int,
-    onDepthChange: (Int) -> Unit,
-    onMoveTimeChange: (Int) -> Unit,
-    onThreadsChange: (Int) -> Unit
-) {
-    Text(
-        text = "Engine",
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(top = 4.dp)
-    )
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Depth: $depth", style = MaterialTheme.typography.bodyMedium)
-        Slider(
-            value = depth.toFloat(),
-            onValueChange = { onDepthChange(it.toInt()) },
-            valueRange = 10f..30f,
-            steps = 19
-        )
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Time per move: ${movetime / 1000}s", style = MaterialTheme.typography.bodyMedium)
-        Slider(
-            value = movetime.toFloat(),
-            onValueChange = { onMoveTimeChange(it.toInt()) },
-            valueRange = 500f..10000f,
-            steps = 19
-        )
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Threads: $threads", style = MaterialTheme.typography.bodyMedium)
-        Slider(
-            value = threads.toFloat(),
-            onValueChange = { onThreadsChange(it.toInt()) },
-            valueRange = 1f..4f,
-            steps = 2
-        )
-    }
-}
-
-@Composable
-private fun AdvancedSection(
-    depth: Int,
-    movetime: Int,
-    threads: Int,
-    onDepthChange: (Int) -> Unit,
-    onMoveTimeChange: (Int) -> Unit,
-    onThreadsChange: (Int) -> Unit
-) {
-    SectionHeader(text = "Advanced", modifier = Modifier.padding(top = 8.dp))
-    EngineSection(
-        depth = depth,
-        movetime = movetime,
-        threads = threads,
-        onDepthChange = onDepthChange,
-        onMoveTimeChange = onMoveTimeChange,
-        onThreadsChange = onThreadsChange
-    )
-}
-
-@Composable
-private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
+internal fun SectionHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        modifier = modifier
+        modifier = modifier,
     )
-}
-
-@Composable
-private fun ColorThemeSelector(current: AppColorTheme, onChange: (AppColorTheme) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Color theme")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = when (current) {
-                    AppColorTheme.WARM_BROWN -> "Warm Brown"
-                    AppColorTheme.FOREST_GREEN -> "Forest Green"
-                    AppColorTheme.WARM_CREAM -> "Warm Cream"
-                    AppColorTheme.VELVET_PINK -> "Velvet Pink"
-                }
-            )
-            IconButton(onClick = { expanded = true }) {
-                Icon(AppIcons.Settings, contentDescription = "Change color theme")
-            }
-        }
-
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("Warm Brown") }, onClick = {
-                onChange(AppColorTheme.WARM_BROWN)
-                expanded = false
-            })
-            DropdownMenuItem(text = { Text("Forest Green") }, onClick = {
-                onChange(AppColorTheme.FOREST_GREEN)
-                expanded = false
-            })
-            DropdownMenuItem(text = { Text("Warm Cream") }, onClick = {
-                onChange(AppColorTheme.WARM_CREAM)
-                expanded = false
-            })
-            DropdownMenuItem(text = { Text("Velvet Pink") }, onClick = {
-                onChange(AppColorTheme.VELVET_PINK)
-                expanded = false
-            })
-        }
-    }
-}
-
-@Composable
-private fun ThemeModeSelector(current: AppThemeMode, onChange: (AppThemeMode) -> Unit) {
-    val systemIsDark = isSystemInDarkTheme()
-    val isDarkChecked = when (current) {
-        AppThemeMode.DARK -> true
-        AppThemeMode.LIGHT -> false
-        AppThemeMode.SYSTEM -> systemIsDark
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text("Dark theme")
-            Text(
-                text = "Toggle between light and dark app theme",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-        Switch(checked = isDarkChecked, onCheckedChange = { checked ->
-            onChange(if (checked) AppThemeMode.DARK else AppThemeMode.LIGHT)
-        }, colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary))
-    }
-}
-
-@Composable
-private fun BoardThemeSelector(current: BoardTheme, onChange: (BoardTheme) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("Board theme")
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = when (current) {
-                    BoardTheme.CLASSIC -> "Classic green"
-                    BoardTheme.BLUE -> "Blue"
-                    BoardTheme.BROWN -> "Brown"
-                    BoardTheme.RED -> "Tournament (red)"
-                    BoardTheme.NIGHT -> "Night (slate blue)"
-                }
-            )
-            IconButton(onClick = { expanded = true }) {
-                Icon(AppIcons.TrainChapter, contentDescription = "Change board theme")
-            }
-        }
-
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text("Classic green") }, onClick = {
-                onChange(BoardTheme.CLASSIC)
-                expanded = false
-            })
-            DropdownMenuItem(text = { Text("Blue") }, onClick = {
-                onChange(BoardTheme.BLUE)
-                expanded = false
-            })
-            DropdownMenuItem(text = { Text("Brown") }, onClick = {
-                onChange(BoardTheme.BROWN)
-                expanded = false
-            })
-            DropdownMenuItem(text = { Text("Tournament (red)") }, onClick = {
-                onChange(BoardTheme.RED)
-                expanded = false
-            })
-            DropdownMenuItem(text = { Text("Night (slate blue)") }, onClick = {
-                onChange(BoardTheme.NIGHT)
-                expanded = false
-            })
-        }
-    }
 }

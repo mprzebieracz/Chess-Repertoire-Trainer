@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,13 +47,14 @@ fun GameDetailScreen(
     onBackClick: () -> Unit,
     onViewInCourse: (chapterId: Int, lineId: Int) -> Unit,
 ) {
-    val complianceEnabled by viewModel.complianceEnabled.collectAsStateWithLifecycle()
     val currentAnnotation by viewModel.currentAnnotation.collectAsStateWithLifecycle()
     val isLoadingCompliance by viewModel.isLoadingCompliance.collectAsStateWithLifecycle()
     val isEngineEnabled by viewModel.isEngineEnabled.collectAsStateWithLifecycle()
     val engineAnalysis by viewModel.engineAnalysis.collectAsStateWithLifecycle()
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
+    val moveEvals by viewModel.moveEvals.collectAsStateWithLifecycle()
+    val isAnalyzing by viewModel.isAnalyzing.collectAsStateWithLifecycle()
     val chessCtrl = viewModel.chessController
     val game = viewModel.game
 
@@ -63,15 +66,12 @@ fun GameDetailScreen(
 
     ChessScreenLayout(
         chessCtrl = chessCtrl,
+        annotations = viewModel.annotations,
         topBar = {
             ChessTopBar(
                 title = "${game.opponentName} — ${game.playerResult.replaceFirstChar { it.uppercase() }}",
                 onBackClick = onBackClick,
                 actions = {
-                    FilterChip(
-                        selected = complianceEnabled,
-                        onClick = viewModel::toggleCompliance,
-                        label = { Text("Repertoire") })
                     engineAnalysis?.depth?.let { depth ->
                         if (isEngineEnabled) DeeperButton(
                             searchState = engineSearchState,
@@ -83,6 +83,13 @@ fun GameDetailScreen(
                         isEnabled = isEngineEnabled,
                         onClick = viewModel::toggleEngine
                     )
+                    if (isAnalyzing) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else if (moveEvals.isEmpty()) {
+                        IconButton(onClick = viewModel::startAnalysis) {
+                            Icon(Icons.Filled.Analytics, contentDescription = "Analyze game")
+                        }
+                    }
                 },
             )
         },
@@ -138,17 +145,12 @@ fun GameDetailScreen(
                     game.opening?.takeIf { it.isNotBlank() }
                         ?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 }
-                if (complianceEnabled) {
-                    CompliancePanel(
-                        annotation = currentAnnotation,
-                        isLoading = isLoadingCompliance,
-                        onViewInCourse = onViewInCourse,
-                        modifier = Modifier.padding(
-                            horizontal = 16.dp,
-                            vertical = 4.dp
-                        )
-                    )
-                }
+                CompliancePanel(
+                    annotation = currentAnnotation,
+                    isLoading = isLoadingCompliance,
+                    onViewInCourse = onViewInCourse,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
                 PgnTextViewer(
                     navigator = viewModel.navigator,
                     onMoveClick = { viewModel.navigator.goTo(it) },
@@ -239,17 +241,13 @@ private fun CompliancePanel(
             ComplianceStatus.OUT_OF_BOOK -> Text(
                 "○ Out of book",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(
-                    alpha = 0.4f
-                )
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
             )
 
             ComplianceStatus.OPPONENT_IN_BOOK -> Text(
                 "Opponent followed expected lines",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(
-                    alpha = 0.5f
-                )
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
 
             ComplianceStatus.OPPONENT_DEVIATION -> Text(

@@ -1,6 +1,8 @@
 package com.example.chessrepertoiretrainer.feature.mygames.data
 
+import com.example.chessrepertoiretrainer.core.database.dao.ChapterStatsRaw
 import com.example.chessrepertoiretrainer.core.database.dao.GameStatsRaw
+import com.example.chessrepertoiretrainer.core.database.dao.OpeningStatsRaw
 import com.example.chessrepertoiretrainer.core.database.dao.RatingPeakRaw
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 import kotlinx.coroutines.flow.Flow
@@ -40,4 +42,9 @@ interface SavedGameRepository {
     ): Double?
 
     suspend fun getGameById(id: String): SavedGame?
+
+    suspend fun getStatsByChapter(chapterId: Int, isWhite: Boolean?, since: Long): ChapterStatsRaw?
+    suspend fun getStatsByOpening(username: String, platform: String, since: Long): List<OpeningStatsRaw>
+    suspend fun getGamesWithNullEcoCode(): List<SavedGame>
+    suspend fun updateEcoCode(id: String, ecoCode: String)
 }
