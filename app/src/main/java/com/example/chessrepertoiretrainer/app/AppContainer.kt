@@ -16,7 +16,9 @@ import com.example.chessrepertoiretrainer.feature.repertoire.domain.usecase.Repe
 import com.example.chessrepertoiretrainer.core.activity.ActivityRecorder
 import com.example.chessrepertoiretrainer.core.network.explorer.LichessExplorerService
 import com.example.chessrepertoiretrainer.core.opening.OpeningRegistry
+import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.repertoire.GameChapterMatcher
+import com.example.chessrepertoiretrainer.core.sound.SoundPlayer
 import com.example.chessrepertoiretrainer.feature.mygames.domain.OnDemandGameAnalyzer
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 
@@ -55,6 +57,10 @@ class AppContainer(context: Context) {
     )
 
     val stockfishEngine = StockfishEngine(context.applicationContext, userSettingsRepository)
+
+    val soundPlayer = SoundPlayer(context.applicationContext, userSettingsRepository).also {
+        DefaultChessBoardController.defaultSoundPlayer = it
+    }
 
     val onDemandGameAnalyzer = OnDemandGameAnalyzer(stockfishEngine, moveEvalDao)
 

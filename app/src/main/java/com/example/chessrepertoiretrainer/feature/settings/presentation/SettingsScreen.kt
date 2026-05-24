@@ -74,6 +74,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             onEngineDepthChange = viewModel::updateEngineDepth,
             onEngineMoveTimeChange = viewModel::updateEngineMovetime,
             onEngineThreadsChange = viewModel::updateEngineThreads,
+            onSoundsEnabledChange = viewModel::updateSoundsEnabled,
         )
     }
 }
@@ -145,6 +146,7 @@ private fun SettingsContent(
     onEngineDepthChange: (Int) -> Unit,
     onEngineMoveTimeChange: (Int) -> Unit,
     onEngineThreadsChange: (Int) -> Unit,
+    onSoundsEnabledChange: (Boolean) -> Unit,
 ) {
     AccountsSection(
         lichessInput = lichessInput,
@@ -167,6 +169,11 @@ private fun SettingsContent(
     DefaultPlatformSection(
         selectedPlatform = settings.defaultOnlinePlatform,
         onPlatformChange = onPlatformChange,
+    )
+
+    SoundSection(
+        soundsEnabled = settings.soundsEnabled,
+        onSoundsEnabledChange = onSoundsEnabledChange,
     )
 
     AdvancedSection(
