@@ -2,11 +2,11 @@ package com.example.chessrepertoiretrainer.core.network.puzzles
 
 import android.util.Log
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
+import com.example.chessrepertoiretrainer.core.network.openGetConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URL
 
 object LichessPuzzleService {
 
@@ -14,11 +14,7 @@ object LichessPuzzleService {
 
     suspend fun fetchDailyPuzzle(sourceDate: String): Puzzle? = withContext(Dispatchers.IO) {
         try {
-            val connection = (URL(DAILY_PUZZLE_URL).openConnection() as HttpURLConnection).apply {
-                requestMethod = "GET"
-                connectTimeout = 10_000
-                readTimeout = 10_000
-            }
+            val connection = openGetConnection(DAILY_PUZZLE_URL, 10_000, 10_000)
 
             if (connection.responseCode != HttpURLConnection.HTTP_OK) {
                 Log.e("LichessPuzzleService", "HTTP error: ${connection.responseCode}")

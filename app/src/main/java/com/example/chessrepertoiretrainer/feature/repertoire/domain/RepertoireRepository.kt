@@ -40,5 +40,8 @@ interface RepertoireRepository {
     suspend fun getLinesForChapters(chapterIds: List<Int>): List<Line>
 
     suspend fun importPgnToChapter(pgnString: String, chapterId: Int)
+
+    suspend fun getAllLineMoveFens(): Map<Int, List<String>>
+    suspend fun updateLineEcoCode(lineId: Int, ecoCode: String?)
 }
 

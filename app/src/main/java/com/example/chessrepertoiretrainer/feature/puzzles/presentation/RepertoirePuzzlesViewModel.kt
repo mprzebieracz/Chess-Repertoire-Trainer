@@ -3,11 +3,11 @@ package com.example.chessrepertoiretrainer.feature.puzzles.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.chessrepertoiretrainer.core.database.dao.RepertoireDao
 import com.example.chessrepertoiretrainer.core.database.entity.RepertoireOpening
 import com.example.chessrepertoiretrainer.core.opening.OpeningClassifier
 import com.example.chessrepertoiretrainer.core.opening.OpeningRegistry
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class RepertoirePuzzlesViewModel(
     private val puzzleRepository: PuzzleRepository,
-    private val repertoireDao: RepertoireDao,
+    private val repertoireRepository: RepertoireRepository,
     private val openingRegistry: OpeningRegistry,
 ) : ViewModel() {
 
@@ -108,12 +108,11 @@ class RepertoirePuzzlesViewModel(
     }
 
     private suspend fun scanRepertoireOpenings(): List<RepertoireOpening> {
-        val allMoveFens = repertoireDao.getAllLineMoveFens()
-        val fensByLine = allMoveFens.groupBy({ it.lineId }, { it.fen })
+        val fensByLine = repertoireRepository.getAllLineMoveFens()
         val detected = mutableMapOf<String, RepertoireOpening>()
         for ((lineId, fens) in fensByLine) {
             val entry = OpeningClassifier.classifyByFenHistory(fens, openingRegistry) ?: continue
-            repertoireDao.updateLastEcoCode(lineId, entry.eco)
+            repertoireRepository.updateLineEcoCode(lineId, entry.eco)
             detected[entry.family] = RepertoireOpening(family = entry.family, eco = entry.eco)
         }
         return detected.values.toList()
@@ -121,11 +120,11 @@ class RepertoirePuzzlesViewModel(
 
     class Factory(
         private val puzzleRepository: PuzzleRepository,
-        private val repertoireDao: RepertoireDao,
+        private val repertoireRepository: RepertoireRepository,
         private val openingRegistry: OpeningRegistry,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            RepertoirePuzzlesViewModel(puzzleRepository, repertoireDao, openingRegistry) as T
+            RepertoirePuzzlesViewModel(puzzleRepository, repertoireRepository, openingRegistry) as T
     }
 }

@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.chessrepertoiretrainer.app.AppContainer
 import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.toSide
 import com.example.chessrepertoiretrainer.core.chess.training.MoveTrainingEngine
@@ -315,7 +314,7 @@ class TrainingViewModel(
 
     class Factory(
         private val repertoireRepository: RepertoireRepository,
-        private val appContainer: AppContainer? = null
+        private val selectedChapterIds: List<Int>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
@@ -323,7 +322,7 @@ class TrainingViewModel(
             return TrainingViewModel(
                 repertoireRepository,
                 handle,
-                appContainer?.navTransientStore?.takeSelectedChapterIds()
+                selectedChapterIds
             ) as T
         }
     }

@@ -3,13 +3,13 @@ package com.example.chessrepertoiretrainer.core.network.explorer
 import android.util.Log
 import com.example.chessrepertoiretrainer.core.database.dao.LichessExplorerCacheDao
 import com.example.chessrepertoiretrainer.core.database.entity.LichessExplorerCache
+import com.example.chessrepertoiretrainer.core.network.openGetConnection
 import com.example.chessrepertoiretrainer.feature.settings.data.UserSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URL
 import java.net.URLEncoder
 
 private const val TAG = "LichessExplorerService"
@@ -83,10 +83,10 @@ class LichessExplorerService(
     private suspend fun fetchRaw(urlString: String, acceptTextPlain: Boolean = false): String? {
         val token = settingsRepository?.settingsFlow?.first()?.lichessApiToken?.trim() ?: ""
         return try {
-            val conn = URL(urlString).openConnection() as HttpURLConnection
-            conn.connectTimeout = CONNECT_TIMEOUT
-            conn.readTimeout = READ_TIMEOUT
-            conn.setRequestProperty("Accept", if (acceptTextPlain) "text/plain" else "application/json")
+            val conn = openGetConnection(
+                urlString, CONNECT_TIMEOUT, READ_TIMEOUT,
+                if (acceptTextPlain) "text/plain" else "application/json"
+            )
             if (token.isNotEmpty()) conn.setRequestProperty("Authorization", "Bearer $token")
             val code = conn.responseCode
             when {

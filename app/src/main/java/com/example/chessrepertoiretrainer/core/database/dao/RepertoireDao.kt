@@ -6,6 +6,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.example.chessrepertoiretrainer.core.database.entity.Chapter
 import com.example.chessrepertoiretrainer.core.database.entity.Line
@@ -129,4 +130,13 @@ interface RepertoireDao {
 
     @Query("UPDATE lines SET lastEcoCode = :ecoCode WHERE id = :lineId")
     suspend fun updateLastEcoCode(lineId: Int, ecoCode: String?)
+
+    @Transaction
+    suspend fun insertLineWithMoves(line: Line, moves: List<LineMove>): Int {
+        val lineId = insertLine(line).toInt()
+        moves.forEachIndexed { index, move ->
+            insertLineMove(move.copy(lineId = lineId, moveIndex = index))
+        }
+        return lineId
+    }
 }

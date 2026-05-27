@@ -18,6 +18,7 @@ import com.example.chessrepertoiretrainer.feature.puzzles.presentation.PuzzleTra
 import com.example.chessrepertoiretrainer.feature.puzzles.presentation.PuzzleTrainingViewModel
 import com.example.chessrepertoiretrainer.feature.puzzles.presentation.RepertoirePuzzlesScreen
 import com.example.chessrepertoiretrainer.feature.puzzles.presentation.RepertoirePuzzlesViewModel
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsScreen
 import com.example.chessrepertoiretrainer.feature.settings.presentation.SettingsViewModel
 
@@ -25,14 +26,14 @@ fun NavGraphBuilder.homeGraph(
     navController: NavHostController,
     settingsViewModel: SettingsViewModel,
     puzzleRepository: PuzzleRepository,
+    repertoireRepository: RepertoireRepository,
     appContainer: AppContainer
 ) {
     composable(Screen.Home.route) {
         val vm: HomeViewModel = viewModel(
             factory = HomeViewModel.Factory(
                 puzzleRepository,
-                appContainer.activityRecorder,
-                appContainer.dailyActivityDao
+                appContainer.activityRecorder
             )
         )
         HomeScreen(
@@ -49,7 +50,7 @@ fun NavGraphBuilder.homeGraph(
     }
 
     composable(Screen.Analysis.route) {
-        val startFen = appContainer.navTransientStore.takeAnalysisStartFen()
+        val startFen = remember { appContainer.navTransientStore.takeAnalysisStartFen() }
         val vm: AnalysisViewModel =
             viewModel(factory = AnalysisViewModel.Factory(appContainer.stockfishEngine, startFen))
         AnalysisScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
@@ -66,7 +67,7 @@ fun NavGraphBuilder.homeGraph(
         val vm: RepertoirePuzzlesViewModel = viewModel(
             factory = RepertoirePuzzlesViewModel.Factory(
                 puzzleRepository,
-                appContainer.repertoireDao,
+                repertoireRepository,
                 appContainer.openingRegistry,
             )
         )

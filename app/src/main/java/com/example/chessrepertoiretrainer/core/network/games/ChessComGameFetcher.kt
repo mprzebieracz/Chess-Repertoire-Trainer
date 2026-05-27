@@ -1,10 +1,10 @@
 package com.example.chessrepertoiretrainer.core.network.games
 
+import com.example.chessrepertoiretrainer.core.network.openGetConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URL
 import java.time.Instant
 import java.time.ZoneOffset
 
@@ -143,11 +143,7 @@ object ChessComGameFetcher : GameFetcher {
     }
 
     private fun httpGet(urlString: String): String? {
-        val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 15_000
-            readTimeout = 30_000
-        }
+        val connection = openGetConnection(urlString, 15_000, 30_000)
         return if (connection.responseCode == HttpURLConnection.HTTP_OK) {
             connection.inputStream.bufferedReader().use { it.readText() }
         } else {

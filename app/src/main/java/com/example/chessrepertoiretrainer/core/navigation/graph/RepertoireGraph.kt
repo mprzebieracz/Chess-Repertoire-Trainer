@@ -2,6 +2,7 @@ package com.example.chessrepertoiretrainer.core.navigation.graph
 
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
@@ -198,9 +199,9 @@ fun NavGraphBuilder.repertoireGraph(
     }
 
     composable(Screen.MultiChapterTraining.route) {
+        val chapterIds = remember { appContainer.navTransientStore.takeSelectedChapterIds() }
         val vm: TrainingViewModel =
-            viewModel(factory = TrainingViewModel.Factory(repertoireRepository, appContainer))
-        appContainer.navTransientStore.selectedChapterIds = null
+            viewModel(factory = TrainingViewModel.Factory(repertoireRepository, chapterIds))
         TrainScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 }

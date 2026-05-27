@@ -35,6 +35,9 @@ class ActivityRecorder(
     suspend fun recordGamesImported(count: Int) =
         incrementToday { it.copy(gamesImported = it.gamesImported + count) }
 
+    suspend fun getActivities(fromMs: Long, toMs: Long): List<DailyActivity> =
+        dailyActivityDao.getAll().filter { it.date in fromMs..toMs }
+
     suspend fun currentStreakDays(): Int {
         val activities = dailyActivityDao.getAll()
         var streak = 0
