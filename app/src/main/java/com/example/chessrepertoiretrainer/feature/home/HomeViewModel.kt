@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.example.chessrepertoiretrainer.core.activity.ActivityRecorder
-import com.example.chessrepertoiretrainer.core.database.dao.DailyActivityDao
 import com.example.chessrepertoiretrainer.core.database.entity.DailyActivity
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
 import kotlinx.coroutines.async
@@ -31,8 +30,7 @@ data class HomeUiState(
 
 class HomeViewModel(
     private val puzzleRepository: PuzzleRepository,
-    private val activityRecorder: ActivityRecorder? = null,
-    private val dailyActivityDao: DailyActivityDao? = null
+    private val activityRecorder: ActivityRecorder
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -52,13 +50,10 @@ class HomeViewModel(
     }
 
     private suspend fun loadStreakAndHeatmap() {
-        val recorder = activityRecorder ?: return
-        val dao = dailyActivityDao ?: return
-
-        val streak = recorder.currentStreakDays()
+        val streak = activityRecorder.currentStreakDays()
         val todayMs = ActivityRecorder.todayMs()
         val fromMs = todayMs - 14L * 7 * 24 * 60 * 60 * 1000L
-        val activities = dao.getAll().filter { it.date in fromMs..todayMs }
+        val activities = activityRecorder.getActivities(fromMs, todayMs)
         val byDate = activities.associateBy { it.date }
 
         // Build 15 cols × 7 rows. Col 0 = oldest week, col 14 = current week.
@@ -116,12 +111,11 @@ class HomeViewModel(
 
     class Factory(
         private val puzzleRepository: PuzzleRepository,
-        private val activityRecorder: ActivityRecorder? = null,
-        private val dailyActivityDao: DailyActivityDao? = null
+        private val activityRecorder: ActivityRecorder
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            return HomeViewModel(puzzleRepository, activityRecorder, dailyActivityDao) as T
+            return HomeViewModel(puzzleRepository, activityRecorder) as T
         }
     }
 }

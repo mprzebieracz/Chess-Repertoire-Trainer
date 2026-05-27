@@ -4,12 +4,12 @@ import android.util.Log
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.pgn.extract.PGNExtractor
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
+import com.example.chessrepertoiretrainer.core.network.openGetConnection
 import com.github.bhlangonijr.chesslib.Board
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URL
 
 private const val TAG = "LichessOpeningPuzzleService"
 private const val CONNECT_TIMEOUT = 10_000
@@ -40,10 +40,7 @@ object LichessOpeningPuzzleService {
         return try {
             val angle = familyToAngle(openingFamily)
             val url = "https://lichess.org/api/puzzle/next?angle=$angle"
-            val conn = URL(url).openConnection() as HttpURLConnection
-            conn.connectTimeout = CONNECT_TIMEOUT
-            conn.readTimeout = READ_TIMEOUT
-            conn.setRequestProperty("Accept", "application/json")
+            val conn = openGetConnection(url, CONNECT_TIMEOUT, READ_TIMEOUT)
             if (conn.responseCode != HttpURLConnection.HTTP_OK) {
                 Log.w(TAG, "HTTP ${conn.responseCode} fetching opening puzzle for $openingFamily")
                 return null

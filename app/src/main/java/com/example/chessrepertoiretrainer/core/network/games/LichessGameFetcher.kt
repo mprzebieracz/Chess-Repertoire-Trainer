@@ -1,11 +1,11 @@
 package com.example.chessrepertoiretrainer.core.network.games
 
 import android.util.Log
+import com.example.chessrepertoiretrainer.core.network.openGetConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
-import java.net.URL
 
 object LichessGameFetcher : GameFetcher {
 
@@ -77,12 +77,7 @@ object LichessGameFetcher : GameFetcher {
         ratedOnly: Boolean,
         onProgress: ((Int) -> Unit)?
     ): List<FetchedGame> {
-        val connection = (URL(urlString).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = 15_000
-            readTimeout = 30_000
-            setRequestProperty("Accept", "application/x-ndjson")
-        }
+        val connection = openGetConnection(urlString, 15_000, 30_000, "application/x-ndjson")
 
         if (connection.responseCode != HttpURLConnection.HTTP_OK) {
             Log.w("LichessGameFetcher", "HTTP error ${connection.responseCode} for $username")

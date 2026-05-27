@@ -79,4 +79,10 @@ class DefaultRepertoireRepository(private val repertoireDao: RepertoireDao) : Re
     override suspend fun importPgnToChapter(pgnString: String, chapterId: Int) {
         pgnImporter.importPgnToChapter(pgnString = pgnString, chapterId = chapterId)
     }
+
+    override suspend fun getAllLineMoveFens(): Map<Int, List<String>> =
+        repertoireDao.getAllLineMoveFens().groupBy({ it.lineId }, { it.fen })
+
+    override suspend fun updateLineEcoCode(lineId: Int, ecoCode: String?) =
+        repertoireDao.updateLastEcoCode(lineId, ecoCode)
 }

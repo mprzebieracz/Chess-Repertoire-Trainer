@@ -13,31 +13,25 @@ class PgnImportWriter(private val repertoireDao: RepertoireDao) {
         moves: List<PgnLineResolver.ResolvedMove>
     ): Int {
         val existingCount = repertoireDao.getLineCountForChapter(chapterId)
-        val lineId = repertoireDao.insertLine(
-            Line(
-                chapterId = chapterId,
-                name = lineName,
-                nextReviewDate = System.currentTimeMillis(),
-                interval = 0,
-                easeFactor = 2.5f,
-                consecutiveCorrect = 0,
-                sortOrder = existingCount
-            )
-        ).toInt()
-
-        moves.forEachIndexed { moveIndex, move ->
-            repertoireDao.insertLineMove(
-                LineMove(
-                    lineId = lineId,
-                    moveIndex = moveIndex,
-                    moveSan = move.san,
-                    fen = move.fen,
-                    comment = move.comment,
-                    arrows = null
-                )
+        val line = Line(
+            chapterId = chapterId,
+            name = lineName,
+            nextReviewDate = System.currentTimeMillis(),
+            interval = 0,
+            easeFactor = 2.5f,
+            consecutiveCorrect = 0,
+            sortOrder = existingCount
+        )
+        val movePlaceholders = moves.map { move ->
+            LineMove(
+                lineId = 0,
+                moveIndex = 0,
+                moveSan = move.san,
+                fen = move.fen,
+                comment = move.comment,
+                arrows = null
             )
         }
-
-        return lineId
+        return repertoireDao.insertLineWithMoves(line, movePlaceholders)
     }
 }
