@@ -101,7 +101,7 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
         return insertedLinesCount
     }
 
-    private fun extractHeadersAndBody(gameText: String): Pair<Map<String, String>, String> {
+    internal fun extractHeadersAndBody(gameText: String): Pair<Map<String, String>, String> {
         val headerMap = mutableMapOf<String, String>()
         val bodyBuilder = StringBuilder()
         var inHeaderSection = true
