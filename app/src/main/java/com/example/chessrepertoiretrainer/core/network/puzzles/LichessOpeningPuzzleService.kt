@@ -28,12 +28,12 @@ object LichessOpeningPuzzleService {
             result
         }
 
-    private fun familyToAngle(family: String): String =
-        family.lowercase()
+    internal fun familyToAngle(family: String): String =
+        family.trim()
+            .lowercase()
             .replace("'", "")
+            .replace(Regex("[^a-z0-9 -]"), "")
             .replace("-", "_")
-            .replace(Regex("[^a-z0-9 ]"), "")
-            .trim()
             .replace(" ", "_")
 
     private fun fetchNext(openingFamily: String, sourceDate: String): Puzzle? {
@@ -53,7 +53,7 @@ object LichessOpeningPuzzleService {
         }
     }
 
-    private fun parsePuzzle(json: String, openingFamily: String, sourceDate: String): Puzzle? {
+    internal fun parsePuzzle(json: String, openingFamily: String, sourceDate: String): Puzzle? {
         return try {
             val root = JSONObject(json)
             val puzzleObj = root.getJSONObject("puzzle")
@@ -63,8 +63,9 @@ object LichessOpeningPuzzleService {
             val initialPly = puzzleObj.optInt("initialPly", 0)
             val pgn = gameObj?.optString("pgn", "") ?: ""
 
-            // /api/puzzle/next doesn't include a fen field; derive position from PGN + initialPly.
-            val fen = fenAtPly(pgn, initialPly) ?: run {
+            // initialPly is the 0-indexed position of the trigger move in the PGN array;
+            // the puzzle position is AFTER that move, so play initialPly+1 moves.
+            val fen = fenAtPly(pgn, initialPly + 1) ?: run {
                 Log.w(TAG, "Could not derive FEN for puzzle $id (ply=$initialPly)")
                 return null
             }
@@ -96,7 +97,7 @@ object LichessOpeningPuzzleService {
         }
     }
 
-    private fun fenAtPly(pgn: String, ply: Int): String? {
+    internal fun fenAtPly(pgn: String, ply: Int): String? {
         return try {
             val board = Board()
             val sanMoves = PGNExtractor.extractSanMovesFromPgn(pgn)
