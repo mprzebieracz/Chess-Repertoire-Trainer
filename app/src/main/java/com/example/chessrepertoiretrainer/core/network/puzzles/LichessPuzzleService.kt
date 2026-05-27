@@ -29,7 +29,7 @@ object LichessPuzzleService {
         }
     }
 
-    private fun parsePuzzle(root: JSONObject, sourceDate: String): Puzzle? {
+    internal fun parsePuzzle(root: JSONObject, sourceDate: String): Puzzle? {
         val puzzleJson = root.getJSONObject("puzzle")
 
         val lichessId = puzzleJson.optString("id", "")
