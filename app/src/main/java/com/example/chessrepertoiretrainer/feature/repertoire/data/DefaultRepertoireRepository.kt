@@ -83,6 +83,9 @@ class DefaultRepertoireRepository(private val repertoireDao: RepertoireDao) : Re
     override suspend fun getAllLineMoveFens(): Map<Int, List<String>> =
         repertoireDao.getAllLineMoveFens().groupBy({ it.lineId }, { it.fen })
 
+    override suspend fun getAllLineColors(): Map<Int, String> =
+        repertoireDao.getLineColors().associate { it.lineId to it.color }
+
     override suspend fun updateLineEcoCode(lineId: Int, ecoCode: String?) =
         repertoireDao.updateLastEcoCode(lineId, ecoCode)
 }

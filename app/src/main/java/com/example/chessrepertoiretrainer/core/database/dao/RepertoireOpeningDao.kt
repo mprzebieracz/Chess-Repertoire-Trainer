@@ -12,6 +12,9 @@ interface RepertoireOpeningDao {
     @Query("SELECT * FROM repertoire_openings ORDER BY family ASC")
     suspend fun getAll(): List<RepertoireOpening>
 
+    @Query("SELECT * FROM repertoire_openings WHERE family = :family LIMIT 1")
+    suspend fun getByFamily(family: String): RepertoireOpening?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(openings: List<RepertoireOpening>)
 

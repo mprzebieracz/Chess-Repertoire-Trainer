@@ -65,7 +65,7 @@ class RepertoirePuzzlesViewModel(
                 puzzleRepository.countUnsolvedForFamily(o.family) == 0
             }
             if (needsFetch.isNotEmpty()) {
-                puzzleRepository.fetchAndSaveOpeningPuzzles(needsFetch.map { it.family })
+                puzzleRepository.fetchAndSaveOpeningPuzzles(needsFetch)
                 // Reload counts after fetch
                 val refreshed = puzzleRepository.getRepertoireOpenings()
                 _uiState.update { it.copy(openings = preserveSelections(buildItems(refreshed))) }
@@ -109,11 +109,17 @@ class RepertoirePuzzlesViewModel(
 
     private suspend fun scanRepertoireOpenings(): List<RepertoireOpening> {
         val fensByLine = repertoireRepository.getAllLineMoveFens()
+        val colorByLine = repertoireRepository.getAllLineColors()
         val detected = mutableMapOf<String, RepertoireOpening>()
         for ((lineId, fens) in fensByLine) {
             val entry = OpeningClassifier.classifyByFenHistory(fens, openingRegistry) ?: continue
             repertoireRepository.updateLineEcoCode(lineId, entry.eco)
-            detected[entry.family] = RepertoireOpening(family = entry.family, eco = entry.eco)
+            val color = colorByLine[lineId]?.lowercase() ?: "white"
+            detected[entry.family] = RepertoireOpening(
+                family = entry.family,
+                eco = entry.eco,
+                color = color,
+            )
         }
         return detected.values.toList()
     }
