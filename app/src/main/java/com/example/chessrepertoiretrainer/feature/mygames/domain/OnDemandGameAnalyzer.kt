@@ -84,7 +84,7 @@ class OnDemandGameAnalyzer(
         }
     }
 
-    private fun classify(cpLoss: Int) = when {
+    internal fun classify(cpLoss: Int) = when {
         cpLoss <= 10 -> "BEST"
         cpLoss <= 25 -> "GOOD"
         cpLoss <= 50 -> "INACCURACY"
