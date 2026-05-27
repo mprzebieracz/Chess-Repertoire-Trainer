@@ -62,12 +62,12 @@ object ChessComGameFetcher : GameFetcher {
             return@withContext result
         }
 
-    private fun epochMsToYearMonth(epochMs: Long): Int {
+    internal fun epochMsToYearMonth(epochMs: Long): Int {
         val date = Instant.ofEpochMilli(epochMs).atOffset(ZoneOffset.UTC)
         return date.year * 100 + date.monthValue
     }
 
-    private fun archiveUrlYearMonth(url: String): Int {
+    internal fun archiveUrlYearMonth(url: String): Int {
         val parts = url.trimEnd('/').split("/")
         val month = parts.getOrNull(parts.size - 1)?.toIntOrNull() ?: return 0
         val year = parts.getOrNull(parts.size - 2)?.toIntOrNull() ?: return 0
@@ -88,7 +88,7 @@ object ChessComGameFetcher : GameFetcher {
         }
     }
 
-    private fun parseChessComGame(gameJson: JSONObject?, username: String): FetchedGame? {
+    internal fun parseChessComGame(gameJson: JSONObject?, username: String): FetchedGame? {
         if (gameJson == null) return null
         val pgn = gameJson.optString("pgn", "")
         if (pgn.isBlank()) return null
@@ -132,7 +132,7 @@ object ChessComGameFetcher : GameFetcher {
         )
     }
 
-    private fun mapTimeClassToCategory(timeClass: String?): String? {
+    internal fun mapTimeClassToCategory(timeClass: String?): String? {
         return when (timeClass?.trim()?.lowercase()) {
             "bullet" -> "bullet"
             "blitz" -> "blitz"

@@ -37,7 +37,7 @@ object LichessGameFetcher : GameFetcher {
             return@withContext streamGames(urlString, normalizedUser, ratedOnly, onProgress)
         }
 
-    private fun buildRequestUrl(
+    internal fun buildRequestUrl(
         username: String,
         maxGames: Int?,
         colorFilter: String,
@@ -95,7 +95,7 @@ object LichessGameFetcher : GameFetcher {
         }
     }
 
-    private fun parseLichessGame(jsonLine: String, username: String, ratedOnly: Boolean): FetchedGame? {
+    internal fun parseLichessGame(jsonLine: String, username: String, ratedOnly: Boolean): FetchedGame? {
         if (jsonLine.isBlank()) return null
 
         return runCatching {
@@ -156,7 +156,7 @@ object LichessGameFetcher : GameFetcher {
         ?: fallback
     }
 
-    private fun mapSpeedToCategory(speed: String?): String? {
+    internal fun mapSpeedToCategory(speed: String?): String? {
         return when (speed?.trim()?.lowercase()) {
             "ultrabullet", "bullet" -> "bullet"
             "blitz" -> "blitz"
