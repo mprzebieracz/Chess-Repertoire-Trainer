@@ -17,12 +17,19 @@ private const val READ_TIMEOUT = 15_000
 
 object LichessOpeningPuzzleService {
 
-    suspend fun getPuzzlesByOpening(openingFamily: String, count: Int): List<Puzzle> =
+    suspend fun getPuzzlesByOpening(
+        openingFamily: String,
+        count: Int,
+        color: String = "white",
+    ): List<Puzzle> =
         withContext(Dispatchers.IO) {
             val result = mutableListOf<Puzzle>()
             val today = java.time.LocalDate.now().toString()
-            repeat(count) {
-                val puzzle = fetchNext(openingFamily, today) ?: return@repeat
+            var attempts = 0
+            val maxAttempts = count * 4
+            while (result.size < count && attempts < maxAttempts) {
+                attempts++
+                val puzzle = fetchNext(openingFamily, today, color) ?: continue
                 if (result.none { it.id == puzzle.id }) result.add(puzzle)
             }
             result
@@ -36,10 +43,10 @@ object LichessOpeningPuzzleService {
             .replace("-", "_")
             .replace(" ", "_")
 
-    private fun fetchNext(openingFamily: String, sourceDate: String): Puzzle? {
+    private fun fetchNext(openingFamily: String, sourceDate: String, color: String): Puzzle? {
         return try {
             val angle = familyToAngle(openingFamily)
-            val url = "https://lichess.org/api/puzzle/next?angle=$angle"
+            val url = "https://lichess.org/api/puzzle/next?angle=$angle&color=$color"
             val conn = openGetConnection(url, CONNECT_TIMEOUT, READ_TIMEOUT)
             if (conn.responseCode != HttpURLConnection.HTTP_OK) {
                 Log.w(TAG, "HTTP ${conn.responseCode} fetching opening puzzle for $openingFamily")

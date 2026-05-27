@@ -9,6 +9,7 @@ import com.example.chessrepertoiretrainer.core.chess.controller.DefaultChessBoar
 import com.example.chessrepertoiretrainer.core.chess.pgn.uci.convertUciSequenceToSan
 import com.example.chessrepertoiretrainer.core.chess.training.MoveTrainingEngine
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
+import com.example.chessrepertoiretrainer.core.database.entity.RepertoireOpening
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
 import com.example.chessrepertoiretrainer.feature.puzzles.domain.model.MoveCheckResult
 import com.example.chessrepertoiretrainer.feature.puzzles.domain.usecase.CheckPuzzleMoveUseCase
@@ -181,7 +182,9 @@ class OpeningPuzzleSessionViewModel(
         viewModelScope.launch {
             val remaining = repository.countUnsolvedForFamily(family)
             if (remaining < 3) {
-                repository.fetchAndSaveOpeningPuzzles(listOf(family))
+                val opening = repository.getOpeningByFamily(family)
+                    ?: RepertoireOpening(family = family)
+                repository.fetchAndSaveOpeningPuzzles(listOf(opening))
             }
         }
     }

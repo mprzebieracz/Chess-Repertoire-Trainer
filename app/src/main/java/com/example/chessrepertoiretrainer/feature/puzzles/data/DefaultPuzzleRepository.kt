@@ -36,16 +36,23 @@ class DefaultPuzzleRepository(
 
     override suspend fun getOpeningPuzzles(): List<Puzzle> = puzzleDao.getOpeningPuzzles()
 
-    override suspend fun fetchAndSaveOpeningPuzzles(families: List<String>) {
+    override suspend fun fetchAndSaveOpeningPuzzles(openings: List<RepertoireOpening>) {
         val allPuzzles = mutableListOf<Puzzle>()
-        for (family in families) {
-            puzzleDao.deleteUnsolvedOpeningPuzzlesByFamily(family)
-            allPuzzles += LichessOpeningPuzzleService.getPuzzlesByOpening(family, count = 5)
+        for (opening in openings) {
+            puzzleDao.deleteUnsolvedOpeningPuzzlesByFamily(opening.family)
+            allPuzzles += LichessOpeningPuzzleService.getPuzzlesByOpening(
+                openingFamily = opening.family,
+                count = 5,
+                color = opening.color,
+            )
         }
         if (allPuzzles.isNotEmpty()) puzzleDao.insertPuzzles(allPuzzles)
     }
 
     override suspend fun getRepertoireOpenings(): List<RepertoireOpening> = openingDao.getAll()
+
+    override suspend fun getOpeningByFamily(family: String): RepertoireOpening? =
+        openingDao.getByFamily(family)
 
     override suspend fun syncRepertoireOpenings(openings: List<RepertoireOpening>) {
         if (openings.isEmpty()) {

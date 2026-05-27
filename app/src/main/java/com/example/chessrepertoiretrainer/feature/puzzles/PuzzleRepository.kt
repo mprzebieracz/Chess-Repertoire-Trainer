@@ -10,10 +10,11 @@ interface PuzzleRepository {
     suspend fun updateAttempts(id: String, attempts: Int)
     suspend fun getPuzzleById(id: String): Puzzle?
     suspend fun getOpeningPuzzles(): List<Puzzle>
-    suspend fun fetchAndSaveOpeningPuzzles(families: List<String>)
+    suspend fun fetchAndSaveOpeningPuzzles(openings: List<RepertoireOpening>)
 
     // Opening list
     suspend fun getRepertoireOpenings(): List<RepertoireOpening>
+    suspend fun getOpeningByFamily(family: String): RepertoireOpening?
     suspend fun syncRepertoireOpenings(openings: List<RepertoireOpening>)
 
     // Session loading
