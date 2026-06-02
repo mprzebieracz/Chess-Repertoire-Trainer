@@ -19,5 +19,6 @@ interface PuzzleRepository {
 
     // Session loading
     suspend fun getUnsolvedPuzzlesForFamilies(families: List<String>): List<Puzzle>
+    suspend fun getNextUnsolvedPuzzleForFamilies(families: List<String>): Puzzle?
     suspend fun countUnsolvedForFamily(family: String): Int
 }

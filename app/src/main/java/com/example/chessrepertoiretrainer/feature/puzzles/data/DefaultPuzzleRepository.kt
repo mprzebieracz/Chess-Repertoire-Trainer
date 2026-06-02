@@ -4,8 +4,8 @@ import com.example.chessrepertoiretrainer.core.database.dao.PuzzleDao
 import com.example.chessrepertoiretrainer.core.database.dao.RepertoireOpeningDao
 import com.example.chessrepertoiretrainer.core.database.entity.Puzzle
 import com.example.chessrepertoiretrainer.core.database.entity.RepertoireOpening
-import com.example.chessrepertoiretrainer.core.network.puzzles.LichessPuzzleService
 import com.example.chessrepertoiretrainer.core.network.puzzles.LichessOpeningPuzzleService
+import com.example.chessrepertoiretrainer.core.network.puzzles.LichessPuzzleService
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
 import java.time.LocalDate
 
@@ -65,6 +65,9 @@ class DefaultPuzzleRepository(
 
     override suspend fun getUnsolvedPuzzlesForFamilies(families: List<String>): List<Puzzle> =
         families.flatMap { puzzleDao.getUnsolvedByFamily(it) }
+
+    override suspend fun getNextUnsolvedPuzzleForFamilies(families: List<String>): Puzzle? =
+        puzzleDao.getNextUnsolvedByFamilies(families)
 
     override suspend fun countUnsolvedForFamily(family: String): Int =
         puzzleDao.countUnsolvedByFamily(family)

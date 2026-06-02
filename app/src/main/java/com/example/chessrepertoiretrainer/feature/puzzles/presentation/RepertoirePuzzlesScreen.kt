@@ -32,13 +32,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chessrepertoiretrainer.core.database.entity.RepertoireOpening
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RepertoirePuzzlesScreen(
     viewModel: RepertoirePuzzlesViewModel,
     onBackClick: () -> Unit,
-    onStartSession: (List<String>) -> Unit,
+    onStartSession: (List<RepertoireOpening>) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedCount = uiState.openings.count { it.isSelected }
@@ -75,14 +76,14 @@ fun RepertoirePuzzlesScreen(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Button(
-                        onClick = { onStartSession(viewModel.selectedFamilies()) },
-                        enabled = selectedCount > 0 && unsolvedInSelection > 0,
+                        onClick = { onStartSession(viewModel.selectedOpenings()) },
+                        enabled = selectedCount > 0,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         if (selectedCount == 0) {
                             Text("Select openings to train")
                         } else if (unsolvedInSelection == 0) {
-                            Text("No unsolved puzzles in selection")
+                            Text("Train selected (fetching puzzles…)")
                         } else {
                             Text("Train selected ($unsolvedInSelection puzzle${if (unsolvedInSelection != 1) "s" else ""})")
                         }

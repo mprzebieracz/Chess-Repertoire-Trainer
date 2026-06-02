@@ -29,17 +29,14 @@ fun OpeningPuzzleSessionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    if (uiState.isLoading) {
+    if (uiState.isLoading && uiState.solvedInSession == 0) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
         return
     }
 
-    val title = if (uiState.totalPuzzles > 0)
-        "Puzzle ${uiState.currentPuzzleNumber} / ${uiState.totalPuzzles}"
-    else
-        "Opening Puzzles"
+    val title = "Puzzle ${uiState.solvedInSession + 1}"
 
     ChessScreenLayout(
         chessCtrl = viewModel.chessController,
@@ -57,13 +54,13 @@ fun OpeningPuzzleSessionScreen(
                     AppIcons.Hint,
                     "Hint",
                     viewModel::showHint,
-                    enabled = !uiState.isLoading && !uiState.isSessionComplete,
+                    enabled = !uiState.isLoading && !uiState.isError,
                 )
                 BottomBarButton(
                     AppIcons.Solution,
                     "Solution",
                     viewModel::showSolution,
-                    enabled = !uiState.isLoading && !uiState.isSessionComplete,
+                    enabled = !uiState.isLoading && !uiState.isError,
                 )
             }
         },
@@ -79,13 +76,13 @@ private fun SessionContentBar(uiState: OpeningPuzzleSessionUiState) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         when {
-            uiState.isLoading -> Text("Loading…", style = MaterialTheme.typography.bodyMedium)
-
-            uiState.isSessionComplete -> Text(
-                text = uiState.statusMessage ?: "Session complete!",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
+            uiState.isError -> Text(
+                text = "Could not load puzzles. Check your connection.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
             )
+
+            uiState.isLoading -> Text("Loading next puzzle…", style = MaterialTheme.typography.bodyMedium)
 
             else -> {
                 uiState.currentOpeningFamily?.let {

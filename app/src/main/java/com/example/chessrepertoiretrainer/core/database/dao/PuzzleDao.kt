@@ -35,4 +35,7 @@ interface PuzzleDao {
 
     @Query("SELECT COUNT(*) FROM puzzles WHERE source = 'opening' AND openingFamily = :family AND isSolved = 0")
     suspend fun countUnsolvedByFamily(family: String): Int
+
+    @Query("SELECT * FROM puzzles WHERE source = 'opening' AND openingFamily IN (:families) AND isSolved = 0 ORDER BY RANDOM() LIMIT 1")
+    suspend fun getNextUnsolvedByFamilies(families: List<String>): Puzzle?
 }

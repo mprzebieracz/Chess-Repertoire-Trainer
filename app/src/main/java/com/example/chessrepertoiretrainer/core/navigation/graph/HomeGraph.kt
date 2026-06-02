@@ -2,6 +2,7 @@ package com.example.chessrepertoiretrainer.core.navigation.graph
 
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
@@ -40,7 +41,15 @@ fun NavGraphBuilder.homeGraph(
             viewModel = vm,
             onOpenAnalysis = { navController.navigate(Screen.Analysis.route) },
             onPlayDailyPuzzle = { navController.navigate(Screen.PuzzleTraining.route) },
-            onOpenRepertoire = { navController.navigate(Screen.RepertoireMain.route) },
+            onOpenRepertoire = {
+                navController.navigate(Screen.RepertoireMain.route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
             onOpenRepertoirePuzzles = { navController.navigate(Screen.RepertoirePuzzles.route) }
         )
     }
@@ -74,19 +83,19 @@ fun NavGraphBuilder.homeGraph(
         RepertoirePuzzlesScreen(
             viewModel = vm,
             onBackClick = { navController.popBackStack() },
-            onStartSession = { families ->
-                appContainer.navTransientStore.selectedOpeningFamilies = families
+            onStartSession = { openings ->
+                appContainer.navTransientStore.selectedOpenings = openings
                 navController.navigate(Screen.OpeningPuzzleSession.route)
             },
         )
     }
 
     composable(Screen.OpeningPuzzleSession.route) {
-        val families = remember { appContainer.navTransientStore.takeSelectedOpeningFamilies() }
+        val openings = remember { appContainer.navTransientStore.takeSelectedOpenings() }
         val vm: OpeningPuzzleSessionViewModel = viewModel(
             factory = OpeningPuzzleSessionViewModel.Factory(
                 puzzleRepository,
-                families ?: emptyList(),
+                openings ?: emptyList(),
             )
         )
         OpeningPuzzleSessionScreen(vm, onBackClick = { navController.popBackStack() })

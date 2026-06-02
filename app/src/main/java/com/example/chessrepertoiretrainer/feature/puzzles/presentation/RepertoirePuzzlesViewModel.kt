@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.chessrepertoiretrainer.core.database.entity.RepertoireOpening
 import com.example.chessrepertoiretrainer.core.opening.OpeningClassifier
+
 import com.example.chessrepertoiretrainer.core.opening.OpeningRegistry
 import com.example.chessrepertoiretrainer.feature.puzzles.PuzzleRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
@@ -23,6 +24,7 @@ class RepertoirePuzzlesViewModel(
     data class OpeningUiItem(
         val family: String,
         val eco: String?,
+        val color: String,
         val unsolvedCount: Int,
         val isSelected: Boolean = false,
     )
@@ -80,6 +82,7 @@ class RepertoirePuzzlesViewModel(
             OpeningUiItem(
                 family = o.family,
                 eco = o.eco,
+                color = o.color,
                 unsolvedCount = puzzleRepository.countUnsolvedForFamily(o.family),
             )
         }
@@ -99,6 +102,10 @@ class RepertoirePuzzlesViewModel(
 
     fun selectedFamilies(): List<String> =
         _uiState.value.openings.filter { it.isSelected }.map { it.family }
+
+    fun selectedOpenings(): List<RepertoireOpening> =
+        _uiState.value.openings.filter { it.isSelected }
+            .map { RepertoireOpening(family = it.family, eco = it.eco, color = it.color) }
 
     fun totalUnsolvedInSelection(): Int =
         _uiState.value.openings.filter { it.isSelected }.sumOf { it.unsolvedCount }
