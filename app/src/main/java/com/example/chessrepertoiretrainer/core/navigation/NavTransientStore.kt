@@ -1,5 +1,6 @@
 package com.example.chessrepertoiretrainer.core.navigation
 
+import com.example.chessrepertoiretrainer.core.database.entity.RepertoireOpening
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 import com.example.chessrepertoiretrainer.feature.openingtree.data.OpeningTree
 
@@ -32,7 +33,7 @@ class NavTransientStore {
     var pendingPuzzleId: String? = null
 
     @Volatile
-    var selectedOpeningFamilies: List<String>? = null
+    var selectedOpenings: List<RepertoireOpening>? = null
 
     fun takeOpeningTree(): OpeningTree? = openingTree.also { openingTree = null }
     fun takeSavedGame(): SavedGame? = savedGame.also { savedGame = null }
@@ -41,6 +42,6 @@ class NavTransientStore {
     fun takeExplorerStartFen(): String? = explorerStartFen.also { explorerStartFen = null }
     fun takeMasterGamePgn(): String? = masterGamePgn.also { masterGamePgn = null }
     fun takePendingPuzzleId(): String? = pendingPuzzleId.also { pendingPuzzleId = null }
-    fun takeSelectedOpeningFamilies(): List<String>? =
-        selectedOpeningFamilies.also { selectedOpeningFamilies = null }
+    fun takeSelectedOpenings(): List<RepertoireOpening>? =
+        selectedOpenings.also { selectedOpenings = null }
 }

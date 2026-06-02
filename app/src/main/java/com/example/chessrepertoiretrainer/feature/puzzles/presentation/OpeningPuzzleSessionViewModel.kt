@@ -25,9 +25,8 @@ import kotlinx.coroutines.launch
 
 data class OpeningPuzzleSessionUiState(
     val isLoading: Boolean = true,
-    val isSessionComplete: Boolean = false,
-    val currentPuzzleNumber: Int = 0,
-    val totalPuzzles: Int = 0,
+    val isError: Boolean = false,
+    val solvedInSession: Int = 0,
     val currentRating: Int? = null,
     val currentOpeningFamily: String? = null,
     val userSideLabel: String? = null,
@@ -38,7 +37,7 @@ data class OpeningPuzzleSessionUiState(
 
 class OpeningPuzzleSessionViewModel(
     private val repository: PuzzleRepository,
-    private val selectedFamilies: List<String>,
+    private val selectedOpenings: List<RepertoireOpening>,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OpeningPuzzleSessionUiState())
@@ -55,66 +54,53 @@ class OpeningPuzzleSessionViewModel(
     private val updatePuzzleAttemptsUseCase = UpdatePuzzleAttemptsUseCase(repository)
     private val checkPuzzleMoveUseCase = CheckPuzzleMoveUseCase()
 
-    private var puzzleQueue: List<Puzzle> = emptyList()
-    private var currentIndex: Int = -1
+    private val families = selectedOpenings.map { it.family }
+    private var solvedInSession = 0
     private var currentPuzzle: Puzzle? = null
     private var currentAttempts: Int = 0
 
     init {
         moveTrainer.setMoveResultListener(::handleMoveResult)
-        viewModelScope.launch { loadSession() }
+        viewModelScope.launch { loadNextPuzzle() }
     }
 
-    private suspend fun loadSession() {
-        _uiState.update { it.copy(isLoading = true) }
-        try {
-            val puzzles = repository.getUnsolvedPuzzlesForFamilies(selectedFamilies).shuffled()
-            if (puzzles.isEmpty()) {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        isSessionComplete = true,
-                        statusMessage = "No unsolved puzzles for the selected openings.",
-                    )
-                }
-                return
-            }
-            puzzleQueue = puzzles
-            startPuzzle(0)
-        } catch (_: Exception) {
-            _uiState.update { it.copy(isLoading = false, isSessionComplete = true, statusMessage = "Failed to load puzzles.") }
+    private suspend fun loadNextPuzzle() {
+        _uiState.update { it.copy(isLoading = true, lastMoveWasCorrect = null) }
+
+        var puzzle = repository.getNextUnsolvedPuzzleForFamilies(families)
+        if (puzzle == null) {
+            repository.fetchAndSaveOpeningPuzzles(selectedOpenings)
+            puzzle = repository.getNextUnsolvedPuzzleForFamilies(families)
         }
-    }
-
-    private fun startPuzzle(index: Int) {
-        if (index >= puzzleQueue.size) {
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    isSessionComplete = true,
-                    isWaitingForUserMove = false,
-                    statusMessage = "Session complete!",
-                )
-            }
+        if (puzzle == null) {
+            _uiState.update { it.copy(isLoading = false, isError = true) }
             return
         }
 
-        val puzzle = puzzleQueue[index]
-        currentIndex = index
+        // Loop to skip invalid puzzles (bad FEN/moves) rather than recursing
+        var attempts = 0
+        while (attempts < 10) {
+            attempts++
+            val sanMoves = convertUciSequenceToSan(
+                puzzle!!.fen, puzzle.moves.split(" ").filter { it.isNotBlank() }
+            )
+            if (sanMoves.isNotEmpty()) {
+                presentPuzzle(puzzle, sanMoves)
+                return
+            }
+            // Mark invalid puzzle as solved to remove it from the pool
+            markPuzzleSolvedUseCase(id = puzzle.id, attempts = 0)
+            puzzle = repository.getNextUnsolvedPuzzleForFamilies(families) ?: break
+        }
+
+        _uiState.update { it.copy(isLoading = false, isError = true) }
+    }
+
+    private fun presentPuzzle(puzzle: Puzzle, sanMoves: List<String>) {
         currentPuzzle = puzzle
         currentAttempts = puzzle.attempts
 
-        val sanMoves = convertUciSequenceToSan(
-            puzzle.fen, puzzle.moves.split(" ").filter { it.isNotBlank() }
-        )
-        if (sanMoves.isEmpty()) {
-            // Skip invalid puzzle and advance
-            startPuzzle(index + 1)
-            return
-        }
-
         val mySide = Board().apply { loadFromFen(puzzle.fen) }.sideToMove
-
         chessController.loadPositionFromFen(puzzle.fen)
         chessController.allowedMoveSide = mySide
         chessController.orientForSide(mySide)
@@ -124,9 +110,8 @@ class OpeningPuzzleSessionViewModel(
         _uiState.update {
             it.copy(
                 isLoading = false,
-                isSessionComplete = false,
-                currentPuzzleNumber = index + 1,
-                totalPuzzles = puzzleQueue.size,
+                isError = false,
+                solvedInSession = solvedInSession,
                 currentRating = puzzle.rating,
                 currentOpeningFamily = puzzle.openingFamily,
                 userSideLabel = if (mySide == Side.WHITE) "White" else "Black",
@@ -147,7 +132,6 @@ class OpeningPuzzleSessionViewModel(
                     it.copy(
                         lastMoveWasCorrect = true,
                         isWaitingForUserMove = !isComplete,
-                        statusMessage = if (isComplete) null else null,
                     )
                 }
                 if (isComplete) solveCurrent(puzzle)
@@ -170,21 +154,20 @@ class OpeningPuzzleSessionViewModel(
     }
 
     private fun solveCurrent(puzzle: Puzzle) {
+        solvedInSession++
         viewModelScope.launch {
             markPuzzleSolvedUseCase(id = puzzle.id, attempts = currentAttempts)
         }
-        maybeRefillPool(puzzle.openingFamily)
-        startPuzzle(currentIndex + 1)
+        ensurePoolFilled()
+        viewModelScope.launch { loadNextPuzzle() }
     }
 
-    private fun maybeRefillPool(family: String?) {
-        if (family.isNullOrBlank()) return
+    private fun ensurePoolFilled() {
         viewModelScope.launch {
-            val remaining = repository.countUnsolvedForFamily(family)
-            if (remaining < 3) {
-                val opening = repository.getOpeningByFamily(family)
-                    ?: RepertoireOpening(family = family)
-                repository.fetchAndSaveOpeningPuzzles(listOf(opening))
+            for (opening in selectedOpenings) {
+                if (repository.countUnsolvedForFamily(opening.family) < 3) {
+                    repository.fetchAndSaveOpeningPuzzles(listOf(opening))
+                }
             }
         }
     }
@@ -199,19 +182,20 @@ class OpeningPuzzleSessionViewModel(
             val finished = moveTrainer.playSolutionStep()
             if (finished) {
                 val puzzle = currentPuzzle ?: return@launch
+                solvedInSession++
                 markPuzzleSolvedUseCase(id = puzzle.id, attempts = currentAttempts)
-                maybeRefillPool(puzzle.openingFamily)
-                startPuzzle(currentIndex + 1)
+                ensurePoolFilled()
+                loadNextPuzzle()
             }
         }
     }
 
     class Factory(
         private val repository: PuzzleRepository,
-        private val selectedFamilies: List<String>,
+        private val selectedOpenings: List<RepertoireOpening>,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
-            OpeningPuzzleSessionViewModel(repository, selectedFamilies) as T
+            OpeningPuzzleSessionViewModel(repository, selectedOpenings) as T
     }
 }
