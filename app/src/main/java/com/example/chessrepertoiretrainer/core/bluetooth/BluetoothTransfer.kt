@@ -24,6 +24,7 @@ class BluetoothTransfer(private val context: Context) {
         // App-specific RFCOMM service UUID. Both phones must use the same one.
         val SERVICE_UUID: UUID = UUID.fromString("8b58e1f0-7d76-4c2a-9d0e-7a3f3a8f5d1b")
         private const val SERVICE_NAME = "ChessRepertoireCourseTransfer"
+        private const val MAX_PAYLOAD_SIZE = 32 * 1024 * 1024 // 32 MB ceiling
     }
 
     private val adapter: BluetoothAdapter?
@@ -55,19 +56,18 @@ class BluetoothTransfer(private val context: Context) {
     @SuppressLint("MissingPermission")
     suspend fun host(payload: ByteArray): Unit = withContext(Dispatchers.IO) {
         require(hasConnectPermission()) { "BLUETOOTH_CONNECT permission required" }
-        val a = adapter ?: error("Bluetooth not available")
-        require(a.isEnabled) { "Bluetooth is off" }
+        val bt = adapter ?: error("Bluetooth not available")
+        require(bt.isEnabled) { "Bluetooth is off" }
 
         var server: BluetoothServerSocket? = null
         var socket: BluetoothSocket? = null
         try {
-            server = a.listenUsingRfcommWithServiceRecord(SERVICE_NAME, SERVICE_UUID)
+            server = bt.listenUsingRfcommWithServiceRecord(SERVICE_NAME, SERVICE_UUID)
             socket = server.accept()
             server.close()
             server = null
             writePayload(socket, payload)
-        }
-        finally {
+        } finally {
             runCatching { socket?.close() }
             runCatching { server?.close() }
         }
@@ -76,17 +76,16 @@ class BluetoothTransfer(private val context: Context) {
     @SuppressLint("MissingPermission")
     suspend fun pull(device: BluetoothDevice): ByteArray = withContext(Dispatchers.IO) {
         require(hasConnectPermission()) { "BLUETOOTH_CONNECT permission required" }
-        val a = adapter ?: error("Bluetooth not available")
-        require(a.isEnabled) { "Bluetooth is off" }
+        val bt = adapter ?: error("Bluetooth not available")
+        require(bt.isEnabled) { "Bluetooth is off" }
 
         var socket: BluetoothSocket? = null
         try {
             socket = device.createRfcommSocketToServiceRecord(SERVICE_UUID)
-            if (a.isDiscovering) a.cancelDiscovery()
+            if (bt.isDiscovering) bt.cancelDiscovery()
             socket.connect()
             readPayload(socket)
-        }
-        finally {
+        } finally {
             runCatching { socket?.close() }
         }
     }
@@ -117,5 +116,3 @@ class BluetoothTransfer(private val context: Context) {
 
     fun newAnalysisSession() = BluetoothAnalysisSession(context)
 }
-
-private const val MAX_PAYLOAD_SIZE = 32 * 1024 * 1024 // 32 MB ceiling

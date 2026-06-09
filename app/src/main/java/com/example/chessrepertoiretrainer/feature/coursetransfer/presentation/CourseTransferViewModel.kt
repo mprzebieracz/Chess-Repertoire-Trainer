@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.coursetransfer.presentation
 
-import android.annotation.SuppressLint
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -73,7 +72,6 @@ class CourseTransferViewModel(
     fun bluetoothReady(): Boolean =
         bluetoothTransfer.isBluetoothAvailable() && bluetoothTransfer.isBluetoothEnabled()
 
-    @SuppressLint("MissingPermission")
     fun refreshPairedDevices() {
         val devices = bluetoothTransfer.pairedDevices().map {
             PairedDeviceUi(

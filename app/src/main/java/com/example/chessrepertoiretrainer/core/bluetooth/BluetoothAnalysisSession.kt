@@ -6,9 +6,12 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
@@ -36,7 +39,8 @@ class BluetoothAnalysisSession(private val context: Context) {
     val state: StateFlow<State> = _state
 
     // Emits UCI move strings received from the peer (e.g. "e2e4", "e7e8q")
-    val incomingMoves = MutableSharedFlow<String>(extraBufferCapacity = 32)
+    private val _incomingMoves = MutableSharedFlow<String>(extraBufferCapacity = 32)
+    val incomingMoves: SharedFlow<String> = _incomingMoves
 
     private var activeSocket: BluetoothSocket? = null
     private var outputStream: OutputStream? = null
@@ -46,12 +50,12 @@ class BluetoothAnalysisSession(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     suspend fun host() = withContext(Dispatchers.IO) {
-        val a = adapter ?: return@withContext
+        val bt = adapter ?: return@withContext
         _state.value = State.WaitingForPeer
         var serverSocket: BluetoothServerSocket? = null
         var socket: BluetoothSocket? = null
         try {
-            serverSocket = a.listenUsingRfcommWithServiceRecord(SESSION_NAME, SESSION_UUID)
+            serverSocket = bt.listenUsingRfcommWithServiceRecord(SESSION_NAME, SESSION_UUID)
             socket = serverSocket.accept()
             serverSocket.close()
             serverSocket = null
@@ -61,9 +65,10 @@ class BluetoothAnalysisSession(private val context: Context) {
             _state.value = State.Connected(peerName)
             readLoop(socket)
         }
-        catch (_: IOException) {
+        catch (e: CancellationException) {
+            throw e
         }
-        catch (_: Exception) {
+        catch (_: IOException) {
         }
         finally {
             _state.value = State.Idle
@@ -76,12 +81,12 @@ class BluetoothAnalysisSession(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     suspend fun connect(device: BluetoothDevice) = withContext(Dispatchers.IO) {
-        val a = adapter ?: return@withContext
+        val bt = adapter ?: return@withContext
         _state.value = State.Connecting
         var socket: BluetoothSocket? = null
         try {
             socket = device.createRfcommSocketToServiceRecord(SESSION_UUID)
-            if (a.isDiscovering) a.cancelDiscovery()
+            if (bt.isDiscovering) bt.cancelDiscovery()
             socket.connect()
             val peerName = runCatching { device.name }.getOrNull() ?: "Peer"
             activeSocket = socket
@@ -89,9 +94,10 @@ class BluetoothAnalysisSession(private val context: Context) {
             _state.value = State.Connected(peerName)
             readLoop(socket)
         }
-        catch (_: IOException) {
+        catch (e: CancellationException) {
+            throw e
         }
-        catch (_: Exception) {
+        catch (_: IOException) {
         }
         finally {
             _state.value = State.Idle
@@ -101,13 +107,13 @@ class BluetoothAnalysisSession(private val context: Context) {
         }
     }
 
-    private suspend fun readLoop(socket: BluetoothSocket) = withContext(Dispatchers.IO) {
+    private suspend fun readLoop(socket: BluetoothSocket) {
         val reader = BufferedReader(InputStreamReader(socket.inputStream, Charsets.UTF_8))
         try {
-            while (isActive) {
+            while (currentCoroutineContext().isActive) {
                 val line = reader.readLine() ?: break
                 if (line.startsWith("MOVE:")) {
-                    incomingMoves.tryEmit(line.removePrefix("MOVE:"))
+                    _incomingMoves.tryEmit(line.removePrefix("MOVE:"))
                 }
             }
         }
