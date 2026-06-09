@@ -60,9 +60,12 @@ class BluetoothAnalysisSession(private val context: Context) {
             outputStream = socket.outputStream
             _state.value = State.Connected(peerName)
             readLoop(socket)
-        } catch (_: IOException) {
-        } catch (_: Exception) {
-        } finally {
+        }
+        catch (_: IOException) {
+        }
+        catch (_: Exception) {
+        }
+        finally {
             _state.value = State.Idle
             runCatching { socket?.close() }
             runCatching { serverSocket?.close() }
@@ -85,9 +88,12 @@ class BluetoothAnalysisSession(private val context: Context) {
             outputStream = socket.outputStream
             _state.value = State.Connected(peerName)
             readLoop(socket)
-        } catch (_: IOException) {
-        } catch (_: Exception) {
-        } finally {
+        }
+        catch (_: IOException) {
+        }
+        catch (_: Exception) {
+        }
+        finally {
             _state.value = State.Idle
             runCatching { socket?.close() }
             activeSocket = null
@@ -104,7 +110,9 @@ class BluetoothAnalysisSession(private val context: Context) {
                     incomingMoves.tryEmit(line.removePrefix("MOVE:"))
                 }
             }
-        } catch (_: IOException) {}
+        }
+        catch (_: IOException) {
+        }
     }
 
     fun sendMove(uci: String) {

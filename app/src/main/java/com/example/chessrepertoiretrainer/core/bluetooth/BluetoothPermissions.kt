@@ -27,7 +27,8 @@ fun rememberBluetoothConnectPermissionLauncher(
                     Manifest.permission.BLUETOOTH_SCAN,
                 )
             )
-        } else {
+        }
+        else {
             onResult(true)
         }
     }

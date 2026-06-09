@@ -3,12 +3,10 @@ package com.example.chessrepertoiretrainer.feature.repertoire.presentation.scree
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -316,24 +314,21 @@ private fun CourseChapterActionsRow(
     ) {
         FilledTonalButton(
             onClick = { onOpenChapterLearn(chapterId) },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
-            Icon(AppIcons.Repertoire, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Learn")
+            Text("Learn", maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         FilledTonalButton(
             onClick = { onOpenChapterReview(chapterId) },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
         ) {
-            Icon(AppIcons.Engine, contentDescription = null, modifier = Modifier.size(13.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Review")
+            Text("Review", maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Button(onClick = { onOpenChapterTrain(chapterId) }, modifier = Modifier.weight(1f)) {
-            Icon(AppIcons.Train, contentDescription = null, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(4.dp))
-            Text("Train")
+        Button(
+            onClick = { onOpenChapterTrain(chapterId) },
+            modifier = Modifier.weight(1f),
+        ) {
+            Text("Train", maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
