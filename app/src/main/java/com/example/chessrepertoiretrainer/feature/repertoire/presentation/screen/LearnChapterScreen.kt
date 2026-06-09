@@ -7,8 +7,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -18,6 +20,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -43,9 +48,14 @@ fun LearnChapterScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val chessCtrl = viewModel.chessController
+    var showImageViewer by remember { mutableStateOf(false) }
 
     val isComplete = uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE
     val isChapterDone = uiState.phase == LearnChapterViewModel.LearnPhase.CHAPTER_COMPLETE
+
+    if (showImageViewer && uiState.currentLineImagePath != null) {
+        LineImageDialog(imagePath = uiState.currentLineImagePath!!, onDismiss = { showImageViewer = false })
+    }
 
     ChessScreenLayout(
         chessCtrl = chessCtrl,
@@ -67,6 +77,7 @@ fun LearnChapterScreen(
                 uiState = uiState,
                 onStartChapterTraining = onStartChapterTraining,
                 onBackClick = onBackClick,
+                onViewImage = { showImageViewer = true },
             )
         },
         bottomBar = {
@@ -111,6 +122,7 @@ private fun LearnContentArea(
     uiState: LearnChapterViewModel.LearnChapterUiState,
     onStartChapterTraining: (chapterId: Int) -> Unit,
     onBackClick: () -> Unit,
+    onViewImage: () -> Unit,
 ) {
     ContentBarScaffold {
         when {
@@ -166,6 +178,17 @@ private fun LearnContentArea(
                             },
                             style = MaterialTheme.typography.bodyMedium,
                         )
+                    }
+                    if (uiState.currentLineImagePath != null) {
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = onViewImage) {
+                            Icon(
+                                Icons.Filled.Image,
+                                contentDescription = null,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                            Text("View Image")
+                        }
                     }
                     if (uiState.phase == LearnChapterViewModel.LearnPhase.LINE_COMPLETE) {
                         Spacer(Modifier.height(8.dp))

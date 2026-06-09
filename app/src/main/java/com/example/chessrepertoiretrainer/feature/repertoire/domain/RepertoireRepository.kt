@@ -44,5 +44,6 @@ interface RepertoireRepository {
     suspend fun getAllLineMoveFens(): Map<Int, List<String>>
     suspend fun getAllLineColors(): Map<Int, String>
     suspend fun updateLineEcoCode(lineId: Int, ecoCode: String?)
+    suspend fun updateLineImagePath(lineId: Int, imagePath: String?)
 }
 

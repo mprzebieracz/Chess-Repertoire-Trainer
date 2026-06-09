@@ -48,6 +48,7 @@ class LearnChapterViewModel(
         val statusMessage: String? = null,
         val currentMoveLabel: String? = null,
         val currentMoveComment: String? = null,
+        val currentLineImagePath: String? = null,
     )
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
@@ -156,6 +157,7 @@ class LearnChapterViewModel(
                 statusMessage = if (lineNavigator.isEmpty) "This line has no moves." else null,
                 currentMoveLabel = null,
                 currentMoveComment = null,
+                currentLineImagePath = line.imagePath,
             )
         }
     }

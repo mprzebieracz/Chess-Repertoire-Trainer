@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chessrepertoiretrainer.core.bluetooth.PairedDeviceUi
 import com.example.chessrepertoiretrainer.core.bluetooth.rememberBluetoothConnectPermissionLauncher
 
 @OptIn(ExperimentalMaterial3Api::class)

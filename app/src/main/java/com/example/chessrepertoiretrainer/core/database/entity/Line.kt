@@ -28,5 +28,6 @@ data class Line(
     val timesTrained: Int = 0,
     val lastTrainedAt: Long? = null,
     val sortOrder: Int = 0,
-    val lastEcoCode: String? = null
+    val lastEcoCode: String? = null,
+    val imagePath: String? = null,
 )

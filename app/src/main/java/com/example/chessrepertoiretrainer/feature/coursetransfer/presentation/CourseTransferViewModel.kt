@@ -1,11 +1,11 @@
 package com.example.chessrepertoiretrainer.feature.coursetransfer.presentation
 
 import android.annotation.SuppressLint
-import android.bluetooth.BluetoothDevice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.chessrepertoiretrainer.core.bluetooth.BluetoothTransfer
+import com.example.chessrepertoiretrainer.core.bluetooth.PairedDeviceUi
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
 import com.example.chessrepertoiretrainer.feature.repertoire.data.transfer.RepertoireExporter
 import com.example.chessrepertoiretrainer.feature.repertoire.data.transfer.RepertoireImporter
@@ -19,12 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-data class PairedDeviceUi(
-    val name: String,
-    val address: String,
-    val device: BluetoothDevice,
-)
 
 data class IncomingPreview(
     val envelope: TransferEnvelope,

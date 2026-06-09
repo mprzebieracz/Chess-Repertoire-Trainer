@@ -1,21 +1,28 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,6 +52,11 @@ fun ReviewChapterScreen(
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
     val chessCtrl = viewModel.chessController
+    var showImageViewer by remember { mutableStateOf(false) }
+
+    if (showImageViewer && uiState.currentLineImagePath != null) {
+        LineImageDialog(imagePath = uiState.currentLineImagePath!!, onDismiss = { showImageViewer = false })
+    }
 
     ChessScreenLayout(
         chessCtrl = chessCtrl,
@@ -104,7 +116,7 @@ fun ReviewChapterScreen(
                 )
             }
         },
-        contentBar = { ReviewContentArea(uiState = uiState) },
+        contentBar = { ReviewContentArea(uiState = uiState, onViewImage = { showImageViewer = true }) },
         bottomBar = {
             if (!uiState.isLoading && !uiState.hasNoLines) {
                 ChessBottomBar {
@@ -126,7 +138,10 @@ fun ReviewChapterScreen(
 }
 
 @Composable
-private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiState) {
+private fun ReviewContentArea(
+    uiState: ReviewChapterViewModel.ReviewChapterUiState,
+    onViewImage: () -> Unit,
+) {
     ContentBarScaffold {
         when {
             uiState.isLoading -> LoadingPlaceholder("Loading chapter…")
@@ -141,7 +156,7 @@ private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiSta
                 }
                 val label = uiState.currentMoveLabel
                 val comment = uiState.currentMoveComment
-                if (!label.isNullOrBlank() || !comment.isNullOrBlank()) {
+                if (!label.isNullOrBlank() || !comment.isNullOrBlank() || uiState.currentLineImagePath != null) {
                     MoveCommentCard {
                         Text(
                             text = buildAnnotatedString {
@@ -157,6 +172,17 @@ private fun ReviewContentArea(uiState: ReviewChapterViewModel.ReviewChapterUiSta
                             },
                             style = MaterialTheme.typography.bodyMedium,
                         )
+                        if (uiState.currentLineImagePath != null) {
+                            Spacer(Modifier.height(8.dp))
+                            TextButton(onClick = onViewImage) {
+                                Icon(
+                                    Icons.Filled.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(end = 4.dp)
+                                )
+                                Text("View Image")
+                            }
+                        }
                     }
                 }
                 uiState.statusMessage?.let {

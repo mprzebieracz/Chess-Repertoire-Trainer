@@ -46,6 +46,9 @@ class LineEditorViewModel(
     val engineSearchState = engineHolder.searchState
     val engineError = engineHolder.error
 
+    private val _lineImagePath = MutableStateFlow<String?>(null)
+    val lineImagePath: StateFlow<String?> = _lineImagePath.asStateFlow()
+
     private val _editingComment = MutableStateFlow<String?>(null)
     val editingComment: StateFlow<String?> = _editingComment.asStateFlow()
 
@@ -64,6 +67,7 @@ class LineEditorViewModel(
         viewModelScope.launch {
             val line = repertoireRepository.getLineById(lineId)
             if (line != null) {
+                _lineImagePath.value = line.imagePath
                 val chapter = repertoireRepository.getChapterById(line.chapterId)
                 val repertoire =
                     chapter?.let { repertoireRepository.getRepertoireById(it.repertoireId) }
@@ -173,6 +177,13 @@ class LineEditorViewModel(
 
     fun cancelEditingComment() {
         _editingComment.value = null
+    }
+
+    fun saveImagePath(path: String?) {
+        _lineImagePath.value = path
+        viewModelScope.launch {
+            repertoireRepository.updateLineImagePath(lineId, path)
+        }
     }
 
     fun toggleEngine() = engineHolder.toggle()

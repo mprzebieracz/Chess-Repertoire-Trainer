@@ -43,7 +43,7 @@ import com.example.chessrepertoiretrainer.core.database.entity.SavedGameRepertoi
         MoveEval::class,
         LichessExplorerCache::class,
         RepertoireOpening::class,
-    ], version = 25, exportSchema = false
+    ], version = 26, exportSchema = false
 )
 abstract class ChessDatabase : RoomDatabase() {
 

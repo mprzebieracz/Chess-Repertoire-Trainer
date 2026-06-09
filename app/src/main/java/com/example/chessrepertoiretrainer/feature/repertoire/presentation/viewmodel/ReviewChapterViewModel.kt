@@ -45,6 +45,7 @@ class ReviewChapterViewModel(
         val statusMessage: String? = null,
         val currentMoveLabel: String? = null,  // e.g. "3. f4" or "3… f4"
         val currentMoveComment: String? = null,
+        val currentLineImagePath: String? = null,
     )
 
     val chapterId: Int = checkNotNull(savedStateHandle["chapterId"])
@@ -140,6 +141,7 @@ class ReviewChapterViewModel(
                 statusMessage = if (lineNavigator.isEmpty) "This line has no moves." else null,
                 currentMoveLabel = null,
                 currentMoveComment = null,
+                currentLineImagePath = line.imagePath,
             )
         }
     }

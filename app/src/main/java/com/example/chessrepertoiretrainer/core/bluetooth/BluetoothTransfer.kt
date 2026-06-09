@@ -94,6 +94,9 @@ class BluetoothTransfer(private val context: Context) {
         out.writeInt(payload.size)
         out.write(payload)
         out.flush()
+        // Wait for receiver's ACK before closing so the socket isn't torn down
+        // while the other side is still reading the buffered data.
+        socket.inputStream.read()
     }
 
     private fun readPayload(socket: BluetoothSocket): ByteArray {
@@ -104,8 +107,13 @@ class BluetoothTransfer(private val context: Context) {
         }
         val buffer = ByteArray(size)
         input.readFully(buffer)
+        // Send ACK so the sender knows it's safe to close.
+        socket.outputStream.write(0)
+        socket.outputStream.flush()
         return buffer
     }
+
+    fun newAnalysisSession() = BluetoothAnalysisSession(context)
 }
 
 private const val MAX_PAYLOAD_SIZE = 32 * 1024 * 1024 // 32 MB ceiling

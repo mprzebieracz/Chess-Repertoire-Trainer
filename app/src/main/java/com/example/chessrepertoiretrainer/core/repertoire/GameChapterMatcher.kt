@@ -61,6 +61,9 @@ class GameChapterMatcher(
         val whiteIndex = complianceAnalyzer.buildIndex(playerIsWhite = true)
         val blackIndex = complianceAnalyzer.buildIndex(playerIsWhite = false)
 
+        val matches = mutableListOf<SavedGameRepertoireMatch>()
+        val now = System.currentTimeMillis()
+
         games.forEach { game ->
             val index = if (game.isPlayerWhite) whiteIndex else blackIndex
             val sans = PGNExtractor.extractSanMovesFromPgn(game.pgn)
@@ -84,7 +87,7 @@ class GameChapterMatcher(
                 anns.take(lastInBook + 1).lastOrNull { it.chapterIdForNavigation != null }
             } else null
 
-            matchDao.upsertMatch(
+            matches.add(
                 SavedGameRepertoireMatch(
                     gameId = game.id,
                     color = if (game.isPlayerWhite) "White" else "Black",
@@ -96,9 +99,11 @@ class GameChapterMatcher(
                     playerTotalMoves = playerAnns.size,
                     playerDeviated = deviationIdx != null,
                     bookDepthPlies = (lastInBook + 1).coerceAtLeast(0),
-                    computedAt = System.currentTimeMillis()
+                    computedAt = now
                 )
             )
         }
+
+        if (matches.isNotEmpty()) matchDao.upsertMatches(matches)
     }
 }

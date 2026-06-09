@@ -1,6 +1,9 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,11 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FirstPage
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.ui.BottomBarButton
@@ -60,10 +66,28 @@ fun LineEditorScreen(
     val engineSearchState by viewModel.engineSearchState.collectAsStateWithLifecycle()
     val engineError by viewModel.engineError.collectAsStateWithLifecycle()
     val isArrowDrawingMode by viewModel.isArrowDrawingMode.collectAsStateWithLifecycle()
+    val lineImagePath by viewModel.lineImagePath.collectAsStateWithLifecycle()
     val chessCtrl = viewModel.chessController
+    val context = LocalContext.current
 
     var showExitDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showImageOptions by remember { mutableStateOf(false) }
+    var showImageViewer by remember { mutableStateOf(false) }
+    var pendingCameraPath by remember { mutableStateOf<String?>(null) }
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) pendingCameraPath?.let { viewModel.saveImagePath(it) }
+        pendingCameraPath = null
+        pendingCameraUri = null
+    }
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            val path = copyUriToLineImage(context, it, viewModel.lineId)
+            path?.let { p -> viewModel.saveImagePath(p) }
+        }
+    }
 
     BackHandler(enabled = hasChanges) { showExitDialog = true }
 
@@ -77,6 +101,13 @@ fun LineEditorScreen(
                 title = "Edit Line",
                 onBackClick = { if (hasChanges) showExitDialog = true else onBackClick() },
                 actions = {
+                    IconButton(onClick = { showImageOptions = true }) {
+                        Icon(
+                            imageVector = if (lineImagePath != null) Icons.Filled.Image else Icons.Filled.AddPhotoAlternate,
+                            contentDescription = "Line image",
+                            tint = if (lineImagePath != null) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                        )
+                    }
                     IconButton(onClick = viewModel::toggleArrowDrawingMode) {
                         Icon(
                             imageVector = Icons.Filled.Create,
@@ -182,6 +213,46 @@ fun LineEditorScreen(
             },
             dismissButton = { TextButton(onClick = { showExitDialog = false }) { Text("Stay") } },
         )
+    }
+
+    if (showImageOptions) {
+        AlertDialog(
+            onDismissRequest = { showImageOptions = false },
+            title = { Text("Line Image") },
+            text = {
+                Column {
+                    TextButton(onClick = {
+                        showImageOptions = false
+                        val file = createLineImageFile(context, viewModel.lineId)
+                        val uri = lineImageFileProviderUri(context, viewModel.lineId)
+                        pendingCameraPath = file.absolutePath
+                        pendingCameraUri = uri
+                        cameraLauncher.launch(uri)
+                    }) { Text("Take Photo") }
+                    TextButton(onClick = {
+                        showImageOptions = false
+                        galleryLauncher.launch("image/*")
+                    }) { Text("Choose from Gallery") }
+                    if (lineImagePath != null) {
+                        TextButton(onClick = {
+                            showImageOptions = false
+                            showImageViewer = true
+                        }) { Text("View Image") }
+                        TextButton(
+                            onClick = { showImageOptions = false; viewModel.saveImagePath(null) },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) { Text("Remove Image") }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showImageOptions = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showImageViewer && lineImagePath != null) {
+        LineImageDialog(imagePath = lineImagePath!!, onDismiss = { showImageViewer = false })
     }
 }
 

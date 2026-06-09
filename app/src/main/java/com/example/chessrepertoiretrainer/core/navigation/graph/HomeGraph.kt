@@ -61,7 +61,7 @@ fun NavGraphBuilder.homeGraph(
     composable(Screen.Analysis.route) {
         val startFen = remember { appContainer.navTransientStore.takeAnalysisStartFen() }
         val vm: AnalysisViewModel =
-            viewModel(factory = AnalysisViewModel.Factory(appContainer.stockfishEngine, startFen))
+            viewModel(factory = AnalysisViewModel.Factory(appContainer.stockfishEngine, appContainer.bluetoothTransfer, startFen))
         AnalysisScreen(viewModel = vm, onBackClick = { navController.popBackStack() })
     }
 

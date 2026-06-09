@@ -89,6 +89,9 @@ interface RepertoireDao {
     @Delete
     suspend fun deleteLine(line: Line)
 
+    @Query("UPDATE lines SET imagePath = :imagePath WHERE id = :lineId")
+    suspend fun updateLineImagePath(lineId: Int, imagePath: String?)
+
     @Query("SELECT * FROM lines WHERE nextReviewDate <= :currentTime")
     fun getLinesToReview(currentTime: Long): Flow<List<Line>>
 

@@ -88,4 +88,7 @@ class DefaultRepertoireRepository(private val repertoireDao: RepertoireDao) : Re
 
     override suspend fun updateLineEcoCode(lineId: Int, ecoCode: String?) =
         repertoireDao.updateLastEcoCode(lineId, ecoCode)
+
+    override suspend fun updateLineImagePath(lineId: Int, imagePath: String?) =
+        repertoireDao.updateLineImagePath(lineId, imagePath)
 }
