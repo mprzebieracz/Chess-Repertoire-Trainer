@@ -31,7 +31,11 @@ class LichessExplorerService(
     ): ExplorerResponse? = withContext(Dispatchers.IO) {
         val key = cacheKey("lichess", fen, speeds, ratings)
         val cached = cacheDao.getByKey(key)
-        if (cached != null && !isExpired(cached.fetchedAt, TTL_LICHESS_MS) && cached.jsonPayload != AUTH_SENTINEL) {
+        if (cached != null && !isExpired(
+                cached.fetchedAt,
+                TTL_LICHESS_MS
+            ) && cached.jsonPayload != AUTH_SENTINEL
+        ) {
             Log.d(TAG, "Cache hit for players FEN")
             val parsed = parseResponse(cached.jsonPayload)
             if (parsed != null) return@withContext parsed
@@ -41,21 +45,44 @@ class LichessExplorerService(
         val encodedFen = URLEncoder.encode(fen, "UTF-8").replace("+", "%20")
         val speedsParam = speeds.joinToString(",")
         val ratingsParam = ratings.joinToString(",")
-        val url = "https://explorer.lichess.org/lichess?fen=$encodedFen&speeds=$speedsParam&ratings=$ratingsParam&moves=10&recentGames=0"
+        val url =
+            "https://explorer.lichess.org/lichess?fen=$encodedFen&speeds=$speedsParam&ratings=$ratingsParam&moves=10&recentGames=0"
 
         val json = fetchRaw(url) ?: return@withContext null
         if (json == AUTH_SENTINEL) {
-            return@withContext ExplorerResponse(0, 0, 0, emptyList(), null, emptyList(), requiresAuth = true)
+            return@withContext ExplorerResponse(
+                0,
+                0,
+                0,
+                emptyList(),
+                null,
+                emptyList(),
+                requiresAuth = true
+            )
         }
         Log.d(TAG, "Players response length: ${json.length}")
-        cacheDao.upsert(LichessExplorerCache(key, fen, "lichess", speedsParam, ratingsParam, json, System.currentTimeMillis()))
+        cacheDao.upsert(
+            LichessExplorerCache(
+                key,
+                fen,
+                "lichess",
+                speedsParam,
+                ratingsParam,
+                json,
+                System.currentTimeMillis()
+            )
+        )
         parseResponse(json)
     }
 
     suspend fun getMastersStats(fen: String): ExplorerResponse? = withContext(Dispatchers.IO) {
         val key = cacheKey("masters", fen, emptyList(), emptyList())
         val cached = cacheDao.getByKey(key)
-        if (cached != null && !isExpired(cached.fetchedAt, TTL_MASTERS_MS) && cached.jsonPayload != AUTH_SENTINEL) {
+        if (cached != null && !isExpired(
+                cached.fetchedAt,
+                TTL_MASTERS_MS
+            ) && cached.jsonPayload != AUTH_SENTINEL
+        ) {
             Log.d(TAG, "Cache hit for masters FEN")
             val parsed = parseResponse(cached.jsonPayload)
             if (parsed != null) return@withContext parsed
@@ -67,16 +94,35 @@ class LichessExplorerService(
 
         val json = fetchRaw(url) ?: return@withContext null
         if (json == AUTH_SENTINEL) {
-            return@withContext ExplorerResponse(0, 0, 0, emptyList(), null, emptyList(), requiresAuth = true)
+            return@withContext ExplorerResponse(
+                0,
+                0,
+                0,
+                emptyList(),
+                null,
+                emptyList(),
+                requiresAuth = true
+            )
         }
         Log.d(TAG, "Masters response length: ${json.length}")
-        cacheDao.upsert(LichessExplorerCache(key, fen, "masters", "", "", json, System.currentTimeMillis()))
+        cacheDao.upsert(
+            LichessExplorerCache(
+                key,
+                fen,
+                "masters",
+                "",
+                "",
+                json,
+                System.currentTimeMillis()
+            )
+        )
         parseResponse(json)
     }
 
     suspend fun getMasterGamePgn(gameId: String): String? =
         withContext(Dispatchers.IO) {
-            val result = fetchRaw("https://explorer.lichess.org/masters/pgn/$gameId", acceptTextPlain = true)
+            val result =
+                fetchRaw("https://explorer.lichess.org/masters/pgn/$gameId", acceptTextPlain = true)
             if (result == AUTH_SENTINEL) null else result
         }
 
@@ -94,13 +140,16 @@ class LichessExplorerService(
                     Log.w(TAG, "HTTP 401 for $urlString — add a Lichess API token in Settings")
                     AUTH_SENTINEL
                 }
+
                 code != HttpURLConnection.HTTP_OK -> {
                     Log.w(TAG, "HTTP $code for $urlString")
                     null
                 }
+
                 else -> conn.inputStream.bufferedReader().readText()
             }
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "Fetch failed for $urlString: ${e.message}")
             null
         }
@@ -161,13 +210,19 @@ class LichessExplorerService(
                 opening = opening,
                 topGames = topGames
             )
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "Parse failed: ${e.message}")
             null
         }
     }
 
-    private fun cacheKey(db: String, fen: String, speeds: List<String>, ratings: List<Int>): String =
+    private fun cacheKey(
+        db: String,
+        fen: String,
+        speeds: List<String>,
+        ratings: List<Int>
+    ): String =
         "${db}_${fen}_${speeds.sorted().joinToString()}_${ratings.sorted().joinToString()}"
 
     private fun isExpired(fetchedAt: Long, ttl: Long): Boolean =

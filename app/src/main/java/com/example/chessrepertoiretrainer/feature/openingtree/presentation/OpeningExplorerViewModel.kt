@@ -96,8 +96,10 @@ class OpeningExplorerViewModel(
             fenHistory.add(fen)
         }
         _uiState.update {
-            it.copy(isFetching = true, moves = emptyList(), topGames = emptyList(),
-                canGoBack = fenHistory.size > 1)
+            it.copy(
+                isFetching = true, moves = emptyList(), topGames = emptyList(),
+                canGoBack = fenHistory.size > 1
+            )
         }
 
         fetchJob = viewModelScope.launch {
@@ -110,18 +112,23 @@ class OpeningExplorerViewModel(
 
                 if (response == null) {
                     _uiState.update {
-                        it.copy(isFetching = false,
+                        it.copy(
+                            isFetching = false,
                             statusMessage = "No data for this position.",
-                            canGoBack = fenHistory.size > 1)
+                            canGoBack = fenHistory.size > 1
+                        )
                     }
                     return@launch
                 }
                 if (response.requiresAuth) {
-                    val label = if (source == ExplorerSource.MASTERS) "Masters database" else "Lichess player explorer"
+                    val label =
+                        if (source == ExplorerSource.MASTERS) "Masters database" else "Lichess player explorer"
                     _uiState.update {
-                        it.copy(isFetching = false,
+                        it.copy(
+                            isFetching = false,
                             statusMessage = "$label requires a Lichess API token. This will be added in a future update.",
-                            canGoBack = fenHistory.size > 1)
+                            canGoBack = fenHistory.size > 1
+                        )
                     }
                     return@launch
                 }
@@ -162,14 +169,18 @@ class OpeningExplorerViewModel(
                     }
                     Arrow(move.from, move.to, alpha)
                 }
-            } catch (e: CancellationException) {
+            }
+            catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 android.util.Log.e("OpeningExplorerVM", "fetchForFen failed: ${e.message}", e)
                 _uiState.update {
-                    it.copy(isFetching = false,
+                    it.copy(
+                        isFetching = false,
                         statusMessage = "Error: ${e.message}",
-                        canGoBack = fenHistory.size > 1)
+                        canGoBack = fenHistory.size > 1
+                    )
                 }
             }
         }

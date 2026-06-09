@@ -44,7 +44,12 @@ interface SavedGameRepository {
     suspend fun getGameById(id: String): SavedGame?
 
     suspend fun getStatsByChapter(chapterId: Int, isWhite: Boolean?, since: Long): ChapterStatsRaw?
-    suspend fun getStatsByOpening(username: String, platform: String, since: Long): List<OpeningStatsRaw>
+    suspend fun getStatsByOpening(
+        username: String,
+        platform: String,
+        since: Long
+    ): List<OpeningStatsRaw>
+
     suspend fun getGamesWithNullEcoCode(): List<SavedGame>
     suspend fun updateEcoCode(id: String, ecoCode: String)
 }

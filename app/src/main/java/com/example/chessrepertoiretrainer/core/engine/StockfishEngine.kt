@@ -125,10 +125,12 @@ class StockfishEngine(
                 depth = 0,
                 line = if (whiteMated) "Checkmate – Black wins" else "Checkmate – White wins"
             )
-        } else {
+        }
+        else {
             EngineAnalysis(centipawns = 0, mateIn = null, depth = 0, line = "Stalemate – Draw")
         }
-    } catch (_: Exception) {
+    }
+    catch (_: Exception) {
         null
     }
 
@@ -173,7 +175,8 @@ class StockfishEngine(
             pendingForcedStop = true
             pendingNewSearch = action
             sendCommand("stop")
-        } else {
+        }
+        else {
             action()
         }
     }
@@ -195,7 +198,8 @@ class StockfishEngine(
             val w = writer ?: return
             w.write("$cmd\n")
             w.flush()
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "sendCommand failed for '$cmd': ${e.message}")
         }
     }
@@ -214,7 +218,8 @@ class StockfishEngine(
             Log.w(TAG, "Binary not executable, attempting chmod: ${binary.absolutePath}")
             try {
                 Runtime.getRuntime().exec("chmod 755 ${binary.absolutePath}").waitFor()
-            } catch (_: Exception) {
+            }
+            catch (_: Exception) {
             }
         }
 
@@ -228,7 +233,8 @@ class StockfishEngine(
                 val exitCode = p.exitValue()
                 val output = try {
                     p.inputStream.bufferedReader().readText().take(300)
-                } catch (_: Exception) {
+                }
+                catch (_: Exception) {
                     ""
                 }
                 val hint = when (exitCode) {
@@ -255,7 +261,8 @@ class StockfishEngine(
                 while (isActive) {
                     val line = try {
                         r.readLine()
-                    } catch (_: Exception) {
+                    }
+                    catch (_: Exception) {
                         break
                     } ?: break
                     Log.v(TAG, "< $line")
@@ -265,7 +272,8 @@ class StockfishEngine(
                             Log.d(TAG, "Engine ready")
                             ready.complete(Unit)
                         }
-                    } else {
+                    }
+                    else {
                         handleOutputLine(line)
                     }
                 }
@@ -287,7 +295,8 @@ class StockfishEngine(
                 return false
             }
             true
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             val msg = "Failed to start engine: ${e.message}"
             Log.e(TAG, msg, e)
             _engineError.value = msg
@@ -303,7 +312,8 @@ class StockfishEngine(
                     pendingForcedStop = false
                     pendingNewSearch?.invoke()
                     pendingNewSearch = null
-                } else {
+                }
+                else {
                     _searchState.value = EngineSearchState.COMPLETE
                 }
             }
@@ -382,7 +392,8 @@ class StockfishEngine(
                 if (board.sideToMove == Side.WHITE) moveNum++
             }
             sb.toString().trim()
-        } catch (_: Exception) {
+        }
+        catch (_: Exception) {
             uciMoves.take(5).joinToString(" ")
         }
     }

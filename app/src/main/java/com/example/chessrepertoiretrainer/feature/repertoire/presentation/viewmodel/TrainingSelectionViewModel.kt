@@ -31,7 +31,8 @@ class TrainingSelectionViewModel(private val repertoireRepository: RepertoireRep
     val chapters: StateFlow<List<Chapter>> = _selectedRepertoireId.flatMapLatest { id ->
         if (id == null) {
             flowOf(emptyList())
-        } else {
+        }
+        else {
             repertoireRepository.getChaptersForRepertoire(id)
         }
     }.stateIn(

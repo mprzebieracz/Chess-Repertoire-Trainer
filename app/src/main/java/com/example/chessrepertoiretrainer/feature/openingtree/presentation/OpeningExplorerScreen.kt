@@ -59,7 +59,10 @@ fun OpeningExplorerScreen(
                         SegmentedButton(
                             selected = uiState.source == source,
                             onClick = { viewModel.setSource(source) },
-                            shape = SegmentedButtonDefaults.itemShape(index, ExplorerSource.entries.size),
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index,
+                                ExplorerSource.entries.size
+                            ),
                             label = {
                                 Text(
                                     text = if (source == ExplorerSource.LICHESS_PLAYERS) "Players" else "Masters",
@@ -81,8 +84,10 @@ fun OpeningExplorerScreen(
                 Spacer(modifier = Modifier.size(8.dp))
 
                 uiState.statusMessage?.let { msg ->
-                    Text(msg, style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        msg, style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     Spacer(modifier = Modifier.size(4.dp))
                 }
 
@@ -105,7 +110,10 @@ fun OpeningExplorerScreen(
                                 Spacer(modifier = Modifier.size(8.dp))
                                 HorizontalDivider()
                                 Spacer(modifier = Modifier.size(8.dp))
-                                Text("Top master games", style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    "Top master games",
+                                    style = MaterialTheme.typography.titleSmall
+                                )
                                 Spacer(modifier = Modifier.size(4.dp))
                             }
                             items(uiState.topGames) { game ->
@@ -115,7 +123,8 @@ fun OpeningExplorerScreen(
                             }
                         }
                     }
-                } else if (!uiState.isFetching) {
+                }
+                else if (!uiState.isFetching) {
                     Text(
                         "No moves found for this position.",
                         style = MaterialTheme.typography.bodySmall,
@@ -126,7 +135,12 @@ fun OpeningExplorerScreen(
         },
         bottomBar = {
             ChessBottomBar {
-                BottomBarButton(AppIcons.Back, "Back", { viewModel.onGoBack() }, enabled = uiState.canGoBack)
+                BottomBarButton(
+                    AppIcons.Back,
+                    "Back",
+                    { viewModel.onGoBack() },
+                    enabled = uiState.canGoBack
+                )
                 BottomBarButton(AppIcons.Home, "Root", { viewModel.onGoRoot() })
             }
         }
@@ -136,11 +150,15 @@ fun OpeningExplorerScreen(
 @Composable
 private fun ExplorerMoveCard(move: OpeningTreeMoveUi, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -156,11 +174,15 @@ private fun ExplorerMoveCard(move: OpeningTreeMoveUi, onClick: () -> Unit) {
 @Composable
 private fun MasterGameCard(game: MasterGameEntry, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -170,11 +192,15 @@ private fun MasterGameCard(game: MasterGameEntry, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold
                 )
-                Text(game.year.toString(), style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    game.year.toString(), style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             Text(
-                text = when (game.winner) { "white" -> "1-0"; "black" -> "0-1"; else -> "½-½" },
+                text = when (game.winner) {
+                    "white" -> "1-0"; "black" -> "0-1"; else -> "½-½"
+                },
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.SemiBold
             )

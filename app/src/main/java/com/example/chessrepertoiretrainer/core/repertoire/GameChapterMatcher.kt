@@ -38,7 +38,8 @@ class GameChapterMatcher(
 
         val deepestAnnotation = if (lastInBook >= 0) {
             anns.take(lastInBook + 1).lastOrNull { it.chapterIdForNavigation != null }
-        } else null
+        }
+        else null
 
         matchDao.upsertMatch(
             SavedGameRepertoireMatch(
@@ -85,7 +86,8 @@ class GameChapterMatcher(
             }
             val deepestAnnotation = if (lastInBook >= 0) {
                 anns.take(lastInBook + 1).lastOrNull { it.chapterIdForNavigation != null }
-            } else null
+            }
+            else null
 
             matches.add(
                 SavedGameRepertoireMatch(

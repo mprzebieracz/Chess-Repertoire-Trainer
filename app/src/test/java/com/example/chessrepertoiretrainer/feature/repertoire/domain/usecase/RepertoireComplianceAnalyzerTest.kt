@@ -2,16 +2,18 @@ package com.example.chessrepertoiretrainer.feature.repertoire.domain.usecase
 
 import com.example.chessrepertoiretrainer.core.chess.domain.moveFromSan
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.ComplianceStatus
-import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
 import com.github.bhlangonijr.chesslib.Board
 import io.mockk.mockk
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RepertoireComplianceAnalyzerTest {
 
     // DAO deps are only used by buildIndex/rebuildIndex — not by annotate()
-    private val analyzer = RepertoireComplianceAnalyzer(mockk(relaxed = true), mockk(relaxed = true))
+    private val analyzer =
+        RepertoireComplianceAnalyzer(mockk(relaxed = true), mockk(relaxed = true))
 
     // Mirrors the private normalizeFen in the analyzer: keeps first 3 FEN fields
     private fun normFen(fen: String) = fen.split(" ").take(3).joinToString(" ")
@@ -23,7 +25,11 @@ class RepertoireComplianceAnalyzerTest {
     }
 
     // Builds an index with all positions after each prefix of the given SAN sequence
-    private fun indexFrom(chapterId: Int = 1, lineId: Int = 1, vararg sans: String): ComplianceIndex {
+    private fun indexFrom(
+        chapterId: Int = 1,
+        lineId: Int = 1,
+        vararg sans: String
+    ): ComplianceIndex {
         val map = mutableMapOf<String, Pair<Int, Int>>()
         for (i in 1..sans.size) {
             map[fenAfterMoves(*sans.take(i).toTypedArray())] = Pair(chapterId, lineId)
@@ -46,7 +52,8 @@ class RepertoireComplianceAnalyzerTest {
     @Test
     fun `all moves in book - player IN_BOOK, opponent OPPONENT_IN_BOOK`() {
         val index = indexFrom(sans = arrayOf("e4", "e5", "Nf3", "Nc6"))
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3", "Nc6"), isPlayerWhite = true, index = index)
+        val annotations =
+            analyzer.annotate(listOf("e4", "e5", "Nf3", "Nc6"), isPlayerWhite = true, index = index)
         assertEquals(4, annotations.size)
         assertEquals(ComplianceStatus.IN_BOOK, annotations[0].status)          // e4 (White)
         assertEquals(ComplianceStatus.OPPONENT_IN_BOOK, annotations[1].status) // e5 (Black)
@@ -58,10 +65,14 @@ class RepertoireComplianceAnalyzerTest {
     fun `player deviates at third move - DEVIATION then OUT_OF_BOOK`() {
         // Index has e4, e5 but not Nf3
         val index = indexFrom(sans = arrayOf("e4", "e5"))
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3", "Nc6"), isPlayerWhite = true, index = index)
+        val annotations =
+            analyzer.annotate(listOf("e4", "e5", "Nf3", "Nc6"), isPlayerWhite = true, index = index)
         assertEquals(ComplianceStatus.IN_BOOK, annotations[0].status)          // e4
         assertEquals(ComplianceStatus.OPPONENT_IN_BOOK, annotations[1].status) // e5
-        assertEquals(ComplianceStatus.DEVIATION, annotations[2].status)        // Nf3 — first off-book
+        assertEquals(
+            ComplianceStatus.DEVIATION,
+            annotations[2].status
+        )        // Nf3 — first off-book
         assertEquals(ComplianceStatus.OUT_OF_BOOK, annotations[3].status)      // Nc6
     }
 
@@ -70,7 +81,8 @@ class RepertoireComplianceAnalyzerTest {
         val chapterId = 7
         val lineId = 42
         val index = indexFrom(chapterId = chapterId, lineId = lineId, sans = arrayOf("e4", "e5"))
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = index)
+        val annotations =
+            analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = index)
         val dev = annotations[2]
         assertEquals(ComplianceStatus.DEVIATION, dev.status)
         assertEquals(chapterId, dev.chapterIdForNavigation)
@@ -80,7 +92,8 @@ class RepertoireComplianceAnalyzerTest {
     @Test
     fun `OUT_OF_BOOK moves have null navTarget`() {
         val index = indexFrom(sans = arrayOf("e4", "e5"))
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3", "Nc6"), isPlayerWhite = true, index = index)
+        val annotations =
+            analyzer.annotate(listOf("e4", "e5", "Nf3", "Nc6"), isPlayerWhite = true, index = index)
         assertNull(annotations[3].chapterIdForNavigation) // Nc6 out of book
         assertNull(annotations[3].lineIdForNavigation)
     }
@@ -89,7 +102,8 @@ class RepertoireComplianceAnalyzerTest {
     fun `opponent deviates - OPPONENT_DEVIATION then player OUT_OF_BOOK`() {
         // Only e4 in index; e5 is off-book for Black
         val index = indexFrom(sans = arrayOf("e4"))
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = index)
+        val annotations =
+            analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = index)
         assertEquals(ComplianceStatus.IN_BOOK, annotations[0].status)             // e4
         assertEquals(ComplianceStatus.OPPONENT_DEVIATION, annotations[1].status)  // e5
         assertEquals(ComplianceStatus.OUT_OF_BOOK, annotations[2].status)         // Nf3
@@ -108,20 +122,40 @@ class RepertoireComplianceAnalyzerTest {
     @Test
     fun `player is Black - odd indices are player moves`() {
         val index = indexFrom(sans = arrayOf("e4", "e5", "Nf3", "Nc6"))
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3", "Nc6"), isPlayerWhite = false, index = index)
-        assertEquals(ComplianceStatus.OPPONENT_IN_BOOK, annotations[0].status) // e4 (White = opponent)
-        assertEquals(ComplianceStatus.IN_BOOK, annotations[1].status)          // e5 (Black = player)
-        assertEquals(ComplianceStatus.OPPONENT_IN_BOOK, annotations[2].status) // Nf3 (White = opponent)
-        assertEquals(ComplianceStatus.IN_BOOK, annotations[3].status)          // Nc6 (Black = player)
+        val annotations = analyzer.annotate(
+            listOf("e4", "e5", "Nf3", "Nc6"),
+            isPlayerWhite = false,
+            index = index
+        )
+        assertEquals(
+            ComplianceStatus.OPPONENT_IN_BOOK,
+            annotations[0].status
+        ) // e4 (White = opponent)
+        assertEquals(
+            ComplianceStatus.IN_BOOK,
+            annotations[1].status
+        )          // e5 (Black = player)
+        assertEquals(
+            ComplianceStatus.OPPONENT_IN_BOOK,
+            annotations[2].status
+        ) // Nf3 (White = opponent)
+        assertEquals(
+            ComplianceStatus.IN_BOOK,
+            annotations[3].status
+        )          // Nc6 (Black = player)
     }
 
     @Test
     fun `player is Black and deviates - correct DEVIATION status`() {
         // Index has e4, e5; Black plays c5 instead
         val index = indexFrom(sans = arrayOf("e4", "e5"))
-        val annotations = analyzer.annotate(listOf("e4", "c5"), isPlayerWhite = false, index = index)
+        val annotations =
+            analyzer.annotate(listOf("e4", "c5"), isPlayerWhite = false, index = index)
         assertEquals(ComplianceStatus.OPPONENT_IN_BOOK, annotations[0].status) // e4
-        assertEquals(ComplianceStatus.DEVIATION, annotations[1].status)        // c5 (Black deviation)
+        assertEquals(
+            ComplianceStatus.DEVIATION,
+            annotations[1].status
+        )        // c5 (Black deviation)
     }
 
     // ---- annotate: transposition back into book ----
@@ -141,10 +175,14 @@ class RepertoireComplianceAnalyzerTest {
         index[fenAfterMoves("e4")] = Pair(1, 1)
         index[fenAfterNf3] = Pair(1, 1)  // reachable via transposition
 
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = index)
+        val annotations =
+            analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = index)
         assertEquals(ComplianceStatus.IN_BOOK, annotations[0].status)            // e4
         assertEquals(ComplianceStatus.OPPONENT_DEVIATION, annotations[1].status)  // e5
-        assertEquals(ComplianceStatus.IN_BOOK, annotations[2].status)             // Nf3 — transposition
+        assertEquals(
+            ComplianceStatus.IN_BOOK,
+            annotations[2].status
+        )             // Nf3 — transposition
     }
 
     // ---- annotate: edge cases ----
@@ -157,7 +195,8 @@ class RepertoireComplianceAnalyzerTest {
 
     @Test
     fun `empty index - first player move is DEVIATION, rest OUT_OF_BOOK`() {
-        val annotations = analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = emptyMap())
+        val annotations =
+            analyzer.annotate(listOf("e4", "e5", "Nf3"), isPlayerWhite = true, index = emptyMap())
         assertEquals(ComplianceStatus.DEVIATION, annotations[0].status)
         // hasDeviated is already true after e4, so e5 and Nf3 are OUT_OF_BOOK (not OPPONENT_DEVIATION)
         assertEquals(ComplianceStatus.OUT_OF_BOOK, annotations[1].status)

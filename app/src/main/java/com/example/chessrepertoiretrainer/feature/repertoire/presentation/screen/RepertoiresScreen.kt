@@ -82,7 +82,8 @@ fun RepertoiresScreen(
             ) {
                 Text("No courses yet. Tap + to add one.")
             }
-        } else {
+        }
+        else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -133,7 +134,8 @@ private fun RepertoiresTopBar(
                         )
                         Text("Rebuilding…")
                     }
-                } else {
+                }
+                else {
                     Text("Rebuild Compliance Index")
                 }
             }, onClick = {
@@ -185,7 +187,8 @@ private fun RepertoireCardContent(course: CourseProgress, modifier: Modifier = M
                     .fillMaxWidth()
                     .padding(top = 4.dp)
             )
-        } else {
+        }
+        else {
             Text(text = "No lines yet", style = MaterialTheme.typography.bodySmall)
         }
     }

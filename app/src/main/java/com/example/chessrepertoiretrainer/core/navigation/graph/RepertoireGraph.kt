@@ -12,6 +12,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.chessrepertoiretrainer.app.AppContainer
 import com.example.chessrepertoiretrainer.core.navigation.Screen
+import com.example.chessrepertoiretrainer.feature.coursetransfer.presentation.CourseTransferScreen
+import com.example.chessrepertoiretrainer.feature.coursetransfer.presentation.CourseTransferViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.usecase.RepertoireComplianceAnalyzer
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen.CourseOverviewScreen
@@ -29,8 +31,6 @@ import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmo
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.LineEditorViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.RepertoiresViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.ReviewChapterViewModel
-import com.example.chessrepertoiretrainer.feature.coursetransfer.presentation.CourseTransferScreen
-import com.example.chessrepertoiretrainer.feature.coursetransfer.presentation.CourseTransferViewModel
 import com.example.chessrepertoiretrainer.feature.repertoire.presentation.viewmodel.TrainingViewModel
 
 fun NavGraphBuilder.repertoireGraph(
@@ -75,7 +75,12 @@ fun NavGraphBuilder.repertoireGraph(
         arguments = listOf(navArgument("repertoireId") { type = NavType.IntType })
     ) {
         val vm: CourseOverviewViewModel =
-            viewModel(factory = CourseOverviewViewModel.Factory(repertoireRepository, appContainer.savedGameRepository))
+            viewModel(
+                factory = CourseOverviewViewModel.Factory(
+                    repertoireRepository,
+                    appContainer.savedGameRepository
+                )
+            )
         CourseOverviewScreen(
             viewModel = vm,
             onBackClick = { navController.popBackStack() },
@@ -125,7 +130,12 @@ fun NavGraphBuilder.repertoireGraph(
         type = NavType.IntType
     })) { backStackEntry ->
         val vm: LearnChapterViewModel =
-            viewModel(factory = LearnChapterViewModel.Factory(repertoireRepository, appContainer.activityRecorder))
+            viewModel(
+                factory = LearnChapterViewModel.Factory(
+                    repertoireRepository,
+                    appContainer.activityRecorder
+                )
+            )
         val savedStateHandle = backStackEntry.savedStateHandle
         val lineTrainingFinished by savedStateHandle.getStateFlow("lineTrainingFinished", false)
             .collectAsStateWithLifecycle()

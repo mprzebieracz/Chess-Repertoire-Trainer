@@ -61,7 +61,8 @@ class RepertoiresViewModel(
             try {
                 complianceAnalyzer.rebuildIndex(playerIsWhite = true)
                 complianceAnalyzer.rebuildIndex(playerIsWhite = false)
-            } finally {
+            }
+            finally {
                 _isRebuildingIndex.value = false
             }
         }

@@ -77,7 +77,8 @@ fun OpeningStatsScreen(viewModel: OpeningStatsViewModel, onBackClick: () -> Unit
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            } else if (uiState.groups.isEmpty()) {
+            }
+            else if (uiState.groups.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         "No opening data yet.\nSync games and ensure ECO codes are populated.",
@@ -85,7 +86,8 @@ fun OpeningStatsScreen(viewModel: OpeningStatsViewModel, onBackClick: () -> Unit
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            } else {
+            }
+            else {
                 LazyColumn {
                     items(uiState.groups, key = { it.family }) { group ->
                         OpeningFamilyRow(

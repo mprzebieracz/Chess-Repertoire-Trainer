@@ -25,7 +25,7 @@ class OnDemandGameAnalyzer(
     suspend fun analyzeGame(
         game: SavedGame,
         onProgress: (analyzed: Int, total: Int) -> Unit = { _, _ -> }
-    ): List<MoveEval>? {
+    ): List<MoveEval> {
         if (moveEvalDao.hasEvalsForGame(game.id)) return moveEvalDao.getEvalsForGame(game.id)
 
         val sans = PGNExtractor.extractSanMovesFromPgn(game.pgn)
@@ -52,7 +52,8 @@ class OnDemandGameAnalyzer(
                 val cpLoss = if (prevCp != null && cp != null) {
                     if (isWhiteMove) (prevCp!! - cp).coerceAtLeast(0)
                     else (cp - prevCp!!).coerceAtLeast(0)
-                } else 0
+                }
+                else 0
 
                 results.add(
                     MoveEval(
@@ -67,7 +68,8 @@ class OnDemandGameAnalyzer(
                 )
                 prevCp = cp
             }
-        } finally {
+        }
+        finally {
             engine.disable()
         }
 

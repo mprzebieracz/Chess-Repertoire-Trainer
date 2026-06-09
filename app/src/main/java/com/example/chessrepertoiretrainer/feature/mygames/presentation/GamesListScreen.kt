@@ -82,7 +82,8 @@ fun GamesListScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No games found", style = MaterialTheme.typography.bodyMedium)
                 }
-            } else {
+            }
+            else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(games) { game ->
                         GameListCard(game = game, onClick = { onOpenGame(game) })
@@ -109,7 +110,7 @@ private fun FilterPanel(
         else if (filter.isPlayerWhite == false) add("Black")
         filter.timeCategories.forEach { add(it.replaceFirstChar { c -> c.uppercase() }) }
         filter.selectedResults.forEach { add(it.replaceFirstChar { c -> c.uppercase() }) }
-                if (filter.ratedOnly) add("Rated")
+        if (filter.ratedOnly) add("Rated")
     }.joinToString(" · ")
 
     Column {

@@ -67,7 +67,8 @@ class BluetoothTransfer(private val context: Context) {
             server.close()
             server = null
             writePayload(socket, payload)
-        } finally {
+        }
+        finally {
             runCatching { socket?.close() }
             runCatching { server?.close() }
         }
@@ -85,7 +86,8 @@ class BluetoothTransfer(private val context: Context) {
             if (bt.isDiscovering) bt.cancelDiscovery()
             socket.connect()
             readPayload(socket)
-        } finally {
+        }
+        finally {
             runCatching { socket?.close() }
         }
     }

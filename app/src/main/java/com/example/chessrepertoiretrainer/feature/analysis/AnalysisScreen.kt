@@ -75,7 +75,9 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
                 title = "Analysis",
                 onBackClick = onBackClick,
                 actions = {
-                    BluetoothButton(state = bluetoothState, onClick = { showBluetoothDialog = true })
+                    BluetoothButton(
+                        state = bluetoothState,
+                        onClick = { showBluetoothDialog = true })
                     engineAnalysis?.depth?.let { depth ->
                         if (isEngineEnabled) DeeperButton(
                             searchState = engineSearchState,
@@ -152,6 +154,7 @@ private fun BluetoothButton(state: BluetoothAnalysisSession.State, onClick: () -
         is BluetoothAnalysisSession.State.Connected -> MaterialTheme.colorScheme.primary
         is BluetoothAnalysisSession.State.WaitingForPeer,
         is BluetoothAnalysisSession.State.Connecting -> MaterialTheme.colorScheme.secondary
+
         is BluetoothAnalysisSession.State.Idle -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
     }
     IconButton(onClick = onClick) {
@@ -190,7 +193,8 @@ private fun BluetoothSessionDialog(
         is BluetoothAnalysisSession.State.WaitingForPeer,
         is BluetoothAnalysisSession.State.Connecting -> {
             val message = if (sessionState is BluetoothAnalysisSession.State.WaitingForPeer)
-                "Waiting for peer to connect…" else "Connecting…"
+                "Waiting for peer to connect…"
+            else "Connecting…"
             AlertDialog(
                 onDismissRequest = onDismiss,
                 title = { Text("Bluetooth Analysis") },
@@ -236,6 +240,7 @@ private fun BluetoothSessionDialog(
                                     Text("Start Hosting")
                                 }
                             }
+
                             1 -> Column {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -253,7 +258,8 @@ private fun BluetoothSessionDialog(
                                         "No paired devices. Pair in system Bluetooth settings first.",
                                         style = MaterialTheme.typography.bodySmall,
                                     )
-                                } else {
+                                }
+                                else {
                                     LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
                                         items(pairedDevices, key = { it.address }) { device ->
                                             Row(

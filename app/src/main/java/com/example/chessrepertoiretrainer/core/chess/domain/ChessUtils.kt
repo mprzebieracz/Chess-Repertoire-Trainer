@@ -49,14 +49,16 @@ fun Board.toSan(move: Move): String {
         val fromFileChar = move.from.toString().lowercase()[0]
         val base = if (isCapture) "${fromFileChar}x$destination" else destination
         base + promotionSuffix
-    } else {
+    }
+    else {
         val samePieceMoves = legalMoves().filter { candidate ->
             candidate.to == move.to && getPiece(candidate.from) == piece && candidate != move
         }
 
         val disambiguation = if (samePieceMoves.isEmpty()) {
             ""
-        } else {
+        }
+        else {
             val fromFileChar = move.from.toString()[0].lowercaseChar()
             val fromRankChar = move.from.toString()[1]
             val otherSameFile =
@@ -94,7 +96,8 @@ fun Board.toSan(move: Move): String {
                 isCheck -> append("+")
             }
         }
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
         sanCore
     }
 }
@@ -128,7 +131,8 @@ fun uciToMove(uci: String, board: Board): Move? {
             else -> return null
         }
         if (promotionPiece == Piece.NONE) Move(from, to) else Move(from, to, promotionPiece)
-    } catch (_: Exception) {
+    }
+    catch (_: Exception) {
         null
     }
 }

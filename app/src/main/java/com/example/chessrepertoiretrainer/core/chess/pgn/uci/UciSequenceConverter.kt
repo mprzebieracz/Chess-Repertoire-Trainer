@@ -25,7 +25,7 @@ fun convertUciSequenceToSan(fen: String, tokens: List<String>): List<String> {
             // (chesslib's Board.doMove / isMoveLegal needs movingPiece to be non-null).
             val legalMove = workingBoard.legalMoves().find { lm ->
                 lm.from == candidate.from && lm.to == candidate.to &&
-                    (candidate.promotion == Piece.NONE || lm.promotion == candidate.promotion)
+                        (candidate.promotion == Piece.NONE || lm.promotion == candidate.promotion)
             } ?: return emptyList()
 
             val san = workingBoard.toSan(legalMove)
@@ -33,7 +33,8 @@ fun convertUciSequenceToSan(fen: String, tokens: List<String>): List<String> {
             sanMoves.add(san)
         }
         sanMoves
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
         emptyList()
     }
 }

@@ -1,6 +1,6 @@
 package com.example.chessrepertoiretrainer.core.sound
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class MoveSoundClassifierTest {

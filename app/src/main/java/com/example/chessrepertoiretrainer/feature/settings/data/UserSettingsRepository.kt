@@ -62,7 +62,8 @@ class UserSettingsRepository(private val context: Context) {
     val settingsFlow: Flow<UserSettings> = context.settingsDataStore.data.catch { exception ->
         if (exception is IOException) {
             emit(emptyPreferences())
-        } else {
+        }
+        else {
             throw exception
         }
     }.map { prefs ->

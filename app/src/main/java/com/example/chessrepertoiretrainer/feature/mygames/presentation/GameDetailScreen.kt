@@ -84,8 +84,12 @@ fun GameDetailScreen(
                         onClick = viewModel::toggleEngine
                     )
                     if (isAnalyzing) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                    } else if (moveEvals.isEmpty()) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                    else if (moveEvals.isEmpty()) {
                         IconButton(onClick = viewModel::startAnalysis) {
                             Icon(Icons.Filled.Analytics, contentDescription = "Analyze game")
                         }

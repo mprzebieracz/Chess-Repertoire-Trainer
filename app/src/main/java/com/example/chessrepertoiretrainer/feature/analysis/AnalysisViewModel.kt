@@ -79,7 +79,8 @@ class AnalysisViewModel(
                         .firstOrNull { !it.contains(".") && it.isNotBlank() }
                     val move = firstSan?.let { chessController.getBoard().findLegalMoveBySan(it) }
                     if (move != null) listOf(Arrow(move.from, move.to)) else emptyList()
-                } else emptyList()
+                }
+                else emptyList()
             }
         }
     }
@@ -93,7 +94,8 @@ class AnalysisViewModel(
         applyingRemoteMove = true
         try {
             chessController.tryApplyMove(legalMove)
-        } finally {
+        }
+        finally {
             applyingRemoteMove = false
         }
     }

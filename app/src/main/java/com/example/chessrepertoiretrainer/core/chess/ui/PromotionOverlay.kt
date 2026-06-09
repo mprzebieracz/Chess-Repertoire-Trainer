@@ -20,7 +20,8 @@ internal fun PromotionOverlay(state: ChessBoardController, board: Board) {
     val side = board.getPiece(promotion.from).pieceSide
     val options = if (side == Side.WHITE) {
         listOf(Piece.WHITE_QUEEN, Piece.WHITE_ROOK, Piece.WHITE_BISHOP, Piece.WHITE_KNIGHT)
-    } else {
+    }
+    else {
         listOf(Piece.BLACK_QUEEN, Piece.BLACK_ROOK, Piece.BLACK_BISHOP, Piece.BLACK_KNIGHT)
     }
 

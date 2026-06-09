@@ -263,7 +263,8 @@ class LearnChapterViewModel(
                         statusMessage = "You have gone through all lines in this chapter."
                     )
                 }
-            } else {
+            }
+            else {
                 startLine(nextIndex)
             }
         }
@@ -276,7 +277,11 @@ class LearnChapterViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             val savedStateHandle = extras.createSavedStateHandle()
-            return LearnChapterViewModel(repertoireRepository, activityRecorder, savedStateHandle) as T
+            return LearnChapterViewModel(
+                repertoireRepository,
+                activityRecorder,
+                savedStateHandle
+            ) as T
         }
     }
 }

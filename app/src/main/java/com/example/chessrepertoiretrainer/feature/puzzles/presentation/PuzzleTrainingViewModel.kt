@@ -67,7 +67,8 @@ class PuzzleTrainingViewModel(
 
         val puzzle = try {
             repository.getTodaysPuzzle()
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             setErrorState(e.message ?: "Error loading puzzle")
             return
         }
@@ -116,7 +117,8 @@ class PuzzleTrainingViewModel(
             val finished = moveTrainer.playSolutionStep()
             if (finished) {
                 markSolved()
-            } else {
+            }
+            else {
                 _uiState.update {
                     it.copy(statusMessage = "Solution move played.", isWaitingForUserMove = true)
                 }
@@ -130,7 +132,8 @@ class PuzzleTrainingViewModel(
         if (square != null) {
             chessController.markedSquare = square
             _uiState.update { it.copy(statusMessage = "Hint: highlighted the piece to move.") }
-        } else {
+        }
+        else {
             _uiState.update { it.copy(statusMessage = "No hint available right now.") }
         }
     }
@@ -202,7 +205,12 @@ class PuzzleTrainingViewModel(
     fun loadSpecificPuzzle(id: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, statusMessage = "Loading puzzle...") }
-            val puzzle = try { repository.getPuzzleById(id) } catch (e: Exception) { null }
+            val puzzle = try {
+                repository.getPuzzleById(id)
+            }
+            catch (e: Exception) {
+                null
+            }
                 ?: run { setErrorState("Puzzle not found"); return@launch }
             if (puzzle.fen.isBlank()) {
                 setErrorState("Puzzle data is outdated — tap refresh to re-fetch.")
@@ -211,8 +219,11 @@ class PuzzleTrainingViewModel(
             val sanMoves = convertUciSequenceToSan(
                 puzzle.fen, puzzle.moves.split(" ").filter { it.isNotBlank() }
             )
-            if (sanMoves.isEmpty()) { setErrorState("Puzzle data is invalid."); return@launch }
-            val mySide = com.github.bhlangonijr.chesslib.Board().apply { loadFromFen(puzzle.fen) }.sideToMove
+            if (sanMoves.isEmpty()) {
+                setErrorState("Puzzle data is invalid."); return@launch
+            }
+            val mySide =
+                Board().apply { loadFromFen(puzzle.fen) }.sideToMove
             chessController.loadPositionFromFen(puzzle.fen)
             chessController.allowedMoveSide = mySide
             chessController.orientForSide(mySide)
@@ -220,10 +231,17 @@ class PuzzleTrainingViewModel(
             currentAttempts = puzzle.attempts
             moveTrainer.reset(MoveTrainingEngine.Config(mySide = mySide, sanMoves = sanMoves))
             _uiState.update {
-                it.copy(isLoading = false, isSessionComplete = false, currentRating = puzzle.rating,
-                    currentThemes = puzzle.themes, userSideLabel = if (mySide == Side.WHITE) "White" else "Black",
-                    attemptsForCurrent = currentAttempts, lastMoveWasCorrect = null,
-                    isWaitingForUserMove = true, statusMessage = "Your turn")
+                it.copy(
+                    isLoading = false,
+                    isSessionComplete = false,
+                    currentRating = puzzle.rating,
+                    currentThemes = puzzle.themes,
+                    userSideLabel = if (mySide == Side.WHITE) "White" else "Black",
+                    attemptsForCurrent = currentAttempts,
+                    lastMoveWasCorrect = null,
+                    isWaitingForUserMove = true,
+                    statusMessage = "Your turn"
+                )
             }
         }
     }

@@ -76,8 +76,15 @@ class HomeViewModel(
 
         val existing = try {
             puzzleRepository.getTodaysPuzzle()
-        } catch (e: Exception) {
-            _uiState.update { it.copy(dailyPuzzleState = DailyPuzzleState.Error(e.message ?: "Unknown error")) }
+        }
+        catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    dailyPuzzleState = DailyPuzzleState.Error(
+                        e.message ?: "Unknown error"
+                    )
+                )
+            }
             return
         }
 
@@ -95,8 +102,15 @@ class HomeViewModel(
 
         val fetched = try {
             puzzleRepository.fetchAndSaveDailyPuzzle()
-        } catch (e: Exception) {
-            _uiState.update { it.copy(dailyPuzzleState = DailyPuzzleState.Error(e.message ?: "Unknown error")) }
+        }
+        catch (e: Exception) {
+            _uiState.update {
+                it.copy(
+                    dailyPuzzleState = DailyPuzzleState.Error(
+                        e.message ?: "Unknown error"
+                    )
+                )
+            }
             return
         }
 

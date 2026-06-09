@@ -51,7 +51,8 @@ object OpeningTreeBuilder {
             try {
                 board.loadFromFen(rootFen)
                 applyGameMoves(board = board, nodes = nodes, sanMoves = sanMoves, outcome = outcome)
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 Log.e("OpeningTreeBuilder", "Error processing game index=$index: ${e.message}", e)
             }
         }

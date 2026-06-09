@@ -50,6 +50,7 @@ class MoveTrainingEngine(
                         MoveResult.Correct(applied.san, raw.expectedSan, isSequenceComplete())
                     )
                 }
+
                 is RawResult.Incorrect -> {
                     chessController.loadPositionFromFen(applied.fenBefore)
                     resultListener?.invoke(
@@ -89,7 +90,8 @@ class MoveTrainingEngine(
         return if (isCorrect) {
             currentIndex++
             RawResult.Correct(expectedSan)
-        } else {
+        }
+        else {
             RawResult.Incorrect(expectedSan)
         }
     }

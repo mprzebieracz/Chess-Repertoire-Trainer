@@ -136,12 +136,14 @@ interface RepertoireDao {
     @Query("SELECT lineId, fen FROM line_moves ORDER BY lineId ASC, moveIndex ASC")
     suspend fun getAllLineMoveFens(): List<LineMoveFenRow>
 
-    @Query("""
+    @Query(
+        """
         SELECT DISTINCT l.id AS lineId, r.color
         FROM lines l
         JOIN chapters c ON c.id = l.chapterId
         JOIN repertoires r ON r.id = c.repertoireId
-    """)
+    """
+    )
     suspend fun getLineColors(): List<LineColorRow>
 
     @Query("UPDATE lines SET lastEcoCode = :ecoCode WHERE id = :lineId")

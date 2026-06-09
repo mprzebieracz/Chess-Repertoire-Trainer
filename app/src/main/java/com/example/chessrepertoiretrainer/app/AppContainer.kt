@@ -52,8 +52,10 @@ class AppContainer(context: Context) {
         RepertoireComplianceAnalyzer(repertoireDao, repertoirePositionIndexDao)
 
     val activityRecorder = ActivityRecorder(dailyActivityDao, reviewLogDao, repertoireDao)
-    val gameChapterMatcher = GameChapterMatcher(repertoireComplianceAnalyzer, savedGameRepertoireMatchDao)
-    val lichessExplorerService = LichessExplorerService(lichessExplorerCacheDao, userSettingsRepository)
+    val gameChapterMatcher =
+        GameChapterMatcher(repertoireComplianceAnalyzer, savedGameRepertoireMatchDao)
+    val lichessExplorerService =
+        LichessExplorerService(lichessExplorerCacheDao, userSettingsRepository)
     val gameSyncManager = GameSyncManager(
         gameFetcherRegistry, savedGameRepository, userSettingsRepository,
         gameChapterMatcher, activityRecorder

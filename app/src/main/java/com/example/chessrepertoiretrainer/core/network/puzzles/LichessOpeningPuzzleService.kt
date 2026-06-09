@@ -54,7 +54,8 @@ object LichessOpeningPuzzleService {
             }
             val json = conn.inputStream.bufferedReader().readText()
             parsePuzzle(json, openingFamily, sourceDate)
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "Failed to fetch opening puzzle for $openingFamily", e)
             null
         }
@@ -84,7 +85,8 @@ object LichessOpeningPuzzleService {
             val themesArray = puzzleObj.optJSONArray("themes")
             val themes = if (themesArray != null) {
                 (0 until themesArray.length()).joinToString(",") { themesArray.getString(it) }
-            } else ""
+            }
+            else ""
 
             Puzzle(
                 id = id,
@@ -98,7 +100,8 @@ object LichessOpeningPuzzleService {
                 openingFamily = openingFamily,
                 source = "opening",
             )
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "Failed to parse opening puzzle", e)
             null
         }
@@ -112,7 +115,8 @@ object LichessOpeningPuzzleService {
                 board.findLegalMoveBySan(san)?.let { board.doMove(it) } ?: return null
             }
             board.fen
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e(TAG, "Failed to derive FEN from PGN at ply $ply", e)
             null
         }

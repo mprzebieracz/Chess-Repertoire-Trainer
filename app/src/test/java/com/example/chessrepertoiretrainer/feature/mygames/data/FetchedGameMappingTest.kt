@@ -1,7 +1,9 @@
 package com.example.chessrepertoiretrainer.feature.mygames.data
 
 import com.example.chessrepertoiretrainer.core.network.games.FetchedGame
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FetchedGameMappingTest {

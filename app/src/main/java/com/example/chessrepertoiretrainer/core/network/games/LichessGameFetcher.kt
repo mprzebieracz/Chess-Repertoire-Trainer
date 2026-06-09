@@ -95,7 +95,11 @@ object LichessGameFetcher : GameFetcher {
         }
     }
 
-    internal fun parseLichessGame(jsonLine: String, username: String, ratedOnly: Boolean): FetchedGame? {
+    internal fun parseLichessGame(
+        jsonLine: String,
+        username: String,
+        ratedOnly: Boolean
+    ): FetchedGame? {
         if (jsonLine.isBlank()) return null
 
         return runCatching {

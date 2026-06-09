@@ -61,7 +61,10 @@ fun NavGraphBuilder.gamesGraph(
     composable(Screen.OpeningExplorer.route) {
         val startFen = remember { appContainer.navTransientStore.takeExplorerStartFen() }
         val vm: OpeningExplorerViewModel = viewModel(
-            factory = OpeningExplorerViewModel.Factory(appContainer.lichessExplorerService, startFen)
+            factory = OpeningExplorerViewModel.Factory(
+                appContainer.lichessExplorerService,
+                startFen
+            )
         )
         OpeningExplorerScreen(
             viewModel = vm,

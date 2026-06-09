@@ -78,7 +78,8 @@ class EditChapterViewModel(
                     pgnString = pgnString,
                     chapterId = chapterId
                 )
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _importError.value = e.message ?: "Failed to import PGN"
             }
         }

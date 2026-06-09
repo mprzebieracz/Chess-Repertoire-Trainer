@@ -12,7 +12,9 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 
@@ -44,8 +46,19 @@ class GameChapterMatcherTest {
         pgn = pgn
     )
 
-    private fun ann(status: ComplianceStatus, idx: Int, chapterId: Int? = null, lineId: Int? = null) =
-        MoveAnnotation(moveIndex = idx, status = status, playedSan = "e4", chapterIdForNavigation = chapterId, lineIdForNavigation = lineId)
+    private fun ann(
+        status: ComplianceStatus,
+        idx: Int,
+        chapterId: Int? = null,
+        lineId: Int? = null
+    ) =
+        MoveAnnotation(
+            moveIndex = idx,
+            status = status,
+            playedSan = "e4",
+            chapterIdForNavigation = chapterId,
+            lineIdForNavigation = lineId
+        )
 
     // ---- player/opponent split ----
 

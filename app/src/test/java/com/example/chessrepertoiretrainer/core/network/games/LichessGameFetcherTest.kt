@@ -1,6 +1,10 @@
 package com.example.chessrepertoiretrainer.core.network.games
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LichessGameFetcherTest {
@@ -21,7 +25,8 @@ class LichessGameFetcherTest {
         clockInitial: Long? = 600L,
         clockIncrement: Long? = 0L
     ): String {
-        val openingBlock = if (openingName != null) """"opening":{"name":"$openingName"}""" else """"opening":null"""
+        val openingBlock =
+            if (openingName != null) """"opening":{"name":"$openingName"}""" else """"opening":null"""
         val clockBlock = if (clockInitial != null)
             """"clock":{"initial":$clockInitial,"increment":${clockIncrement ?: 0}}"""
         else
@@ -43,9 +48,11 @@ class LichessGameFetcherTest {
         """.trimIndent()
     }
 
-    private fun escapeJson(s: String) = "\"${s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")}\""
+    private fun escapeJson(s: String) =
+        "\"${s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")}\""
 
-    private val SAMPLE_PGN = "[Event \"?\"]\n[White \"playerA\"]\n[Black \"playerB\"]\n[Result \"1-0\"]\n[TimeControl \"600+0\"]\n\n1. e4 e5 1-0"
+    private val SAMPLE_PGN =
+        "[Event \"?\"]\n[White \"playerA\"]\n[Black \"playerB\"]\n[Result \"1-0\"]\n[TimeControl \"600+0\"]\n\n1. e4 e5 1-0"
 
     // ---- parseLichessGame: basic parsing ----
 
@@ -57,7 +64,11 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame uses id field as platformGameId`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(id = "xyz999"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(id = "xyz999"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("xyz999", result.platformGameId)
     }
 
@@ -75,13 +86,21 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame opponent is black player when user is white`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(blackUser = "opponent123"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(blackUser = "opponent123"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("opponent123", result.opponentName)
     }
 
     @Test
     fun `parseLichessGame opponent is white player when user is black`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(whiteUser = "opponent123"), "playerB", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(whiteUser = "opponent123"),
+            "playerB",
+            ratedOnly = false
+        )!!
         assertEquals("opponent123", result.opponentName)
     }
 
@@ -93,28 +112,48 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame extracts rated flag`() {
-        val rated = LichessGameFetcher.parseLichessGame(gameJson(rated = true), "playerA", ratedOnly = false)!!
+        val rated = LichessGameFetcher.parseLichessGame(
+            gameJson(rated = true),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertTrue(rated.rated)
 
-        val unrated = LichessGameFetcher.parseLichessGame(gameJson(rated = false), "playerA", ratedOnly = false)!!
+        val unrated = LichessGameFetcher.parseLichessGame(
+            gameJson(rated = false),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertFalse(unrated.rated)
     }
 
     @Test
     fun `parseLichessGame extracts lastMoveAt as playedAt`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(lastMoveAt = 1_700_000_000_000L), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(lastMoveAt = 1_700_000_000_000L),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals(1_700_000_000_000L, result.playedAt)
     }
 
     @Test
     fun `parseLichessGame extracts opening name`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(openingName = "Sicilian Defense"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(openingName = "Sicilian Defense"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("Sicilian Defense", result.opening)
     }
 
     @Test
     fun `parseLichessGame null opening returns null opening field`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(openingName = null), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(openingName = null),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertNull(result.opening)
     }
 
@@ -122,14 +161,22 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame playerRating is white rating when user is white`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(whiteRating = 1750, blackRating = 1800), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(whiteRating = 1750, blackRating = 1800),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals(1750, result.playerRating)
         assertEquals(1800, result.opponentRating)
     }
 
     @Test
     fun `parseLichessGame playerRating is black rating when user is black`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(whiteRating = 1750, blackRating = 1800), "playerB", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(whiteRating = 1750, blackRating = 1800),
+            "playerB",
+            ratedOnly = false
+        )!!
         assertEquals(1800, result.playerRating)
         assertEquals(1750, result.opponentRating)
     }
@@ -144,7 +191,8 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame time control from clock when no PGN TimeControl header`() {
-        val pgn = "[Event \"?\"]\n[White \"playerA\"]\n[Black \"playerB\"]\n[Result \"1-0\"]\n\n1. e4 1-0"
+        val pgn =
+            "[Event \"?\"]\n[White \"playerA\"]\n[Black \"playerB\"]\n[Result \"1-0\"]\n\n1. e4 1-0"
         val result = LichessGameFetcher.parseLichessGame(
             gameJson(pgn = pgn, clockInitial = 300L, clockIncrement = 3L),
             "playerA",
@@ -157,43 +205,71 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame rapid speed maps to rapid category`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(speed = "rapid"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(speed = "rapid"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("rapid", result.timeCategory)
     }
 
     @Test
     fun `parseLichessGame blitz speed maps to blitz category`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(speed = "blitz"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(speed = "blitz"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("blitz", result.timeCategory)
     }
 
     @Test
     fun `parseLichessGame bullet speed maps to bullet category`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(speed = "bullet"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(speed = "bullet"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("bullet", result.timeCategory)
     }
 
     @Test
     fun `parseLichessGame ultrabullet maps to bullet category`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(speed = "ultrabullet"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(speed = "ultrabullet"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("bullet", result.timeCategory)
     }
 
     @Test
     fun `parseLichessGame classical speed maps to classical category`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(speed = "classical"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(speed = "classical"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("classical", result.timeCategory)
     }
 
     @Test
     fun `parseLichessGame correspondence maps to classical category`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(speed = "correspondence"), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(speed = "correspondence"),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertEquals("classical", result.timeCategory)
     }
 
     @Test
     fun `parseLichessGame unknown speed returns null category`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(speed = ""), "playerA", ratedOnly = false)!!
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(speed = ""),
+            "playerA",
+            ratedOnly = false
+        )!!
         assertNull(result.timeCategory)
     }
 
@@ -201,13 +277,18 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame ratedOnly=true filters out unrated game`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(rated = false), "playerA", ratedOnly = true)
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(rated = false),
+            "playerA",
+            ratedOnly = true
+        )
         assertNull(result)
     }
 
     @Test
     fun `parseLichessGame ratedOnly=true passes rated game`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(rated = true), "playerA", ratedOnly = true)
+        val result =
+            LichessGameFetcher.parseLichessGame(gameJson(rated = true), "playerA", ratedOnly = true)
         assertNotNull(result)
     }
 
@@ -221,19 +302,25 @@ class LichessGameFetcherTest {
 
     @Test
     fun `parseLichessGame user not in game returns null`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(), "unknownUser", ratedOnly = false)
+        val result =
+            LichessGameFetcher.parseLichessGame(gameJson(), "unknownUser", ratedOnly = false)
         assertNull(result)
     }
 
     @Test
     fun `parseLichessGame missing pgn returns null`() {
-        val json = """{"id":"x","rated":true,"speed":"rapid","players":{"white":{"user":{"name":"a"},"rating":1500},"black":{"user":{"name":"b"},"rating":1500}},"lastMoveAt":1000}"""
+        val json =
+            """{"id":"x","rated":true,"speed":"rapid","players":{"white":{"user":{"name":"a"},"rating":1500},"black":{"user":{"name":"b"},"rating":1500}},"lastMoveAt":1000}"""
         assertNull(LichessGameFetcher.parseLichessGame(json, "a", ratedOnly = false))
     }
 
     @Test
     fun `parseLichessGame case-insensitive username matching`() {
-        val result = LichessGameFetcher.parseLichessGame(gameJson(whiteUser = "PlayerA"), "playera", ratedOnly = false)
+        val result = LichessGameFetcher.parseLichessGame(
+            gameJson(whiteUser = "PlayerA"),
+            "playera",
+            ratedOnly = false
+        )
         assertNotNull(result)
         assertTrue(result!!.isUserWhite)
     }
@@ -284,13 +371,21 @@ class LichessGameFetcherTest {
 
     @Test
     fun `buildRequestUrl includes since when provided`() {
-        val url = LichessGameFetcher.buildRequestUrl("magnus", null, "both", "", false, 1_700_000_000_000L)
+        val url = LichessGameFetcher.buildRequestUrl(
+            "magnus",
+            null,
+            "both",
+            "",
+            false,
+            1_700_000_000_000L
+        )
         assertTrue(url.contains("since=1700000000000"))
     }
 
     @Test
     fun `buildRequestUrl includes perfType for time control filter`() {
-        val url = LichessGameFetcher.buildRequestUrl("magnus", null, "both", "rapid,blitz", false, null)
+        val url =
+            LichessGameFetcher.buildRequestUrl("magnus", null, "both", "rapid,blitz", false, null)
         assertTrue(url.contains("perfType=rapid,blitz"))
     }
 

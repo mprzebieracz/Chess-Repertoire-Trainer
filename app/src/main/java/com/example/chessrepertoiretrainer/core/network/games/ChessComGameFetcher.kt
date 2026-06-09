@@ -146,7 +146,8 @@ object ChessComGameFetcher : GameFetcher {
         val connection = openGetConnection(urlString, 15_000, 30_000)
         return if (connection.responseCode == HttpURLConnection.HTTP_OK) {
             connection.inputStream.bufferedReader().use { it.readText() }
-        } else {
+        }
+        else {
             null
         }
     }

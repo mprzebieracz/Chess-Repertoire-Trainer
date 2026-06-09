@@ -12,7 +12,8 @@ object PgnExporter {
                 "Event" to "?", "Site" to "?", "Date" to "????.??.??",
                 "Round" to "?", "White" to "?", "Black" to "?", "Result" to "*"
             )
-        } else {
+        }
+        else {
             headers
         }
 

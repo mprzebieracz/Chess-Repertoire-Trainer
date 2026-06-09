@@ -10,8 +10,10 @@ import org.junit.Test
 
 class OpeningClassifierTest {
 
-    private val e4Entry = OpeningEntry("C20", "King's Pawn Game", "normalized_fen_e4", "King's Pawn Game")
-    private val sicilianEntry = OpeningEntry("B20", "Sicilian Defense", "normalized_fen_c5", "Sicilian Defense")
+    private val e4Entry =
+        OpeningEntry("C20", "King's Pawn Game", "normalized_fen_e4", "King's Pawn Game")
+    private val sicilianEntry =
+        OpeningEntry("B20", "Sicilian Defense", "normalized_fen_c5", "Sicilian Defense")
 
     // ---- normalizeFen ----
 

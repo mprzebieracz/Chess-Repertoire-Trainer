@@ -72,7 +72,8 @@ class RepertoirePuzzlesViewModel(
                 val refreshed = puzzleRepository.getRepertoireOpenings()
                 _uiState.update { it.copy(openings = preserveSelections(buildItems(refreshed))) }
             }
-        } finally {
+        }
+        finally {
             _uiState.update { it.copy(isScanning = false) }
         }
     }
@@ -88,7 +89,8 @@ class RepertoirePuzzlesViewModel(
         }
 
     private fun preserveSelections(newItems: List<OpeningUiItem>): List<OpeningUiItem> {
-        val selectedFamilies = _uiState.value.openings.filter { it.isSelected }.map { it.family }.toSet()
+        val selectedFamilies =
+            _uiState.value.openings.filter { it.isSelected }.map { it.family }.toSet()
         return newItems.map { it.copy(isSelected = it.family in selectedFamilies) }
     }
 

@@ -93,7 +93,8 @@ private fun OpeningTreeMovesPanel(uiState: OpeningTreeUiState, onMoveSelected: (
                     OpeningTreeMoveCard(move = move) { onMoveSelected(move.moveSan) }
                 }
             }
-        } else {
+        }
+        else {
             Text("No further moves from this position.", style = MaterialTheme.typography.bodySmall)
         }
     }

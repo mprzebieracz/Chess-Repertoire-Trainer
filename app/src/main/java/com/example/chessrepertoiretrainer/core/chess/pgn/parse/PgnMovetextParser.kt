@@ -26,14 +26,17 @@ class PgnMovetextParser {
                 val last = current.last()
                 val combined = if (last.comment.isNullOrEmpty()) {
                     textComment
-                } else {
+                }
+                else {
                     last.comment + "\n" + textComment
                 }
                 current[current.lastIndex] = last.copy(comment = combined)
-            } else {
+            }
+            else {
                 pendingCommentForNext = if (pendingCommentForNext == null) {
                     textComment
-                } else {
+                }
+                else {
                     pendingCommentForNext + "\n" + textComment
                 }
             }
@@ -70,7 +73,8 @@ class PgnMovetextParser {
                 c == '(' -> {
                     val parentForVariation = if (current.isNotEmpty()) {
                         current.dropLast(1)
-                    } else {
+                    }
+                    else {
                         current
                     }
 

@@ -22,7 +22,8 @@ class RepertoireComplianceAnalyzer(
         val color = colorFor(playerIsWhite)
         if (indexDao.countForColor(color) == 0) {
             rebuildIndex(playerIsWhite)
-        } else {
+        }
+        else {
             indexDao.getForColor(color)
                 .associate { it.normalizedFen to Pair(it.chapterId, it.lineId) }
         }
@@ -80,12 +81,14 @@ class RepertoireComplianceAnalyzer(
                     if (isPlayerTurn) ComplianceStatus.IN_BOOK else ComplianceStatus.OPPONENT_IN_BOOK
                 navTarget = navInfo
                 lastNavInfo = navInfo
-            } else if (!hasDeviated) {
+            }
+            else if (!hasDeviated) {
                 hasDeviated = true
                 status =
                     if (isPlayerTurn) ComplianceStatus.DEVIATION else ComplianceStatus.OPPONENT_DEVIATION
                 navTarget = if (isPlayerTurn) lastNavInfo else null
-            } else {
+            }
+            else {
                 status = ComplianceStatus.OUT_OF_BOOK
                 navTarget = null
             }

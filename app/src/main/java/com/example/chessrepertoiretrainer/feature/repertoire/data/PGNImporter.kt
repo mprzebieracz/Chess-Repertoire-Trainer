@@ -53,7 +53,8 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                     nextLineNumber += insertedForGame
                 }
 
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 Log.e("PgnImporter", "PGN import error: ${e.message}", e)
             }
         }
@@ -120,7 +121,8 @@ class PgnImporter(private val repertoireDao: RepertoireDao) {
                 if (match != null) {
                     headerMap[match.groupValues[1]] = match.groupValues[2]
                 }
-            } else {
+            }
+            else {
                 inHeaderSection = false
                 if (bodyBuilder.isNotEmpty()) {
                     bodyBuilder.append('\n')

@@ -57,7 +57,8 @@ class TreeGameNavigator(val initialFen: String = STARTING_FEN) : GameNavigator {
     }
 
     override fun goNext(): Boolean {
-        val childrenIds = if (currentId == null) rootChildIds else nodesMap[currentId]?.children ?: return false
+        val childrenIds =
+            if (currentId == null) rootChildIds else nodesMap[currentId]?.children ?: return false
         val firstChild = childrenIds.firstOrNull() ?: return false
         val node = nodesMap[firstChild] ?: return false
         currentId = firstChild
@@ -85,7 +86,8 @@ class TreeGameNavigator(val initialFen: String = STARTING_FEN) : GameNavigator {
 
     override fun onUserMove(applied: AppliedMove): UserMoveResult {
         val parentId = currentId
-        val siblings = if (parentId == null) rootChildIds else nodesMap[parentId]?.children?.toMutableList() ?: mutableListOf()
+        val siblings = if (parentId == null) rootChildIds
+        else nodesMap[parentId]?.children?.toMutableList() ?: mutableListOf()
 
         // Re-use existing child with same SAN if one exists.
         val existing = siblings.firstOrNull { nodesMap[it]?.san == applied.san }
@@ -110,7 +112,8 @@ class TreeGameNavigator(val initialFen: String = STARTING_FEN) : GameNavigator {
 
         if (parentId == null) {
             rootChildIds.add(newId)
-        } else {
+        }
+        else {
             val parent = nodesMap[parentId]!!
             nodesMap[parentId] = parent.copy(children = parent.children + newId)
         }

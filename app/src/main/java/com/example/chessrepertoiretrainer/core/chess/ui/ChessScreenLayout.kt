@@ -42,7 +42,6 @@ import com.example.chessrepertoiretrainer.core.chess.controller.BoardAnnotations
 import com.example.chessrepertoiretrainer.core.chess.controller.ChessBoardController
 import com.example.chessrepertoiretrainer.core.chess.domain.Arrow
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.GameNavigator
-import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveNode
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveNodeId
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.MoveTree
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
@@ -235,7 +234,8 @@ fun PgnTextViewer(
     val annotated = buildAnnotatedString {
         if (tokens.isEmpty()) {
             withStyle(SpanStyle(color = dimFg)) { append("No moves yet.") }
-        } else {
+        }
+        else {
             tokens.forEach { token ->
                 when (token) {
                     is PgnToken.MoveNumber -> withStyle(SpanStyle(color = dimFg)) { append(token.text) }
@@ -255,6 +255,7 @@ fun PgnTextViewer(
                         append(token.san)
                         pop()
                     }
+
                     is PgnToken.Punctuation -> withStyle(SpanStyle(color = dimFg)) { append(token.text) }
                 }
             }
@@ -320,7 +321,8 @@ private fun appendSection(
         tokens.add(PgnToken.Punctuation(" ("))
         if (varIsWhite) {
             tokens.add(PgnToken.MoveNumber("$varMoveNum."))
-        } else {
+        }
+        else {
             tokens.add(PgnToken.MoveNumber("$varMoveNum…"))
         }
         tokens.add(PgnToken.Punctuation(" "))

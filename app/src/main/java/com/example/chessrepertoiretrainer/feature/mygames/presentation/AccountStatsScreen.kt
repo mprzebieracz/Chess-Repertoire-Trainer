@@ -91,7 +91,8 @@ fun AccountStatsScreen(
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
-            } else {
+            }
+            else {
                 val periodLabel = when (uiState.selectedTimeRange) {
                     StatsTimeRange.DAYS_7 -> "last 7 days"
                     StatsTimeRange.DAYS_30 -> "last 30 days"
@@ -172,7 +173,8 @@ private fun CategoryStatsContent(stats: CategoryStats, platform: String) {
     ) {
         if (stats.allStats.played == 0) {
             Text("No games in this period", style = MaterialTheme.typography.bodyMedium)
-        } else {
+        }
+        else {
             OverallStatsRow(stats.allStats)
             HorizontalDivider()
             ColorBreakdownTable(stats)
@@ -269,7 +271,8 @@ private fun ExtraInfoSection(stats: CategoryStats) {
                 if (!dateStr.isNullOrBlank()) {
                     Text("  ·  $dateStr", style = MaterialTheme.typography.bodySmall)
                 }
-            } else {
+            }
+            else {
                 Text("—", style = MaterialTheme.typography.bodySmall)
             }
         }

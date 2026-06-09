@@ -1,6 +1,6 @@
 package com.example.chessrepertoiretrainer.core.network.explorer
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ExplorerResponseTest {
@@ -21,7 +21,13 @@ class ExplorerResponseTest {
 
     @Test
     fun `ExplorerMove total handles large values`() {
-        val move = ExplorerMove(uci = "e2e4", san = "e4", white = 1_000_000L, draws = 500_000L, black = 800_000L)
+        val move = ExplorerMove(
+            uci = "e2e4",
+            san = "e4",
+            white = 1_000_000L,
+            draws = 500_000L,
+            black = 800_000L
+        )
         assertEquals(2_300_000L, move.total)
     }
 

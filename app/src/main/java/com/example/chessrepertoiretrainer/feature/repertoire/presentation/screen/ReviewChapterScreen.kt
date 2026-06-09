@@ -14,16 +14,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chessrepertoiretrainer.core.chess.ui.BottomBarButton
@@ -55,7 +55,9 @@ fun ReviewChapterScreen(
     var showImageViewer by remember { mutableStateOf(false) }
 
     if (showImageViewer && uiState.currentLineImagePath != null) {
-        LineImageDialog(imagePath = uiState.currentLineImagePath!!, onDismiss = { showImageViewer = false })
+        LineImageDialog(
+            imagePath = uiState.currentLineImagePath!!,
+            onDismiss = { showImageViewer = false })
     }
 
     ChessScreenLayout(
@@ -116,7 +118,11 @@ fun ReviewChapterScreen(
                 )
             }
         },
-        contentBar = { ReviewContentArea(uiState = uiState, onViewImage = { showImageViewer = true }) },
+        contentBar = {
+            ReviewContentArea(
+                uiState = uiState,
+                onViewImage = { showImageViewer = true })
+        },
         bottomBar = {
             if (!uiState.isLoading && !uiState.hasNoLines) {
                 ChessBottomBar {

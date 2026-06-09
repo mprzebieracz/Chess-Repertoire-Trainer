@@ -105,12 +105,15 @@ class CourseTransferViewModel(
                 val payload = exporter.export(ids).toByteArray(Charsets.UTF_8)
                 bluetoothTransfer.host(payload)
                 _status.value = "Sent ${ids.size} course(s)"
-            } catch (e: CancellationException) {
+            }
+            catch (e: CancellationException) {
                 _status.value = "Cancelled"
                 throw e
-            } catch (e: Throwable) {
+            }
+            catch (e: Throwable) {
                 _status.value = "Send failed: ${e.message ?: e.javaClass.simpleName}"
-            } finally {
+            }
+            finally {
                 _isHosting.value = false
             }
         }
@@ -138,12 +141,15 @@ class CourseTransferViewModel(
                 val envelope = importer.parsePreview(String(bytes, Charsets.UTF_8))
                 _incomingPreview.value = IncomingPreview(envelope, deviceUi.name)
                 _status.value = null
-            } catch (e: CancellationException) {
+            }
+            catch (e: CancellationException) {
                 _status.value = "Cancelled"
                 throw e
-            } catch (e: Throwable) {
+            }
+            catch (e: Throwable) {
                 _status.value = "Receive failed: ${e.message ?: e.javaClass.simpleName}"
-            } finally {
+            }
+            finally {
                 _isReceiving.value = false
             }
         }

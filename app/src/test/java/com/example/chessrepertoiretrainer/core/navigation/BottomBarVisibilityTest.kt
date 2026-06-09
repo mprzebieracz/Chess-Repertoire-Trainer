@@ -3,7 +3,8 @@ package com.example.chessrepertoiretrainer.core.navigation
 import androidx.navigation.NavDestination
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BottomBarVisibilityTest {

@@ -1,7 +1,11 @@
 package com.example.chessrepertoiretrainer.core.network.games
 
 import org.json.JSONObject
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ChessComGameFetcherTest {
@@ -10,7 +14,7 @@ class ChessComGameFetcherTest {
 
     private val SAMPLE_PGN =
         "[Event \"Live Chess\"]\n[White \"playerA\"]\n[Black \"playerB\"]\n" +
-        "[Result \"1-0\"]\n[TimeControl \"600\"]\n[Opening \"Italian Game\"]\n\n1. e4 e5 1-0"
+                "[Result \"1-0\"]\n[TimeControl \"600\"]\n[Opening \"Italian Game\"]\n\n1. e4 e5 1-0"
 
     private fun gameJson(
         uuid: String? = "uuid-abc-123",
@@ -75,13 +79,15 @@ class ChessComGameFetcherTest {
 
     @Test
     fun `parseChessComGame opponent is black player when user is white`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(blackUser = "enemy99"), "playerA")!!
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(blackUser = "enemy99"), "playerA")!!
         assertEquals("enemy99", result.opponentName)
     }
 
     @Test
     fun `parseChessComGame opponent is white player when user is black`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(whiteUser = "enemy99"), "playerB")!!
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(whiteUser = "enemy99"), "playerB")!!
         assertEquals("enemy99", result.opponentName)
     }
 
@@ -94,12 +100,20 @@ class ChessComGameFetcherTest {
     @Test
     fun `parseChessComGame extracts rated flag`() {
         assertTrue(ChessComGameFetcher.parseChessComGame(gameJson(rated = true), "playerA")!!.rated)
-        assertFalse(ChessComGameFetcher.parseChessComGame(gameJson(rated = false), "playerA")!!.rated)
+        assertFalse(
+            ChessComGameFetcher.parseChessComGame(
+                gameJson(rated = false),
+                "playerA"
+            )!!.rated
+        )
     }
 
     @Test
     fun `parseChessComGame playedAt is end_time multiplied by 1000`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(endTimeSec = 1_700_000_000L), "playerA")!!
+        val result = ChessComGameFetcher.parseChessComGame(
+            gameJson(endTimeSec = 1_700_000_000L),
+            "playerA"
+        )!!
         assertEquals(1_700_000_000_000L, result.playedAt)
     }
 
@@ -121,14 +135,20 @@ class ChessComGameFetcherTest {
 
     @Test
     fun `parseChessComGame playerRating is white rating when user is white`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(whiteRating = 1750, blackRating = 1800), "playerA")!!
+        val result = ChessComGameFetcher.parseChessComGame(
+            gameJson(whiteRating = 1750, blackRating = 1800),
+            "playerA"
+        )!!
         assertEquals(1750, result.playerRating)
         assertEquals(1800, result.opponentRating)
     }
 
     @Test
     fun `parseChessComGame playerRating is black rating when user is black`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(whiteRating = 1750, blackRating = 1800), "playerB")!!
+        val result = ChessComGameFetcher.parseChessComGame(
+            gameJson(whiteRating = 1750, blackRating = 1800),
+            "playerB"
+        )!!
         assertEquals(1800, result.playerRating)
         assertEquals(1750, result.opponentRating)
     }
@@ -143,8 +163,12 @@ class ChessComGameFetcherTest {
 
     @Test
     fun `parseChessComGame time control falls back to json field when no PGN header`() {
-        val pgn = "[Event \"?\"]\n[White \"playerA\"]\n[Black \"playerB\"]\n[Result \"1-0\"]\n\n1. e4 1-0"
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(pgn = pgn, timeControl = "300+2"), "playerA")!!
+        val pgn =
+            "[Event \"?\"]\n[White \"playerA\"]\n[Black \"playerB\"]\n[Result \"1-0\"]\n\n1. e4 1-0"
+        val result = ChessComGameFetcher.parseChessComGame(
+            gameJson(pgn = pgn, timeControl = "300+2"),
+            "playerA"
+        )!!
         assertEquals("300+2", result.timeControl)
     }
 
@@ -152,31 +176,36 @@ class ChessComGameFetcherTest {
 
     @Test
     fun `parseChessComGame rapid time_class maps to rapid`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "rapid"), "playerA")!!
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "rapid"), "playerA")!!
         assertEquals("rapid", result.timeCategory)
     }
 
     @Test
     fun `parseChessComGame blitz time_class maps to blitz`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "blitz"), "playerA")!!
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "blitz"), "playerA")!!
         assertEquals("blitz", result.timeCategory)
     }
 
     @Test
     fun `parseChessComGame bullet time_class maps to bullet`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "bullet"), "playerA")!!
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "bullet"), "playerA")!!
         assertEquals("bullet", result.timeCategory)
     }
 
     @Test
     fun `parseChessComGame daily time_class maps to classical`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "daily"), "playerA")!!
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "daily"), "playerA")!!
         assertEquals("classical", result.timeCategory)
     }
 
     @Test
     fun `parseChessComGame unknown time_class returns null category`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "unknown"), "playerA")!!
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(timeClass = "unknown"), "playerA")!!
         assertNull(result.timeCategory)
     }
 
@@ -201,7 +230,8 @@ class ChessComGameFetcherTest {
 
     @Test
     fun `parseChessComGame case-insensitive username matching`() {
-        val result = ChessComGameFetcher.parseChessComGame(gameJson(whiteUser = "PlayerA"), "playera")
+        val result =
+            ChessComGameFetcher.parseChessComGame(gameJson(whiteUser = "PlayerA"), "playera")
         assertNotNull(result)
         assertTrue(result!!.isUserWhite)
     }

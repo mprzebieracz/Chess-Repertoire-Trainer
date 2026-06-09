@@ -105,7 +105,8 @@ fun EditCourseScreen(
                             RenamingChapterItem(chapter = chapter, onConfirm = { name ->
                                 viewModel.renameChapter(chapter, name)
                             }, onCancel = { viewModel.cancelRename() })
-                        } else {
+                        }
+                        else {
                             ListItem(
                                 modifier = Modifier.clickable { onNavigateToEditChapter(chapter.id) },
                                 leadingContent = {

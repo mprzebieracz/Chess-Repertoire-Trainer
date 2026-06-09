@@ -82,7 +82,10 @@ private fun SessionContentBar(uiState: OpeningPuzzleSessionUiState) {
                 color = MaterialTheme.colorScheme.error,
             )
 
-            uiState.isLoading -> Text("Loading next puzzle…", style = MaterialTheme.typography.bodyMedium)
+            uiState.isLoading -> Text(
+                "Loading next puzzle…",
+                style = MaterialTheme.typography.bodyMedium
+            )
 
             else -> {
                 uiState.currentOpeningFamily?.let {
@@ -111,7 +114,8 @@ private fun SessionContentBar(uiState: OpeningPuzzleSessionUiState) {
                 val statusText = when (uiState.lastMoveWasCorrect) {
                     true -> "Correct!"
                     false -> "Incorrect, try again"
-                    null -> if (uiState.isWaitingForUserMove) "Find the best move" else uiState.statusMessage ?: ""
+                    null -> if (uiState.isWaitingForUserMove) "Find the best move"
+                    else uiState.statusMessage ?: ""
                 }
                 if (statusText.isNotBlank()) {
                     Text(

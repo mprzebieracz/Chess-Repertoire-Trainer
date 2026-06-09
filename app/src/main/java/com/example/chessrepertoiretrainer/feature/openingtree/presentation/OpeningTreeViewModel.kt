@@ -52,7 +52,8 @@ class OpeningTreeViewModel(private val tree: OpeningTree?) : ViewModel() {
         if (tree != null) {
             chessController.orientForSide(if (tree.playerIsBlack) Side.BLACK else Side.WHITE)
             applyFen(tree.rootFen, tree, updateBoard = true)
-        } else {
+        }
+        else {
             showEmptyState("Opening tree not found. Please go back and search again.")
         }
     }

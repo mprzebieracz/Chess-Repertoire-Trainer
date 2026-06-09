@@ -11,7 +11,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -251,7 +250,12 @@ class ActivityRecorderTest {
         val twoDaysAgo = today - 2 * DAY
         val activities = listOf(
             DailyActivity(date = today, linesTrained = 1, lastUpdatedAt = today),
-            DailyActivity(date = yesterday, linesTrained = 0, puzzlesSolved = 0, lastUpdatedAt = yesterday),
+            DailyActivity(
+                date = yesterday,
+                linesTrained = 0,
+                puzzlesSolved = 0,
+                lastUpdatedAt = yesterday
+            ),
             DailyActivity(date = twoDaysAgo, linesTrained = 1, lastUpdatedAt = twoDaysAgo)
         )
         coEvery { activityDao.getAll() } returns activities
@@ -284,7 +288,8 @@ class ActivityRecorderTest {
     @Test
     fun `puzzle solved counts as activity for streak`() = runTest {
         val today = ActivityRecorder.todayMs()
-        val activity = DailyActivity(date = today, linesTrained = 0, puzzlesSolved = 1, lastUpdatedAt = today)
+        val activity =
+            DailyActivity(date = today, linesTrained = 0, puzzlesSolved = 1, lastUpdatedAt = today)
         coEvery { activityDao.getAll() } returns listOf(activity)
         assertEquals(1, recorder.currentStreakDays())
     }

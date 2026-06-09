@@ -52,7 +52,8 @@ fun LineImageDialog(imagePath: String, onDismiss: () -> Unit) {
                         .fillMaxSize()
                         .align(Alignment.Center)
                 )
-            } else {
+            }
+            else {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
                     color = Color.White

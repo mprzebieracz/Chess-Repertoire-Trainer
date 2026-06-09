@@ -60,7 +60,8 @@ fun RepertoirePuzzlesScreen(
                             modifier = Modifier.padding(end = 12.dp),
                             strokeWidth = 2.dp,
                         )
-                    } else {
+                    }
+                    else {
                         IconButton(onClick = viewModel::manualRefresh) {
                             Icon(Icons.Filled.Refresh, contentDescription = "Refresh openings")
                         }
@@ -82,9 +83,11 @@ fun RepertoirePuzzlesScreen(
                     ) {
                         if (selectedCount == 0) {
                             Text("Select openings to train")
-                        } else if (unsolvedInSelection == 0) {
+                        }
+                        else if (unsolvedInSelection == 0) {
                             Text("Train selected (fetching puzzles…)")
-                        } else {
+                        }
+                        else {
                             Text("Train selected ($unsolvedInSelection puzzle${if (unsolvedInSelection != 1) "s" else ""})")
                         }
                     }
@@ -150,8 +153,15 @@ private fun OpeningRow(
             checked = item.isSelected,
             onCheckedChange = { onToggle() },
         )
-        Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = item.family,
                     style = MaterialTheme.typography.bodyMedium,

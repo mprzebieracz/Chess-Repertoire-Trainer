@@ -102,7 +102,8 @@ class MyGamesViewModel(
                     lichessLastSyncAt = if (settings.lichessUsername.isNotBlank()) now else _uiState.value.lichessLastSyncAt,
                     chessComLastSyncAt = if (settings.chessComUsername.isNotBlank()) now else _uiState.value.chessComLastSyncAt
                 )
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isSyncing = false,
                     syncProgress = null,

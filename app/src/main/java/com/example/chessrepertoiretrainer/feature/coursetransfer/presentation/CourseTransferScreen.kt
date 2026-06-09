@@ -36,7 +36,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -97,9 +96,11 @@ fun CourseTransferScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             TabRow(selectedTabIndex = selectedTab) {
                 Tab(
                     selected = selectedTab == 0,
@@ -122,6 +123,7 @@ fun CourseTransferScreen(
                     onSend = { requestPermissionForSend() },
                     onCancel = viewModel::cancelSending,
                 )
+
                 1 -> ReceiveTab(
                     devices = pairedDevices,
                     isReceiving = isReceiving,
@@ -164,20 +166,25 @@ private fun SendTab(
     onSend: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         if (statusBanner != null) {
             StatusBanner(text = statusBanner)
             Spacer(Modifier.height(8.dp))
         }
         if (repertoires.isEmpty()) {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 32.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 32.dp), contentAlignment = Alignment.Center
+            ) {
                 Text("No courses to send.")
             }
-        } else {
+        }
+        else {
             Text(
                 text = "Pick courses to send",
                 style = MaterialTheme.typography.titleSmall,
@@ -228,9 +235,11 @@ private fun ReceiveTab(
     onPick: (PairedDeviceUi) -> Unit,
     onCancel: () -> Unit,
 ) {
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         if (statusBanner != null) {
             StatusBanner(text = statusBanner)
             Spacer(Modifier.height(8.dp))
@@ -245,12 +254,15 @@ private fun ReceiveTab(
         }
         Spacer(Modifier.height(4.dp))
         if (devices.isEmpty()) {
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 32.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 32.dp), contentAlignment = Alignment.Center
+            ) {
                 Text("No paired devices. Pair in system Bluetooth settings.")
             }
-        } else {
+        }
+        else {
             LazyColumn(modifier = Modifier.weight(1f)) {
                 items(devices, key = { it.address }) { device ->
                     Row(

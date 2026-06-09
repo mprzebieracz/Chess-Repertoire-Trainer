@@ -1,6 +1,7 @@
 package com.example.chessrepertoiretrainer.feature.mygames.domain.model
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StatsModelsTest {
@@ -93,31 +94,71 @@ class StatsModelsTest {
 
     @Test
     fun `ChapterStats winPct is wins over played`() {
-        val stats = ChapterStats(played = 8, wins = 4, losses = 3, draws = 1, gamesInBook = 0, gamesDeviated = 0, avgBookDepthPlies = null)
+        val stats = ChapterStats(
+            played = 8,
+            wins = 4,
+            losses = 3,
+            draws = 1,
+            gamesInBook = 0,
+            gamesDeviated = 0,
+            avgBookDepthPlies = null
+        )
         assertEquals(0.5f, stats.winPct, 0.001f)
     }
 
     @Test
     fun `ChapterStats inBookPct is gamesInBook over played`() {
-        val stats = ChapterStats(played = 10, wins = 0, losses = 0, draws = 0, gamesInBook = 6, gamesDeviated = 0, avgBookDepthPlies = null)
+        val stats = ChapterStats(
+            played = 10,
+            wins = 0,
+            losses = 0,
+            draws = 0,
+            gamesInBook = 6,
+            gamesDeviated = 0,
+            avgBookDepthPlies = null
+        )
         assertEquals(0.6f, stats.inBookPct, 0.001f)
     }
 
     @Test
     fun `ChapterStats winPctInBook uses overall winPct as approximation`() {
-        val stats = ChapterStats(played = 8, wins = 4, losses = 3, draws = 1, gamesInBook = 5, gamesDeviated = 0, avgBookDepthPlies = null)
+        val stats = ChapterStats(
+            played = 8,
+            wins = 4,
+            losses = 3,
+            draws = 1,
+            gamesInBook = 5,
+            gamesDeviated = 0,
+            avgBookDepthPlies = null
+        )
         assertEquals(stats.winPct, stats.winPctInBook, 0.001f)
     }
 
     @Test
     fun `ChapterStats winPctInBook returns 0 when gamesInBook is 0`() {
-        val stats = ChapterStats(played = 8, wins = 4, losses = 3, draws = 1, gamesInBook = 0, gamesDeviated = 0, avgBookDepthPlies = null)
+        val stats = ChapterStats(
+            played = 8,
+            wins = 4,
+            losses = 3,
+            draws = 1,
+            gamesInBook = 0,
+            gamesDeviated = 0,
+            avgBookDepthPlies = null
+        )
         assertEquals(0f, stats.winPctInBook, 0f)
     }
 
     @Test
     fun `ChapterStats zero played returns zero pcts`() {
-        val stats = ChapterStats(played = 0, wins = 0, losses = 0, draws = 0, gamesInBook = 0, gamesDeviated = 0, avgBookDepthPlies = null)
+        val stats = ChapterStats(
+            played = 0,
+            wins = 0,
+            losses = 0,
+            draws = 0,
+            gamesInBook = 0,
+            gamesDeviated = 0,
+            avgBookDepthPlies = null
+        )
         assertEquals(0f, stats.winPct, 0f)
         assertEquals(0f, stats.inBookPct, 0f)
     }

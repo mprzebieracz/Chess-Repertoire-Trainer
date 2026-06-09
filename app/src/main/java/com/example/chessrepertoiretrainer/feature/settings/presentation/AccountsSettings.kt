@@ -95,13 +95,15 @@ private fun SaveStatusMessage(screenState: SettingsUiState) {
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodySmall,
         )
-    } else if (screenState.saveSuccessMessage != null) {
+    }
+    else if (screenState.saveSuccessMessage != null) {
         Text(
             text = "Saved",
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodySmall,
         )
-    } else if (screenState.saveErrorMessage != null) {
+    }
+    else if (screenState.saveErrorMessage != null) {
         Text(
             text = screenState.saveErrorMessage,
             color = MaterialTheme.colorScheme.error,

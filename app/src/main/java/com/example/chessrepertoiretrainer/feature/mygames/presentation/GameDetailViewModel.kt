@@ -11,11 +11,11 @@ import com.example.chessrepertoiretrainer.core.chess.domain.BoardMoveAnnotation
 import com.example.chessrepertoiretrainer.core.chess.domain.findLegalMoveBySan
 import com.example.chessrepertoiretrainer.core.chess.pgn.extract.PGNExtractor
 import com.example.chessrepertoiretrainer.core.chess.pgn.navigator.LinearGameNavigator
+import com.example.chessrepertoiretrainer.core.database.entity.MoveEval
 import com.example.chessrepertoiretrainer.core.database.entity.SavedGame
 import com.example.chessrepertoiretrainer.core.engine.EngineAnalysisHolder
-import com.example.chessrepertoiretrainer.core.navigation.NavTransientStore
 import com.example.chessrepertoiretrainer.core.engine.StockfishEngine
-import com.example.chessrepertoiretrainer.core.database.entity.MoveEval
+import com.example.chessrepertoiretrainer.core.navigation.NavTransientStore
 import com.example.chessrepertoiretrainer.feature.mygames.domain.OnDemandGameAnalyzer
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.ComplianceStatus
 import com.example.chessrepertoiretrainer.feature.mygames.domain.model.MoveAnnotation
@@ -79,7 +79,9 @@ class GameDetailViewModel(
         navigator.onPositionChanged = { fen, lm -> chessController.loadPositionFromFen(fen, lm) }
 
         loadGame()
-        viewModelScope.launch { _moveEvals.value = gameAnalyzer?.loadCachedEvals(game.id) ?: emptyList() }
+        viewModelScope.launch {
+            _moveEvals.value = gameAnalyzer?.loadCachedEvals(game.id) ?: emptyList()
+        }
         viewModelScope.launch { loadAnnotations() }
         viewModelScope.launch {
             combine(
@@ -134,7 +136,8 @@ class GameDetailViewModel(
                 _annotations.value = withContext(Dispatchers.Default) {
                     analyzer.annotate(gameSanMoves, game.isPlayerWhite, index)
                 }
-            } finally {
+            }
+            finally {
                 _isLoadingCompliance.value = false
             }
         }
@@ -148,7 +151,8 @@ class GameDetailViewModel(
             _annotations.value = withContext(Dispatchers.Default) {
                 analyzer.annotate(gameSanMoves, game.isPlayerWhite, index)
             }
-        } finally {
+        }
+        finally {
             _isLoadingCompliance.value = false
         }
     }
@@ -166,7 +170,8 @@ class GameDetailViewModel(
                 }
                 _moveEvals.value = evals ?: emptyList()
                 if (!engineHolder.isEnabled.value) engineHolder.toggle()
-            } finally {
+            }
+            finally {
                 _isAnalyzing.value = false
             }
         }

@@ -28,7 +28,8 @@ class PGNExtractor {
                 if (!inBody) {
                     if (line.startsWith("[") || line.isBlank()) {
                         // keep skipping header / blank lines until movetext starts
-                    } else {
+                    }
+                    else {
                         inBody = true
                     }
                 }
@@ -42,7 +43,8 @@ class PGNExtractor {
                         if (end == -1) {
                             sanitizedLine = sanitizedLine.removeRange(start, sanitizedLine.length)
                             break
-                        } else {
+                        }
+                        else {
                             sanitizedLine = sanitizedLine.removeRange(start, end + 1)
                         }
                     }
@@ -55,18 +57,22 @@ class PGNExtractor {
                                 if (token.contains('}')) {
                                     inBraceComment = false
                                 }
-                            } else if (token.startsWith("{")) {
+                            }
+                            else if (token.startsWith("{")) {
                                 if (!token.contains('}')) {
                                     inBraceComment = true
                                 }
-                            } else if (token.startsWith('$') && token.drop(1)
+                            }
+                            else if (token.startsWith('$') && token.drop(1)
                                     .all { it.isDigit() }
                             ) {
                                 // skip numeric annotation glyphs
-                            } else if (isGameResultToken(token)) {
+                            }
+                            else if (isGameResultToken(token)) {
                                 stopParsing = true
                                 break
-                            } else {
+                            }
+                            else {
                                 val cleaned = token.trim('(', ')')
                                 if (cleaned.isNotEmpty() && !isMoveNumberToken(cleaned)) {
                                     sanMoves += cleaned

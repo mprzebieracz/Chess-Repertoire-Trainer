@@ -56,7 +56,8 @@ fun MyGamesScreen(
                         .padding(end = 4.dp),
                     strokeWidth = 2.dp
                 )
-            } else {
+            }
+            else {
                 IconButton(onClick = viewModel::sync) {
                     Icon(Icons.Filled.Refresh, contentDescription = "Sync")
                 }

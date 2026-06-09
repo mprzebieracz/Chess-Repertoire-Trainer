@@ -50,7 +50,8 @@ fun TrainSelectionScreen(
                         Icon(AppIcons.Back, contentDescription = "Back")
                     }
                 }
-            } else {
+            }
+            else {
                 {}
             })
     }) { padding ->

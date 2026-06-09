@@ -22,7 +22,8 @@ fun copyUriToLineImage(context: Context, uri: Uri, lineId: Int): String? {
             dest.outputStream().use { output -> input.copyTo(output) }
         }
         dest.absolutePath
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
         null
     }
 }

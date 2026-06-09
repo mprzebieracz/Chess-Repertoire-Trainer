@@ -107,7 +107,8 @@ class TrainingViewModel(
     private suspend fun observeSessionLines() {
         val flow = if (chapterId != null) {
             repertoireRepository.getLinesForChapter(chapterId)
-        } else {
+        }
+        else {
             val allLinesTime = Long.MAX_VALUE
             repertoireRepository.getLinesToReview(allLinesTime)
         }
@@ -124,7 +125,8 @@ class TrainingViewModel(
         if (isFirstSessionLoad()) {
             lines = prepareSessionLines(loadedLines)
             startLine(0)
-        } else {
+        }
+        else {
             updateLoadedSessionSize()
         }
     }
@@ -276,7 +278,8 @@ class TrainingViewModel(
 
         if (moveTrainer.isSequenceComplete()) {
             finishCurrentLine()
-        } else {
+        }
+        else {
             _uiState.update {
                 it.copy(isWaitingForUserMove = true)
             }
@@ -300,7 +303,8 @@ class TrainingViewModel(
                     statusMessage = "Training complete"
                 )
             }
-        } else {
+        }
+        else {
             startLine(nextIndex)
         }
     }

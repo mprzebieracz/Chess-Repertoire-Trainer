@@ -58,7 +58,8 @@ class DefaultChessBoardController(
             if (piece != Piece.NONE && piece.pieceSide == board.sideToMove) {
                 selectedSquare = square
             }
-        } else {
+        }
+        else {
             if (currentSelected == square) {
                 selectedSquare = null
                 return
@@ -91,11 +92,13 @@ class DefaultChessBoardController(
         val legalMoves = board.legalMoves()
         if (legalMoves.contains(move)) {
             applyMove(move)
-        } else {
+        }
+        else {
             val piece2 = board.getPiece(move.to)
             if (piece2 != Piece.NONE && piece2.pieceSide == board.sideToMove) {
                 selectedSquare = move.to
-            } else {
+            }
+            else {
                 selectedSquare = null
             }
         }

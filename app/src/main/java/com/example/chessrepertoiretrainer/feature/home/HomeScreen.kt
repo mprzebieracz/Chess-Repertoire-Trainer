@@ -113,7 +113,8 @@ private fun StreakSection(streak: Int) {
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
-        } else {
+        }
+        else {
             Text(
                 text = "No streak yet — train today!",
                 style = MaterialTheme.typography.bodySmall,
@@ -128,7 +129,7 @@ private fun ActivityHeatmap(weeks: List<List<DailyActivity?>>) {
     val cellSize = 14.dp
     val gap = 2.dp
     val primary = MaterialTheme.colorScheme.primary
-    val surface = MaterialTheme.colorScheme.surfaceVariant
+    MaterialTheme.colorScheme.surfaceVariant
     val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

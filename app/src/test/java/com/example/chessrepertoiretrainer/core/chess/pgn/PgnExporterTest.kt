@@ -1,13 +1,22 @@
 package com.example.chessrepertoiretrainer.core.chess.pgn
 
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PgnExporterTest {
 
     private fun lm(san: String, index: Int, comment: String? = null) =
-        LineMove(id = 0, lineId = 1, moveIndex = index, moveSan = san, fen = "", comment = comment, arrows = null)
+        LineMove(
+            id = 0,
+            lineId = 1,
+            moveIndex = index,
+            moveSan = san,
+            fen = "",
+            comment = comment,
+            arrows = null
+        )
 
     // ---- headers ----
 
@@ -21,7 +30,10 @@ class PgnExporterTest {
 
     @Test
     fun `custom headers are used instead of defaults`() {
-        val pgn = PgnExporter.export(emptyList(), mapOf("Event" to "World Championship", "Result" to "1-0"))
+        val pgn = PgnExporter.export(
+            emptyList(),
+            mapOf("Event" to "World Championship", "Result" to "1-0")
+        )
         assertTrue(pgn.contains("[Event \"World Championship\"]"))
         assertTrue(pgn.contains("[Result \"1-0\"]"))
         assertFalse(pgn.contains("[White \"?\"]"))

@@ -67,7 +67,9 @@ class OpeningStatsViewModel(
             val groups = openingStatsList
                 .groupBy { it.family }
                 .map { (family, openings) ->
-                    OpeningFamilyGroup(family = family, openings = openings.sortedByDescending { it.played })
+                    OpeningFamilyGroup(
+                        family = family,
+                        openings = openings.sortedByDescending { it.played })
                 }
                 .sortedByDescending { it.totalPlayed }
 

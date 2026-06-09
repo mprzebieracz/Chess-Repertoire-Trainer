@@ -1,8 +1,12 @@
 package com.example.chessrepertoiretrainer.core.network.games
 
-import io.mockk.mockk
 import io.mockk.every
-import org.junit.Assert.*
+import io.mockk.mockk
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GameFetcherTest {

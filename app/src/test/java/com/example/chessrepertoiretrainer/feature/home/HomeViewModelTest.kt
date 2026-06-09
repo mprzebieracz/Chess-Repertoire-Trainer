@@ -7,7 +7,8 @@ import com.example.chessrepertoiretrainer.util.MainDispatcherRule
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -40,7 +41,11 @@ class HomeViewModelTest {
 
     @Test
     fun `unsolved puzzle in db - state becomes Available`() = runTest {
-        coEvery { puzzleRepository.getTodaysPuzzle() } returns makePuzzle(isSolved = false, rating = 1500, themes = "fork mateIn2")
+        coEvery { puzzleRepository.getTodaysPuzzle() } returns makePuzzle(
+            isSolved = false,
+            rating = 1500,
+            themes = "fork mateIn2"
+        )
         val vm = makeVm()
         val state = vm.uiState.value.dailyPuzzleState
         assertTrue(state is DailyPuzzleState.Available)
@@ -58,7 +63,10 @@ class HomeViewModelTest {
     @Test
     fun `no puzzle in db but fetch succeeds - state becomes Available`() = runTest {
         coEvery { puzzleRepository.getTodaysPuzzle() } returns null
-        coEvery { puzzleRepository.fetchAndSaveDailyPuzzle() } returns makePuzzle(rating = 1800, themes = "pin")
+        coEvery { puzzleRepository.fetchAndSaveDailyPuzzle() } returns makePuzzle(
+            rating = 1800,
+            themes = "pin"
+        )
         val vm = makeVm()
         val state = vm.uiState.value.dailyPuzzleState
         assertTrue(state is DailyPuzzleState.Available)

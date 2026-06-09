@@ -3,7 +3,10 @@ package com.example.chessrepertoiretrainer.core.chess.pgn.navigator
 import com.example.chessrepertoiretrainer.core.database.entity.LineMove
 import com.github.bhlangonijr.chesslib.Square
 import com.github.bhlangonijr.chesslib.move.Move
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GuidedLineNavigatorTest {
@@ -13,7 +16,15 @@ class GuidedLineNavigatorTest {
     private val FEN_AFTER_E5 = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2"
 
     private fun lm(san: String, fen: String, comment: String? = null, index: Int = 0) =
-        LineMove(id = 0, lineId = 1, moveIndex = index, moveSan = san, fen = fen, comment = comment, arrows = null)
+        LineMove(
+            id = 0,
+            lineId = 1,
+            moveIndex = index,
+            moveSan = san,
+            fen = fen,
+            comment = comment,
+            arrows = null
+        )
 
     private fun twoMoveLine() = listOf(
         lm("e4", FEN_AFTER_E4, index = 0),
@@ -60,7 +71,14 @@ class GuidedLineNavigatorTest {
     @Test
     fun `onUserMove with correct SAN returns Accepted and advances index`() {
         val nav = GuidedLineNavigator(twoMoveLine())
-        val result = nav.onUserMove(AppliedMove(Move(Square.E2, Square.E4), "e4", STARTING_FEN, FEN_AFTER_E4))
+        val result = nav.onUserMove(
+            AppliedMove(
+                Move(Square.E2, Square.E4),
+                "e4",
+                STARTING_FEN,
+                FEN_AFTER_E4
+            )
+        )
         assertTrue(result is UserMoveResult.Accepted)
         assertEquals(0, nav.currentMoveIndex)
         assertFalse(nav.isAtStart)
@@ -69,7 +87,14 @@ class GuidedLineNavigatorTest {
     @Test
     fun `onUserMove with wrong SAN returns Rejected and leaves index unchanged`() {
         val nav = GuidedLineNavigator(twoMoveLine())
-        val result = nav.onUserMove(AppliedMove(Move(Square.D2, Square.D4), "d4", STARTING_FEN, FEN_AFTER_E4))
+        val result = nav.onUserMove(
+            AppliedMove(
+                Move(Square.D2, Square.D4),
+                "d4",
+                STARTING_FEN,
+                FEN_AFTER_E4
+            )
+        )
         assertEquals(UserMoveResult.Rejected, result)
         assertEquals(-1, nav.currentMoveIndex)
         assertTrue(nav.isAtStart)
@@ -79,7 +104,14 @@ class GuidedLineNavigatorTest {
     fun `onUserMove at end of line returns Rejected`() {
         val nav = GuidedLineNavigator(listOf(lm("e4", FEN_AFTER_E4)))
         nav.onUserMove(AppliedMove(Move(Square.E2, Square.E4), "e4", STARTING_FEN, FEN_AFTER_E4))
-        val result = nav.onUserMove(AppliedMove(Move(Square.E7, Square.E5), "e5", FEN_AFTER_E4, FEN_AFTER_E5))
+        val result = nav.onUserMove(
+            AppliedMove(
+                Move(Square.E7, Square.E5),
+                "e5",
+                FEN_AFTER_E4,
+                FEN_AFTER_E5
+            )
+        )
         assertEquals(UserMoveResult.Rejected, result)
     }
 

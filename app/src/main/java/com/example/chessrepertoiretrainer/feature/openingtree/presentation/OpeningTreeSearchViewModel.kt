@@ -62,7 +62,8 @@ class OpeningTreeSearchViewModel(private val fetcherRegistry: GameFetcherRegistr
                         _uiState.value =
                             _uiState.value.copy(fetchedGameCount = fetched)
                     })
-            } catch (e: Exception) {
+            }
+            catch (e: Exception) {
                 _uiState.value = SearchUiState(
                     errorMessage = e.message
                         ?: "Unexpected error while fetching games"

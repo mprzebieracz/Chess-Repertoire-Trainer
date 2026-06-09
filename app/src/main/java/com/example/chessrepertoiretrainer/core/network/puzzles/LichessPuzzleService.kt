@@ -23,7 +23,8 @@ object LichessPuzzleService {
 
             val body = connection.inputStream.bufferedReader().use { it.readText() }
             parsePuzzle(JSONObject(body), sourceDate)
-        } catch (e: Exception) {
+        }
+        catch (e: Exception) {
             Log.e("LichessPuzzleService", "Error fetching daily puzzle: ${e.message}", e)
             null
         }
@@ -50,7 +51,8 @@ object LichessPuzzleService {
         val themesArray = puzzleJson.optJSONArray("themes")
         val themes = if (themesArray != null) {
             (0 until themesArray.length()).joinToString(",") { themesArray.getString(it) }
-        } else {
+        }
+        else {
             ""
         }
 

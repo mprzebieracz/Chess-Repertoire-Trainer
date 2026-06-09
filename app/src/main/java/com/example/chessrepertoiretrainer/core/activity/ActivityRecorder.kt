@@ -30,7 +30,8 @@ class ActivityRecorder(
         return updated
     }
 
-    suspend fun recordPuzzleSolved() = incrementToday { it.copy(puzzlesSolved = it.puzzlesSolved + 1) }
+    suspend fun recordPuzzleSolved() =
+        incrementToday { it.copy(puzzlesSolved = it.puzzlesSolved + 1) }
 
     suspend fun recordGamesImported(count: Int) =
         incrementToday { it.copy(gamesImported = it.gamesImported + count) }
@@ -48,6 +49,7 @@ class ActivityRecorder(
                     streak++
                     expectedDay -= MILLIS_PER_DAY
                 }
+
                 a.date == expectedDay -> expectedDay -= MILLIS_PER_DAY // inactive day
                 else -> break
             }
@@ -66,7 +68,8 @@ class ActivityRecorder(
         val newEaseFactor = if (wasCorrect) {
             // SM-2 formula with grade = 5 for correct
             (line.easeFactor + 0.1f).coerceAtLeast(1.3f)
-        } else {
+        }
+        else {
             line.easeFactor // easeFactor unchanged on failure
         }
         val now = System.currentTimeMillis()
@@ -88,7 +91,8 @@ class ActivityRecorder(
         val existing = dailyActivityDao.getByDate(today)
         val updated = if (existing != null) {
             update(existing).copy(lastUpdatedAt = now)
-        } else {
+        }
+        else {
             update(DailyActivity(date = today, lastUpdatedAt = now)).copy(lastUpdatedAt = now)
         }
         dailyActivityDao.upsertActivity(updated)

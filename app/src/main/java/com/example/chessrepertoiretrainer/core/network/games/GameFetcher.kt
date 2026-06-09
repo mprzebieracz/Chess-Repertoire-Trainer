@@ -47,7 +47,8 @@ internal fun parsePgnHeaders(pgn: String): Map<String, String> {
         val match = TAG_REGEX.matchEntire(line)
         if (match != null) {
             headers[match.groupValues[1]] = match.groupValues[2]
-        } else if (!line.startsWith("[")) {
+        }
+        else if (!line.startsWith("[")) {
             break
         }
     }

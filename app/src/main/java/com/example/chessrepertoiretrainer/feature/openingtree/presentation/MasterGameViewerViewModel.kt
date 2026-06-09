@@ -62,7 +62,8 @@ class MasterGameViewerViewModel(pgn: String) : ViewModel() {
             val moveNum = parts.getOrNull(5)?.toIntOrNull() ?: 1
             val isWhite = parts.getOrNull(1) != "b"
             if (isWhite) "$moveNum. ${node.san}" else "$moveNum… ${node.san}"
-        } else null
+        }
+        else null
         _uiState.update {
             it.copy(
                 isAtStart = navigator.isAtStart,

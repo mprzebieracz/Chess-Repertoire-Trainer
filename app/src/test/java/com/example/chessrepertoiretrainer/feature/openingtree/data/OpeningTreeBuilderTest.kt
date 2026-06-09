@@ -1,6 +1,9 @@
 package com.example.chessrepertoiretrainer.feature.openingtree.data
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OpeningTreeBuilderTest {
@@ -46,7 +49,15 @@ class OpeningTreeBuilderTest {
 
     @Test
     fun `win result counts as win for white player`() {
-        val tree = OpeningTreeBuilder.buildTree(listOf(game("1. e4 1-0", isUserWhite = true, result = "1-0")), playerIsBlack = false)
+        val tree = OpeningTreeBuilder.buildTree(
+            listOf(
+                game(
+                    "1. e4 1-0",
+                    isUserWhite = true,
+                    result = "1-0"
+                )
+            ), playerIsBlack = false
+        )
         val root = tree!!.getNode(tree.rootFen)!!
         assertEquals(1L, root.children["e4"]!!.wins)
         assertEquals(0L, root.children["e4"]!!.losses)
@@ -54,7 +65,15 @@ class OpeningTreeBuilderTest {
 
     @Test
     fun `loss result counts as loss for white player`() {
-        val tree = OpeningTreeBuilder.buildTree(listOf(game("1. e4 e5 0-1", isUserWhite = true, result = "0-1")), playerIsBlack = false)
+        val tree = OpeningTreeBuilder.buildTree(
+            listOf(
+                game(
+                    "1. e4 e5 0-1",
+                    isUserWhite = true,
+                    result = "0-1"
+                )
+            ), playerIsBlack = false
+        )
         val root = tree!!.getNode(tree.rootFen)!!
         assertEquals(0L, root.children["e4"]!!.wins)
         assertEquals(1L, root.children["e4"]!!.losses)
@@ -62,21 +81,45 @@ class OpeningTreeBuilderTest {
 
     @Test
     fun `draw result counts as draw`() {
-        val tree = OpeningTreeBuilder.buildTree(listOf(game("1. e4 e5 1/2-1/2", isUserWhite = true, result = "1/2-1/2")), playerIsBlack = false)
+        val tree = OpeningTreeBuilder.buildTree(
+            listOf(
+                game(
+                    "1. e4 e5 1/2-1/2",
+                    isUserWhite = true,
+                    result = "1/2-1/2"
+                )
+            ), playerIsBlack = false
+        )
         val root = tree!!.getNode(tree.rootFen)!!
         assertEquals(1L, root.children["e4"]!!.draws)
     }
 
     @Test
     fun `win for black player - 0-1 is a win`() {
-        val tree = OpeningTreeBuilder.buildTree(listOf(game("1. e4 e5 0-1", isUserWhite = false, result = "0-1")), playerIsBlack = true)
+        val tree = OpeningTreeBuilder.buildTree(
+            listOf(
+                game(
+                    "1. e4 e5 0-1",
+                    isUserWhite = false,
+                    result = "0-1"
+                )
+            ), playerIsBlack = true
+        )
         val root = tree!!.getNode(tree.rootFen)!!
         assertEquals(1L, root.children["e4"]!!.wins)
     }
 
     @Test
     fun `unknown result tag game is skipped`() {
-        val tree = OpeningTreeBuilder.buildTree(listOf(game("1. e4 e5 *", isUserWhite = true, result = "*")), playerIsBlack = false)
+        val tree = OpeningTreeBuilder.buildTree(
+            listOf(
+                game(
+                    "1. e4 e5 *",
+                    isUserWhite = true,
+                    result = "*"
+                )
+            ), playerIsBlack = false
+        )
         // * is not a recognised result, so game is skipped; root has no children
         val root = tree!!.getNode(tree.rootFen)!!
         assertTrue(root.children.isEmpty())

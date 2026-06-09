@@ -77,17 +77,19 @@ fun LineEditorScreen(
     var pendingCameraPath by remember { mutableStateOf<String?>(null) }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
 
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) pendingCameraPath?.let { viewModel.saveImagePath(it) }
-        pendingCameraPath = null
-        pendingCameraUri = null
-    }
-    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
-            val path = copyUriToLineImage(context, it, viewModel.lineId)
-            path?.let { p -> viewModel.saveImagePath(p) }
+    val cameraLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) pendingCameraPath?.let { viewModel.saveImagePath(it) }
+            pendingCameraPath = null
+            pendingCameraUri = null
         }
-    }
+    val galleryLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                val path = copyUriToLineImage(context, it, viewModel.lineId)
+                path?.let { p -> viewModel.saveImagePath(p) }
+            }
+        }
 
     BackHandler(enabled = hasChanges) { showExitDialog = true }
 
@@ -287,7 +289,8 @@ private fun LineEditorCommentSection(
                 TextButton(onClick = onCancel) { Text("Cancel") }
                 TextButton(onClick = { onSave(boardFen) }) { Text("Save") }
             }
-        } else {
+        }
+        else {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
