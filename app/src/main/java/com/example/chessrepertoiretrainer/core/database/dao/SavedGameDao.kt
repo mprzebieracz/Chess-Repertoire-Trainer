@@ -37,6 +37,9 @@ interface SavedGameDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertGames(games: List<SavedGame>)
 
+    @Query("SELECT * FROM saved_games")
+    suspend fun getAllGames(): List<SavedGame>
+
     @Query("SELECT MAX(playedAt) FROM saved_games WHERE platform = :platform AND playerUsername = :username")
     suspend fun getLatestPlayedAt(platform: String, username: String): Long?
 
@@ -131,6 +134,9 @@ interface SavedGameDao {
 
     @Query("SELECT * FROM saved_games WHERE id = :id")
     suspend fun getGameById(id: String): SavedGame?
+
+    @Query("SELECT COUNT(*) FROM saved_game_repertoire_match")
+    fun observeMatchCount(): Flow<Int>
 
     @Query(
         """

@@ -105,11 +105,12 @@ class BluetoothTransfer(private val context: Context) {
     private fun readPayload(socket: BluetoothSocket): ByteArray {
         val input = DataInputStream(socket.inputStream)
         val size = input.readInt()
-        if (size < 0 || size > MAX_PAYLOAD_SIZE) {
+        if (size !in 0..MAX_PAYLOAD_SIZE) {
             throw IOException("Invalid payload size: $size")
         }
         val buffer = ByteArray(size)
         input.readFully(buffer)
+
         // Send ACK so the sender knows it's safe to close.
         socket.outputStream.write(0)
         socket.outputStream.flush()

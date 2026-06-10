@@ -40,6 +40,8 @@ class DefaultSavedGameRepository(private val dao: SavedGameDao) : SavedGameRepos
 
     override suspend fun insertGames(games: List<SavedGame>) = dao.insertGames(games)
 
+    override suspend fun getAllGames(): List<SavedGame> = dao.getAllGames()
+
     override suspend fun getLatestPlayedAt(platform: String, username: String): Long? =
         dao.getLatestPlayedAt(platform, username)
 
@@ -111,4 +113,6 @@ class DefaultSavedGameRepository(private val dao: SavedGameDao) : SavedGameRepos
 
     override suspend fun updateEcoCode(id: String, ecoCode: String) =
         dao.updateEcoCode(id, ecoCode)
+
+    override fun observeMatchCount(): Flow<Int> = dao.observeMatchCount()
 }

@@ -27,6 +27,19 @@ interface GameFetcher {
         since: Long? = null,
         onProgress: ((fetched: Int) -> Unit)? = null
     ): List<FetchedGame>
+
+    // Streams games to `onBatch` in fixed-size chunks rather than accumulating everything
+    // in memory first. Used by GameSyncManager; defaults to a single full-list batch so
+    // fetchers that don't override still work correctly.
+    suspend fun streamGamesForUser(
+        username: String,
+        since: Long? = null,
+        onProgress: ((fetched: Int) -> Unit)? = null,
+        onBatch: suspend (List<FetchedGame>) -> Unit,
+    ) {
+        val all = fetchGamesForUser(username = username, since = since, onProgress = onProgress)
+        if (all.isNotEmpty()) onBatch(all)
+    }
 }
 
 class GameFetcherRegistry(fetchers: List<GameFetcher>) {

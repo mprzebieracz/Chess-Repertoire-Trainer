@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -32,12 +31,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.chessrepertoiretrainer.core.database.entity.DailyActivity
 import com.example.chessrepertoiretrainer.core.ui.icons.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,9 +79,6 @@ fun HomeScreen(
                 onRetry = viewModel::retry,
             )
             StreakSection(streak = uiState.streak)
-            if (uiState.activityWeeks.isNotEmpty()) {
-                ActivityHeatmap(weeks = uiState.activityWeeks)
-            }
             QuickActionsRow(
                 onOpenAnalysis = onOpenAnalysis,
                 onOpenRepertoire = onOpenRepertoire,
@@ -120,54 +114,6 @@ private fun StreakSection(streak: Int) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-@Composable
-private fun ActivityHeatmap(weeks: List<List<DailyActivity?>>) {
-    val cellSize = 14.dp
-    val gap = 2.dp
-    val primary = MaterialTheme.colorScheme.primary
-    MaterialTheme.colorScheme.surfaceVariant
-    val dayLabels = listOf("M", "T", "W", "T", "F", "S", "S")
-
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            "Activity",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Column(verticalArrangement = Arrangement.spacedBy(gap)) {
-            repeat(7) { dayRow ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(gap),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        dayLabels[dayRow],
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.width(10.dp),
-                    )
-                    weeks.forEach { week ->
-                        val activity = week.getOrNull(dayRow)
-                        val total = (activity?.linesTrained ?: 0) + (activity?.puzzlesSolved ?: 0)
-                        val alpha = when {
-                            total == 0 -> 0.15f
-                            total <= 2 -> 0.35f
-                            total <= 5 -> 0.65f
-                            else -> 0.9f
-                        }
-                        Box(
-                            modifier = Modifier
-                                .size(cellSize)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(primary.copy(alpha = alpha))
-                        )
-                    }
-                }
-            }
         }
     }
 }

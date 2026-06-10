@@ -42,6 +42,10 @@ class BluetoothAnalysisSession(private val context: Context) {
     private val _incomingMoves = MutableSharedFlow<String>(extraBufferCapacity = 32)
     val incomingMoves: SharedFlow<String> = _incomingMoves
 
+    // Emits FEN strings when the peer navigates to a position
+    private val _incomingPositions = MutableSharedFlow<String>(extraBufferCapacity = 32)
+    val incomingPositions: SharedFlow<String> = _incomingPositions
+
     private var activeSocket: BluetoothSocket? = null
     private var outputStream: OutputStream? = null
 
@@ -111,9 +115,14 @@ class BluetoothAnalysisSession(private val context: Context) {
         val reader = BufferedReader(InputStreamReader(socket.inputStream, Charsets.UTF_8))
         try {
             while (currentCoroutineContext().isActive) {
-                val line = reader.readLine() ?: break
+                val line = withContext(Dispatchers.IO) {
+                    reader.readLine()
+                } ?: break
                 if (line.startsWith("MOVE:")) {
                     _incomingMoves.tryEmit(line.removePrefix("MOVE:"))
+                }
+                else if (line.startsWith("POS:")) {
+                    _incomingPositions.tryEmit(line.removePrefix("POS:"))
                 }
             }
         }
@@ -125,6 +134,15 @@ class BluetoothAnalysisSession(private val context: Context) {
         runCatching {
             outputStream?.let { out ->
                 out.write("MOVE:$uci\n".toByteArray(Charsets.UTF_8))
+                out.flush()
+            }
+        }
+    }
+
+    fun sendPosition(fen: String) {
+        runCatching {
+            outputStream?.let { out ->
+                out.write("POS:$fen\n".toByteArray(Charsets.UTF_8))
                 out.flush()
             }
         }

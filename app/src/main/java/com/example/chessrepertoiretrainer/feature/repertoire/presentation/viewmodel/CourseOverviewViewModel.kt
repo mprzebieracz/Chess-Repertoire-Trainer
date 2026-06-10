@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -42,7 +43,11 @@ class CourseOverviewViewModel(
     )
 
     val chaptersWithStats: StateFlow<List<ChapterWithStats>> =
-        repertoireRepository.getChaptersForRepertoire(repertoireId).mapLatest { chapters ->
+        combine(
+            repertoireRepository.getChaptersForRepertoire(repertoireId),
+            savedGameRepository.observeMatchCount()
+        ) { chapters, _ -> chapters }
+        .mapLatest { chapters ->
             chapters.map { chapter ->
                 val total = repertoireRepository.getLineCountForChapter(chapter.id)
                 val learned = repertoireRepository.getLearnedLineCountForChapter(chapter.id)

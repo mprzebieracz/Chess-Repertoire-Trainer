@@ -1,6 +1,5 @@
 package com.example.chessrepertoiretrainer.feature.repertoire.presentation.screen
 
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,13 +14,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FirstPage
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -75,13 +74,11 @@ fun LineEditorScreen(
     var showImageOptions by remember { mutableStateOf(false) }
     var showImageViewer by remember { mutableStateOf(false) }
     var pendingCameraPath by remember { mutableStateOf<String?>(null) }
-    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             if (success) pendingCameraPath?.let { viewModel.saveImagePath(it) }
             pendingCameraPath = null
-            pendingCameraUri = null
         }
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -130,7 +127,7 @@ fun LineEditorScreen(
                         onClick = viewModel::toggleEngine
                     )
                     IconButton(onClick = { onFindMasterGames(chessCtrl.getBoard().fen) }) {
-                        Icon(Icons.Filled.ManageSearch, contentDescription = "Find master games")
+                        Icon(Icons.AutoMirrored.Filled.ManageSearch, contentDescription = "Find master games")
                     }
                 },
             )
@@ -184,12 +181,12 @@ fun LineEditorScreen(
 
     if (showDeleteConfirm) {
         AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
+            onDismissRequest = { },
             title = { Text("Delete last move?") },
             text = { Text("This will permanently remove the last move from the line.") },
             confirmButton = {
                 Button(
-                    onClick = { showDeleteConfirm = false; viewModel.deleteLastMove() },
+                    onClick = { viewModel.deleteLastMove() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text("Delete")
@@ -197,7 +194,6 @@ fun LineEditorScreen(
             },
             dismissButton = {
                 TextButton(onClick = {
-                    showDeleteConfirm = false
                 }) { Text("Cancel") }
             },
         )
@@ -205,43 +201,39 @@ fun LineEditorScreen(
 
     if (showExitDialog) {
         AlertDialog(
-            onDismissRequest = { showExitDialog = false },
+            onDismissRequest = { },
             title = { Text("Leave editor?") },
             text = { Text("You have made changes to this line. They are saved automatically — leave anyway?") },
             confirmButton = {
                 TextButton(onClick = {
-                    showExitDialog = false; onBackClick()
+                    onBackClick()
                 }) { Text("Leave") }
             },
-            dismissButton = { TextButton(onClick = { showExitDialog = false }) { Text("Stay") } },
+            dismissButton = { TextButton(onClick = { }) { Text("Stay") } },
         )
     }
 
     if (showImageOptions) {
         AlertDialog(
-            onDismissRequest = { showImageOptions = false },
+            onDismissRequest = { },
             title = { Text("Line Image") },
             text = {
                 Column {
                     TextButton(onClick = {
-                        showImageOptions = false
                         val file = createLineImageFile(context, viewModel.lineId)
                         val uri = lineImageFileProviderUri(context, viewModel.lineId)
                         pendingCameraPath = file.absolutePath
-                        pendingCameraUri = uri
                         cameraLauncher.launch(uri)
                     }) { Text("Take Photo") }
                     TextButton(onClick = {
-                        showImageOptions = false
                         galleryLauncher.launch("image/*")
                     }) { Text("Choose from Gallery") }
                     if (lineImagePath != null) {
                         TextButton(onClick = {
-                            showImageOptions = false
                             showImageViewer = true
                         }) { Text("View Image") }
                         TextButton(
-                            onClick = { showImageOptions = false; viewModel.saveImagePath(null) },
+                            onClick = { viewModel.saveImagePath(null) },
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) { Text("Remove Image") }
                     }

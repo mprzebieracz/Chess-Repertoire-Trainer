@@ -62,6 +62,35 @@ object ChessComGameFetcher : GameFetcher {
             return@withContext result
         }
 
+    override suspend fun streamGamesForUser(
+        username: String,
+        since: Long?,
+        onProgress: ((Int) -> Unit)?,
+        onBatch: suspend (List<FetchedGame>) -> Unit,
+    ) = withContext(Dispatchers.IO) {
+        val normalizedUser = username.trim().lowercase()
+        if (normalizedUser.isBlank()) return@withContext
+
+        val archiveUrls = fetchArchiveUrls(normalizedUser)
+        if (archiveUrls.isEmpty()) return@withContext
+
+        val sinceYearMonth = since?.let { epochMsToYearMonth(it) }
+        var totalFetched = 0
+
+        for (archiveUrl in archiveUrls.asReversed()) {
+            if (sinceYearMonth != null && archiveUrlYearMonth(archiveUrl) < sinceYearMonth) break
+
+            val games = fetchGamesFromArchive(archiveUrl, normalizedUser)
+                .filter { since == null || it.playedAt > since }
+
+            if (games.isNotEmpty()) {
+                totalFetched += games.size
+                onProgress?.invoke(totalFetched)
+                onBatch(games)
+            }
+        }
+    }
+
     internal fun epochMsToYearMonth(epochMs: Long): Int {
         val date = Instant.ofEpochMilli(epochMs).atOffset(ZoneOffset.UTC)
         return date.year * 100 + date.monthValue

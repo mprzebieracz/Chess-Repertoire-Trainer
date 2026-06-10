@@ -56,6 +56,11 @@ class AnalysisViewModel(
     private var applyingRemoteMove = false
 
     init {
+        navigator.onPositionChanged = { fen, lastMove ->
+            chessController.loadPositionFromFen(fen, lastMove)
+            sendPositionOverBluetooth(fen)
+        }
+
         chessController.onMoveApplied = { applied ->
             navigator.onUserMove(applied)
             if (!applyingRemoteMove) {
@@ -65,6 +70,12 @@ class AnalysisViewModel(
 
         viewModelScope.launch {
             bluetoothSession.incomingMoves.collect { uci -> applyMoveFromPeer(uci) }
+        }
+
+        viewModelScope.launch {
+            bluetoothSession.incomingPositions.collect { fen ->
+                chessController.loadPositionFromFen(fen, null)
+            }
         }
 
         viewModelScope.launch {
@@ -98,6 +109,11 @@ class AnalysisViewModel(
         finally {
             applyingRemoteMove = false
         }
+    }
+
+    private fun sendPositionOverBluetooth(fen: String) {
+        if (bluetoothSession.state.value !is BluetoothAnalysisSession.State.Connected) return
+        bluetoothSession.sendPosition(fen)
     }
 
     private fun sendMoveOverBluetooth(move: com.github.bhlangonijr.chesslib.move.Move) {

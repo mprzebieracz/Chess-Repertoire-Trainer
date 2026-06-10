@@ -110,10 +110,12 @@ fun AnalysisScreen(viewModel: AnalysisViewModel, onBackClick: () -> Unit) {
             }
         },
         contentBar = {
-            PgnTextViewer(
-                navigator = viewModel.navigator,
-                onMoveClick = { viewModel.navigator.goTo(it) },
-            )
+            if (bluetoothState !is BluetoothAnalysisSession.State.Connected) {
+                PgnTextViewer(
+                    navigator = viewModel.navigator,
+                    onMoveClick = { viewModel.navigator.goTo(it) },
+                )
+            }
         },
         bottomBar = {
             ChessBottomBar {

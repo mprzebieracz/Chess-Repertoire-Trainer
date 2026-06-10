@@ -37,16 +37,20 @@ class GameSyncManager(
     suspend fun syncAccount(username: String, platform: String, onProgress: (Int) -> Unit): Int {
         val fetcher = fetcherRegistry.getFetcher(platform) ?: return 0
         val since = repository.getLatestPlayedAt(platform, username)
+        var total = 0
 
-        val fetched =
-            fetcher.fetchGamesForUser(username = username, since = since, onProgress = onProgress)
-
-        val toInsert = fetched.map { it.toSavedGame(platform, username) }
-        repository.insertGames(toInsert)
-        if (toInsert.isNotEmpty()) {
+        fetcher.streamGamesForUser(
+            username = username,
+            since = since,
+            onProgress = onProgress,
+        ) { batch ->
+            val toInsert = batch.map { it.toSavedGame(platform, username) }
+            repository.insertGames(toInsert)
             gameChapterMatcher?.matchAllGames(toInsert)
             activityRecorder?.recordGamesImported(toInsert.size)
+            total += toInsert.size
         }
-        return toInsert.size
+
+        return total
     }
 }

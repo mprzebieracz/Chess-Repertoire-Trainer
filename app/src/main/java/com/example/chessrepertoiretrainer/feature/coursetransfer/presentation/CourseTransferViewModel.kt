@@ -6,10 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.example.chessrepertoiretrainer.core.bluetooth.BluetoothTransfer
 import com.example.chessrepertoiretrainer.core.bluetooth.PairedDeviceUi
 import com.example.chessrepertoiretrainer.core.database.entity.Repertoire
+import com.example.chessrepertoiretrainer.core.repertoire.GameChapterMatcher
+import com.example.chessrepertoiretrainer.feature.mygames.data.SavedGameRepository
 import com.example.chessrepertoiretrainer.feature.repertoire.data.transfer.RepertoireExporter
 import com.example.chessrepertoiretrainer.feature.repertoire.data.transfer.RepertoireImporter
 import com.example.chessrepertoiretrainer.feature.repertoire.data.transfer.TransferEnvelope
 import com.example.chessrepertoiretrainer.feature.repertoire.domain.RepertoireRepository
+import com.example.chessrepertoiretrainer.feature.repertoire.domain.usecase.RepertoireComplianceAnalyzer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +32,9 @@ class CourseTransferViewModel(
     private val bluetoothTransfer: BluetoothTransfer,
     private val exporter: RepertoireExporter,
     private val importer: RepertoireImporter,
+    private val complianceAnalyzer: RepertoireComplianceAnalyzer,
+    private val gameChapterMatcher: GameChapterMatcher,
+    private val savedGameRepository: SavedGameRepository,
 ) : ViewModel() {
 
     val repertoires: StateFlow<List<Repertoire>> =
@@ -166,8 +172,20 @@ class CourseTransferViewModel(
             val result = runCatching { importer.import(envelope) }
             result.onSuccess {
                 _status.value = "Imported ${it.imported} course(s)"
+                rematchAllGames()
             }.onFailure {
                 _status.value = "Import failed: ${it.message ?: it.javaClass.simpleName}"
+            }
+        }
+    }
+
+    private fun rematchAllGames() {
+        viewModelScope.launch {
+            runCatching {
+                complianceAnalyzer.rebuildIndex(playerIsWhite = true)
+                complianceAnalyzer.rebuildIndex(playerIsWhite = false)
+                val games = savedGameRepository.getAllGames()
+                if (games.isNotEmpty()) gameChapterMatcher.matchAllGames(games)
             }
         }
     }
@@ -182,6 +200,9 @@ class CourseTransferViewModel(
         private val bluetoothTransfer: BluetoothTransfer,
         private val exporter: RepertoireExporter,
         private val importer: RepertoireImporter,
+        private val complianceAnalyzer: RepertoireComplianceAnalyzer,
+        private val gameChapterMatcher: GameChapterMatcher,
+        private val savedGameRepository: SavedGameRepository,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
@@ -190,6 +211,9 @@ class CourseTransferViewModel(
                 bluetoothTransfer,
                 exporter,
                 importer,
+                complianceAnalyzer,
+                gameChapterMatcher,
+                savedGameRepository,
             ) as T
     }
 }

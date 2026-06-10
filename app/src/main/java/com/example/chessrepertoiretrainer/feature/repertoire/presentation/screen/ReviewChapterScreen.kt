@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ManageSearch
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -96,7 +96,7 @@ fun ReviewChapterScreen(
                         onClick = viewModel::toggleEngine
                     )
                     IconButton(onClick = { onFindMasterGames(chessCtrl.getBoard().fen) }) {
-                        Icon(Icons.Filled.ManageSearch, contentDescription = "Find master games")
+                        Icon(Icons.AutoMirrored.Filled.ManageSearch, contentDescription = "Find master games")
                     }
                 },
             )

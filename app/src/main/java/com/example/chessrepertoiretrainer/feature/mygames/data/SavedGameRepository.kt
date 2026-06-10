@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface SavedGameRepository {
     suspend fun insertGames(games: List<SavedGame>)
+    suspend fun getAllGames(): List<SavedGame>
     suspend fun getLatestPlayedAt(platform: String, username: String): Long?
     suspend fun countGames(platform: String, username: String): Int
     fun getAllGamesFiltered(
@@ -52,4 +53,6 @@ interface SavedGameRepository {
 
     suspend fun getGamesWithNullEcoCode(): List<SavedGame>
     suspend fun updateEcoCode(id: String, ecoCode: String)
+
+    fun observeMatchCount(): Flow<Int>
 }

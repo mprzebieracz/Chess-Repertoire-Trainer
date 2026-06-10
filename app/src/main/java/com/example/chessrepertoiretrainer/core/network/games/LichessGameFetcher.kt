@@ -10,6 +10,7 @@ import java.net.HttpURLConnection
 object LichessGameFetcher : GameFetcher {
 
     private const val BASE_URL = "https://lichess.org/api/games/user"
+    private const val STREAM_BATCH_SIZE = 200
     override val platformKey: String = "lichess"
 
     override suspend fun fetchGamesForUser(
@@ -69,6 +70,43 @@ object LichessGameFetcher : GameFetcher {
         }
 
         return "$BASE_URL/$username?${params.joinToString("&")}"
+    }
+
+    override suspend fun streamGamesForUser(
+        username: String,
+        since: Long?,
+        onProgress: ((Int) -> Unit)?,
+        onBatch: suspend (List<FetchedGame>) -> Unit,
+    ) = withContext(Dispatchers.IO) {
+        val normalizedUser = username.trim()
+        if (normalizedUser.isBlank()) return@withContext
+
+        val urlString = buildRequestUrl(normalizedUser, null, "both", "", false, since)
+        val connection = openGetConnection(urlString, 15_000, 30_000, "application/x-ndjson")
+        if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+            Log.w("LichessGameFetcher", "HTTP error ${connection.responseCode} for $normalizedUser")
+            return@withContext
+        }
+
+        val batch = ArrayList<FetchedGame>(STREAM_BATCH_SIZE)
+        var totalFetched = 0
+        val reader = connection.inputStream.bufferedReader()
+        try {
+            while (true) {
+                val line = reader.readLine() ?: break
+                val game = parseLichessGame(line, normalizedUser, false) ?: continue
+                batch.add(game)
+                totalFetched++
+                onProgress?.invoke(totalFetched)
+                if (batch.size >= STREAM_BATCH_SIZE) {
+                    onBatch(batch.toList())
+                    batch.clear()
+                }
+            }
+            if (batch.isNotEmpty()) onBatch(batch.toList())
+        } finally {
+            reader.close()
+        }
     }
 
     private fun streamGames(

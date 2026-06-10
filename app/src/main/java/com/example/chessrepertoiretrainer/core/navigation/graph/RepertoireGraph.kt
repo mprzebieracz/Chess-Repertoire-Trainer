@@ -62,6 +62,9 @@ fun NavGraphBuilder.repertoireGraph(
                 appContainer.bluetoothTransfer,
                 appContainer.repertoireExporter,
                 appContainer.repertoireImporter,
+                appContainer.repertoireComplianceAnalyzer,
+                appContainer.gameChapterMatcher,
+                appContainer.savedGameRepository,
             )
         )
         CourseTransferScreen(
