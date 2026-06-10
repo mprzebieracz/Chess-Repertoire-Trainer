@@ -31,6 +31,9 @@ A free-form board for exploring any position — no repertoire required. Make mo
 
 You can also jump from any repertoire position directly into the analysis board to investigate a specific moment in depth.
 
+### Shared analysis (Bluetooth)
+Pair two devices over Bluetooth and analyze the same position together — one device hosts, the other joins from its paired devices list. Once connected, moves and board navigation made on either device are mirrored live on the other, so you can study side by side on separate boards.
+
 ---
 
 ## Opening Tree
@@ -52,7 +55,15 @@ Fetches today's puzzle from Lichess. A hint is available if needed, and the solu
 
 ## My Games
 
-Browse and replay your imported game history. Open any game to step through it move by move, optionally with the engine running alongside.
+Browse and replay your imported game history from **Lichess** and **Chess.com**. Open any game to step through it move by move, optionally with the engine running alongside.
+
+As you step through a game, a compliance panel shows whether each of your moves matches your repertoire — marking it **in book** or flagging a **deviation** — with a link to jump straight to that line in the relevant course.
+
+---
+
+## Course Transfer
+
+Send and receive courses (with all their chapters and lines) between two devices over Bluetooth — handy for moving your repertoire to a new phone without an account or cloud sync. Pick courses to send, then pair with a nearby device from its paired devices list to receive them; incoming courses are previewed before import.
 
 ---
 
@@ -64,15 +75,9 @@ All analysis features — the evaluation bar, score label, and principal variati
 
 ## Themes
 
-Three app color themes and five board themes, all switchable from Settings.
+Four app color themes and five board themes, all switchable from Settings, each with light and dark variants.
 
-**App themes**
-
-| Theme | Feel | Accent |
-|---|---|---|
-| Dark Wood | chess.com-style dark | Warm gold |
-| Lichess Green | Lichess dark | Signature green |
-| Warm Parchment | Light, classic | Library red |
+**App themes:** Warm Brown · Forest Green · Warm Cream · Velvet Pink
 
 **Board themes:** Classic Green · Blue · Brown · Tournament (red) · Night (slate blue)
 
